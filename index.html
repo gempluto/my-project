@@ -1,762 +1,400 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Stop phones from automatically underlining numbers -->
-    <meta name="format-detection" content="telephone=no">
-    <title>Customer Service</title>
-    
-    <!-- PWA & iOS Meta Tags -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#202c33" id="theme-color-meta">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Customer Service">
-    <link rel="apple-touch-icon" href="icon.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="format-detection" content="telephone=no">
+  <title>Customer Service</title>
 
-    <style>
-        /* Default WhatsApp Dark Theme Palette */
-        :root {
-            --bg-body: #0b141a;
-            --bg-container: #0b141a;
-            --border-container: #222d34;
-            --bg-header: #202c33;
-            --text-header: #e9edef;
-            --text-status: #8696a0;
-            --bg-chat: #0b141a;
-            --pattern-opacity: 0.02;
-            --bg-user-msg: #005c4b;
-            --text-user-msg: #e9edef;
-            --bg-bot-msg: #202c33;
-            --text-bot-msg: #e9edef;
-            --text-loading: #8696a0;
-            --bg-input-area: #202c33;
-            --bg-input-wrapper: #2a3942;
-            --text-input: #e9edef;
-            --placeholder-input: #8696a0;
-            --icon-color: #8696a0;
-            --icon-hover: #e9edef;
-            --btn-install: #00a884;
-            --btn-install-text: #111b21;
-            --ios-banner-bg: #1f2c34;
-            --ios-banner-text: #f59e0b;
-            --doc-bg: rgba(0, 0, 0, 0.2);
-            --doc-hover: rgba(0, 0, 0, 0.3);
-            --file-preview-bg: #1f2c34;
-            --vn-bar-bg: rgba(255, 255, 255, 0.3);
-            --vn-bar-active: #ffffff;
-            --vn-subtext: rgba(255, 255, 255, 0.7);
-        }
+  <!-- PWA & iOS Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#202c33" id="theme-color-meta">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Customer Service">
+  <link rel="apple-touch-icon" href="icon.png">
 
-        /* WhatsApp Light Theme Palette */
-        @media (prefers-color-scheme: light) {
-            :root {
-                --bg-body: #d1d7db;
-                --bg-container: #efeae2;
-                --border-container: #d1d7db;
-                --bg-header: #008069;
-                --text-header: #ffffff;
-                --text-status: #d1e8e2;
-                --bg-chat: #efeae2;
-                --pattern-opacity: 0.06;
-                --bg-user-msg: #d9fdd3;
-                --text-user-msg: #111b21;
-                --bg-bot-msg: #ffffff;
-                --text-bot-msg: #111b21;
-                --text-loading: #667781;
-                --bg-input-area: #f0f2f5;
-                --bg-input-wrapper: #ffffff;
-                --text-input: #111b21;
-                --placeholder-input: #667781;
-                --icon-color: #54656f;
-                --icon-hover: #111b21;
-                --btn-install: #008069;
-                --btn-install-text: #ffffff;
-                --ios-banner-bg: #fff3cd;
-                --ios-banner-text: #856404;
-                --doc-bg: rgba(0, 0, 0, 0.05);
-                --doc-hover: rgba(0, 0, 0, 0.1);
-                --file-preview-bg: #e9edef;
-                --vn-bar-bg: rgba(0, 0, 0, 0.2);
-                --vn-bar-active: #54656f;
-                --vn-subtext: #667781;
-            }
-        }
+  <style>
+    :root {
+      --bg-color: #111b21;
+      --header-bg: #202c33;
+      --chat-bg: #0b141a;
+      --user-msg: #005c4b;
+      --bot-msg: #202c33;
+      --text-primary: #e9edef;
+      --text-secondary: #8696a0;
+      --input-bg: #2a3942;
+      --link-color: #53bdeb;
+      --icon-color: #8696a0;
+    }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        
-        html, body { 
-            height: 100%; 
-            height: 100dvh; 
-            background: var(--bg-body); 
-            color: var(--text-bot-msg); 
-            overflow: hidden; 
-        }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg-color: #efeae2;
+        --header-bg: #f0f2f5;
+        --chat-bg: #efeae2;
+        --user-msg: #d9fdd3;
+        --bot-msg: #ffffff;
+        --text-primary: #111b21;
+        --text-secondary: #667781;
+        --input-bg: #ffffff;
+        --link-color: #027eb5;
+        --icon-color: #54656f;
+      }
+    }
 
-        body { 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-        }
-        
-        .chat-container { 
-            width: 100%; 
-            max-width: 480px; 
-            height: 100%; 
-            height: 100dvh; 
-            background: var(--bg-container); 
-            display: flex; 
-            flex-direction: column; 
-        }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
 
-        @media (min-width: 500px) { 
-            .chat-container { 
-                height: 92vh; 
-                border-radius: 12px; 
-                border: 1px solid var(--border-container); 
-                box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
-            } 
-        }
+    header {
+      background-color: var(--header-bg);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
 
-        /* Hide install button automatically when app is installed */
-        @media all and (display-mode: standalone) {
-            #install-btn {
-                display: none !important;
-            }
-        }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-        /* WhatsApp Header */
-        .chat-header { background: var(--bg-header); color: var(--text-header); padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; border-bottom: 1px solid var(--border-container); }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .header-info { flex: 1; display: flex; flex-direction: column; cursor: pointer; }
-        .header-name { font-size: 16px; font-weight: 500; color: var(--text-header); }
-        .header-status { font-size: 12px; color: var(--text-status); }
-        
-        .header-actions { display: flex; gap: 12px; align-items: center; }
-        #install-btn { background: var(--btn-install); border: none; color: var(--btn-install-text); padding: 6px 10px; border-radius: 14px; cursor: pointer; font-size: 11px; font-weight: bold; white-space: nowrap; }
+    header img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
 
-        /* iOS Banner */
-        .ios-banner { background: var(--ios-banner-bg); color: var(--ios-banner-text); padding: 10px 16px; font-size: 12px; text-align: center; border-bottom: 1px solid var(--border-container); display: none; line-height: 1.4; flex-shrink: 0; }
+    .header-info h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
 
-        /* Chat Messages Box */
-        .chat-box { flex: 1; min-height: 0; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: var(--bg-chat); background-image: radial-gradient(circle, rgba(0,0,0,var(--pattern-opacity)) 1px, transparent 1px); background-size: 24px 24px; }
-        
-        /* Message Bubbles */
-        .message { 
-            max-width: 85%; padding: 8px 10px; border-radius: 7.5px; font-size: 14.5px; line-height: 1.4; word-break: break-word; position: relative; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
-            -webkit-user-select: text; 
-            user-select: text; 
-        }
-        .message.user { background: var(--bg-user-msg); color: var(--text-user-msg); align-self: flex-end; border-top-right-radius: 0; }
-        .message.bot { background: var(--bg-bot-msg); color: var(--text-bot-msg); align-self: flex-start; border-top-left-radius: 0; }
-        .message.loading { color: var(--text-loading); font-style: italic; background: var(--bg-bot-msg); }
+    .header-info p {
+      margin: 0;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
 
-        /* Media styling inside messages */
-        .message img { width: 100%; max-height: 260px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; display: block; }
-        .media-doc { background: var(--doc-bg); padding: 8px; border-radius: 6px; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; text-decoration: none; color: inherit; }
-        .media-doc:hover { background: var(--doc-hover); }
-        .doc-icon { background: #ea4335; color: white; padding: 6px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .doc-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; color: inherit; }
+    .install-btn {
+      background-color: #00a884;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
 
-        /* Native WhatsApp Voice Note Player Styling */
-        .vn-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 250px;
-            padding: 2px 0;
-        }
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background-color: var(--chat-bg);
+    }
 
-        .vn-avatar-wrapper {
-            position: relative;
-            width: 44px;
-            height: 44px;
-            flex-shrink: 0;
-        }
+    .message {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      color: var(--text-primary);
+    }
 
-        .vn-avatar-wrapper img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-        }
+    .message.user {
+      align-self: flex-end;
+      background-color: var(--user-msg);
+      border-bottom-right-radius: 2px;
+    }
 
-        .vn-mic-badge {
-            position: absolute;
-            bottom: -2px;
-            right: -2px;
-            background: transparent;
-            color: var(--vn-bar-active);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    .message.bot {
+      align-self: flex-start;
+      background-color: var(--bot-msg);
+      border-bottom-left-radius: 2px;
+    }
 
-        .vn-controls {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
+    .message a {
+      color: var(--link-color);
+      text-decoration: underline;
+      word-break: break-all;
+    }
 
-        .vn-main-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+    .vn-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 180px;
+    }
 
-        .vn-play-btn {
-            background: none;
-            border: none;
-            color: var(--text-user-msg);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            flex-shrink: 0;
-        }
+    .vn-play-btn {
+      background: #00a884;
+      border: none;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-        .vn-track-wrapper {
-            position: relative;
-            flex: 1;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
+    .vn-waveform {
+      flex: 1;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
 
-        .vn-waveform {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            width: 100%;
-            height: 100%;
-        }
+    .vn-bar {
+      flex: 1;
+      background: var(--text-secondary);
+      border-radius: 2px;
+      transition: height 0.2s ease;
+    }
 
-        .vn-bar {
-            width: 3px;
-            border-radius: 2px;
-            background-color: var(--vn-bar-bg);
-            transition: background-color 0.1s;
-        }
+    #input-container {
+      background-color: var(--header-bg);
+      padding: 10px 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
 
-        .vn-bar.played {
-            background-color: var(--vn-bar-active);
-        }
+    .icon-btn {
+      background: none;
+      border: none;
+      color: var(--icon-color);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+    }
 
-        .vn-scrubber {
-            position: absolute;
-            width: 12px;
-            height: 12px;
-            background-color: #ffffff;
-            border-radius: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-            pointer-events: none;
-        }
+    #message-input {
+      flex: 1;
+      background-color: var(--input-bg);
+      border: none;
+      padding: 10px 16px;
+      border-radius: 20px;
+      color: var(--text-primary);
+      font-size: 14px;
+      outline: none;
+    }
 
-        .vn-meta-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 11px;
-            color: var(--vn-subtext);
-            padding-left: 26px;
-        }
-
-        .vn-time-ticks {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-        }
-
-        /* Tap to Copy Number Button Style */
-        .copy-btn {
-            background: rgba(0, 168, 132, 0.15);
-            color: #00a884;
-            padding: 2px 6px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            border: 1px solid rgba(0, 168, 132, 0.3);
-            margin: 0 2px;
-            transition: 0.2s all;
-        }
-        .copy-btn:active { background: #00a884; color: #ffffff; }
-
-        /* File Preview Pill */
-        #file-preview { display: none; background: var(--file-preview-bg); color: var(--text-bot-msg); padding: 6px 16px; font-size: 13px; border-top: 1px solid var(--border-container); align-items: center; justify-content: space-between; flex-shrink: 0; }
-        #file-preview span { cursor: pointer; color: #f87171; font-weight: bold; }
-
-        /* WhatsApp Input Bar */
-        .input-area { background: var(--bg-input-area); padding: 8px 12px; display: flex; align-items: center; gap: 8px; min-height: 62px; flex-shrink: 0; box-sizing: border-box; }
-        .input-box-wrapper { flex: 1; background: var(--bg-input-wrapper); border-radius: 8px; display: flex; align-items: center; padding: 0 12px; gap: 8px; }
-        
-        input[type="text"] { flex: 1; background: transparent; border: none; outline: none; color: var(--text-input); font-size: 16px; padding: 10px 0; }
-        input[type="text"]::placeholder { color: var(--placeholder-input); }
-        
-        .whatsapp-icon-btn { background: none; border: none; color: var(--icon-color); cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; padding: 4px; }
-        .whatsapp-icon-btn:hover { color: var(--icon-hover); }
-        
-        .mic-send-btn { background: #00a884; color: #ffffff; border: none; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0; transition: background 0.2s; }
-        .mic-send-btn:hover { background: #029474; }
-        .mic-send-btn.recording { background: #ef4444; color: white; animation: pulse 1.5s infinite; }
-
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-    </style>
+    .send-mic-btn {
+      background-color: #00a884;
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+    }
+  </style>
 </head>
 <body>
 
-<div class="chat-container">
-    <!-- WhatsApp Header -->
-    <div class="chat-header">
-        <div class="avatar">
-            <img src="icon.png" alt="Profile" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%238696a0\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'">
-        </div>
-        <div class="header-info">
-            <div class="header-name">Connection Platform</div>
-            <div class="header-status">online</div>
-        </div>
-        <div class="header-actions">
-            <button id="install-btn" onclick="installApp()">📥 Install App</button>
-        </div>
+  <header>
+    <div class="header-left">
+      <img src="icon.png" alt="Avatar">
+      <div class="header-info">
+        <h2>Connection Platform</h2>
+        <p>online</p>
+      </div>
     </div>
-    
-    <div id="ios-instruction" class="ios-banner">
-        To install on iPhone: Tap the browser's <b>Share</b> button below, then select <b>"Add to Home Screen"</b>.
-    </div>
+    <button class="install-btn" id="install-app-btn" style="display:none;">⚡ Install App</button>
+  </header>
 
-    <div id="chatBox" class="chat-box">
-        <div class="message bot">Hi there My name is mercy! we can offer you connection for Sugar mommy or Sugar daddy, Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group, Serious relationship in Nigeria, Serious relationship outside Nigeria and Get paid for chatting with rich people abroad<br><br>So please What's your name and which city are you living in?</div>
-    </div>
-    
-    <!-- Attached file indicator pill -->
-    <div id="file-preview">
-        <span id="file-name">file.png</span>
-        <span onclick="clearFile()">✕ Remove</span>
-    </div>
+  <div id="chat-container"></div>
 
-    <!-- Hidden File Input -->
-    <input type="file" id="fileInput" accept="image/*,application/pdf,.doc,.docx" style="display: none;" onchange="handleFileSelect(this)" />
+  <div id="input-container">
+    <button class="icon-btn">┼</button>
+    <input type="text" id="message-input" placeholder="Type a message" onkeydown="if(event.key==='Enter') handleSendOrRecord()">
+    <button class="icon-btn">📷</button>
+    <button class="send-mic-btn" id="send-btn" onclick="handleSendOrRecord()">🎤</button>
+  </div>
 
-    <!-- WhatsApp Input Bar -->
-    <div class="input-area">
-        <button class="whatsapp-icon-btn" onclick="document.getElementById('fileInput').click()" title="Attach File">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        </button>
-
-        <div class="input-box-wrapper">
-            <input type="text" id="messageInput" placeholder="Type a message" oninput="toggleInputButton()" />
-            <button class="whatsapp-icon-btn" onclick="document.getElementById('fileInput').click()" title="Camera">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-            </button>
-        </div>
-
-        <button class="mic-send-btn" id="mainActionBtn" onclick="handleMainAction()" title="Record / Send">
-            <svg id="micIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-        </button>
-    </div>
-</div>
-
-<script>
+  <script>
     const WEBHOOK_URL = 'https://n8n.srv1501696.hstgr.cloud/webhook/c9d54b8a-cd36-4802-862e-c02087f1065a';
 
-    // Update browser header theme color based on system settings
-    function updateThemeColor() {
-        const metaThemeColor = document.getElementById('theme-color-meta');
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-            metaThemeColor.setAttribute('content', '#008069');
-        } else {
-            metaThemeColor.setAttribute('content', '#202c33');
-        }
-    }
-    updateThemeColor();
-    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', updateThemeColor);
-
-    function getSessionId() {
-        let sessionId = localStorage.getItem('chat_session_id');
-        if (!sessionId) {
-            sessionId = 'user_' + Math.random().toString(36).substring(2, 15) + Date.now();
-            localStorage.setItem('chat_session_id', sessionId);
-        }
-        return sessionId;
-    }
-
-    let deferredPrompt;
-    const installBtn = document.getElementById('install-btn');
-    const iosInstruction = document.getElementById('ios-instruction');
-
-    const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    if (isInStandaloneMode) installBtn.style.display = 'none';
-    if (isIOS) {
-        installBtn.style.display = 'none';
-        if (!isInStandaloneMode) iosInstruction.style.display = 'block'; 
-    }
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-    });
-
-    window.addEventListener('appinstalled', () => {
-        installBtn.style.display = 'none';
-    });
-
-    async function installApp() {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') installBtn.style.display = 'none';
-            deferredPrompt = null;
-        } else {
-            alert('To install this app on Android, tap your browser menu (3 dots) and select "Install app" or "Add to Home screen".');
-        }
-    }
-
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js'); 
-
-    document.getElementById('messageInput').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') sendMessage();
-    });
-
-    let mediaRecorder;
+    const inputField = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    let mediaRecorder = null;
     let audioChunks = [];
-    let recordedAudioBlob = null;
     let isRecording = false;
 
-    function formatText(text) {
-        let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        html = html.replace(/\n/g, '<br>');
-        const numberRegex = /(?:\d[\s-]*){10,14}/g;
-        html = html.replace(numberRegex, function(match) {
-            const cleanNumber = match.replace(/[\s-]/g, '');
-            return `<span class="copy-btn" onclick="copyNumber('${cleanNumber}', this)" title="Tap to copy">${match} 📋</span>`;
-        });
-        return html;
+    inputField.addEventListener('input', () => {
+      sendBtn.innerHTML = inputField.value.trim().length > 0 ? '➤' : '🎤';
+    });
+
+    function handleSendOrRecord() {
+      if (inputField.value.trim().length > 0) {
+        sendMessage();
+      } else {
+        toggleVoiceRecording();
+      }
     }
 
-    function copyNumber(number, el) {
-        navigator.clipboard.writeText(number).then(() => {
-            const originalText = el.innerHTML;
-            el.innerHTML = `Copied ✓`;
-            el.style.background = '#00a884';
-            el.style.color = '#ffffff';
-            setTimeout(() => { 
-                el.innerHTML = originalText; 
-                el.style.background = '';
-                el.style.color = '';
-            }, 2000);
-        });
-    }
+    async function toggleVoiceRecording() {
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
 
-    function handleFileSelect(input) {
-        if (input.files && input.files[0]) {
-            document.getElementById('file-name').textContent = input.files[0].name;
-            document.getElementById('file-preview').style.display = 'flex';
-            toggleInputButton();
+          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            appendVoiceNote('user', audioUrl);
+            saveVoiceNoteToStorage('user', audioUrl);
+          };
+
+          mediaRecorder.start();
+          isRecording = true;
+          sendBtn.innerHTML = '⏹';
+          inputField.placeholder = "Recording audio...";
+        } catch (err) {
+          alert("Microphone access is required to record voice notes.");
         }
+      } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        sendBtn.innerHTML = '🎤';
+        inputField.placeholder = "Type a message";
+      }
     }
 
-    function clearFile() {
-        document.getElementById('fileInput').value = '';
-        document.getElementById('file-preview').style.display = 'none';
-        toggleInputButton();
+    function appendVoiceNote(sender, audioUrl) {
+      const container = document.getElementById('chat-container');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${sender}`;
+      
+      msgDiv.innerHTML = `
+        <div class="vn-container">
+          <button class="vn-play-btn" onclick="playAudio('${audioUrl}', this)">▶</button>
+          <div class="vn-waveform">
+            <div class="vn-bar" style="height: 40%"></div>
+            <div class="vn-bar" style="height: 80%"></div>
+            <div class="vn-bar" style="height: 50%"></div>
+            <div class="vn-bar" style="height: 90%"></div>
+            <div class="vn-bar" style="height: 30%"></div>
+            <div class="vn-bar" style="height: 70%"></div>
+          </div>
+        </div>
+      `;
+      container.appendChild(msgDiv);
+      container.scrollTop = container.scrollHeight;
     }
 
-    function toggleInputButton() {
-        const text = document.getElementById('messageInput').value.trim();
-        const file = document.getElementById('fileInput').files[0];
-        const btn = document.getElementById('mainActionBtn');
-        
-        if (text || file) {
-            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`;
-        } else if (!isRecording) {
-            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>`;
-        }
+    function playAudio(url, btn) {
+      const audio = new Audio(url);
+      btn.innerText = '⏸';
+      audio.play();
+      audio.onended = () => { btn.innerText = '▶'; };
     }
 
-    function handleMainAction() {
-        const text = document.getElementById('messageInput').value.trim();
-        const file = document.getElementById('fileInput').files[0];
+    function formatMessageText(text) {
+      if (!text) return '';
+      let formatted = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+      formatted = formatted.replace(/(^|[^"'])((https?:\/\/[^\s<]+))/g, '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>');
+      formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      return formatted;
+    }
 
-        if (text || file || recordedAudioBlob) {
-            sendMessage();
+    function getStoredChat() {
+      return JSON.parse(localStorage.getItem('connection_chat_history') || '[]');
+    }
+
+    function saveChat(chat) {
+      localStorage.setItem('connection_chat_history', JSON.stringify(chat));
+    }
+
+    function saveVoiceNoteToStorage(sender, audioUrl) {
+      const history = getStoredChat();
+      history.push({ sender, text: `[Voice Note]`, isAudio: true, audioUrl });
+      saveChat(history);
+    }
+
+    function appendMessage(sender, text) {
+      const container = document.getElementById('chat-container');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${sender}`;
+      msgDiv.innerHTML = formatMessageText(text);
+      container.appendChild(msgDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function loadChat() {
+      const history = getStoredChat();
+      history.forEach(msg => {
+        if (msg.isAudio) {
+          appendVoiceNote(msg.sender, msg.audioUrl);
         } else {
-            toggleRecord();
+          appendMessage(msg.sender, msg.text);
         }
-    }
-
-    async function toggleRecord() {
-        const btn = document.getElementById('mainActionBtn');
-        if (!isRecording) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    sendMessage();
-                };
-                mediaRecorder.start();
-                isRecording = true;
-                btn.classList.add('recording');
-                btn.innerHTML = `⏹`;
-            } catch (err) {
-                alert('Microphone access denied or not supported.');
-            }
-        } else {
-            mediaRecorder.stop();
-            isRecording = false;
-            btn.classList.remove('recording');
-            toggleInputButton();
-        }
+      });
     }
 
     async function sendMessage() {
-        const textInput = document.getElementById('messageInput');
-        const fileInput = document.getElementById('fileInput');
-        const text = textInput.value.trim();
-        const file = fileInput.files[0];
+      const text = inputField.value.trim();
+      if (!text) return;
 
-        if (!text && !file && !recordedAudioBlob) return;
+      appendMessage('user', text);
+      const history = getStoredChat();
+      history.push({ sender: 'user', text });
+      saveChat(history);
 
-        // Render preview on user side
-        if (file && file.type.startsWith('image/')) {
-            appendRichMessage('user', 'image', { url: URL.createObjectURL(file), caption: text });
-        } else if (file) {
-            appendRichMessage('user', 'doc', { name: file.name, url: URL.createObjectURL(file), caption: text });
-        } else if (recordedAudioBlob) {
-            appendRichMessage('user', 'audio', { url: URL.createObjectURL(recordedAudioBlob) });
-        } else {
-            appendRichMessage('user', 'text', { text: text });
-        }
+      inputField.value = '';
+      sendBtn.innerHTML = '🎤';
 
-        const formData = new FormData();
-        formData.append('text', text);
-        formData.append('sessionId', getSessionId());
-        if (file) formData.append('attachment', file);
-        if (recordedAudioBlob) formData.append('voiceNote', recordedAudioBlob, 'voice-note.webm');
-
-        textInput.value = '';
-        clearFile();
-        recordedAudioBlob = null;
-        toggleInputButton();
-
-        const loadingId = appendLoadingMessage();
-
-        try {
-            const response = await fetch(WEBHOOK_URL, { method: 'POST', body: formData });
-            const data = await response.json();
-            removeMessage(loadingId);
-
-            const replyText = data.reply || data.output || data.text || '';
-            const imageUrl = data.imageUrl || data.image || '';
-            const fileUrl = data.fileUrl || data.pdfUrl || '';
-            const audioUrl = data.audioUrl || data.voiceUrl || '';
-            const fileName = data.fileName || 'Document.pdf';
-
-            if (audioUrl) {
-                appendRichMessage('bot', 'audio', { url: audioUrl });
-            } else if (imageUrl) {
-                appendRichMessage('bot', 'image', { url: imageUrl, caption: replyText });
-            } else if (fileUrl) {
-                appendRichMessage('bot', 'doc', { name: fileName, url: fileUrl, caption: replyText });
-            } else {
-                appendRichMessage('bot', 'text', { text: replyText || 'Response received.' });
-            }
-
-        } catch (err) {
-            removeMessage(loadingId);
-            appendRichMessage('bot', 'text', { text: 'Error connecting to server. Please check your n8n workflow.' });
-        }
-    }
-
-    function appendRichMessage(sender, type, data) {
-        const chatBox = document.getElementById('chatBox');
-        const div = document.createElement('div');
-        div.className = `message ${sender}`;
-
-        if (type === 'image') {
-            div.innerHTML = `
-                <img src="${data.url}" alt="Image">
-                ${data.caption ? `<div style="margin-top: 4px;">${sender === 'bot' ? formatText(data.caption) : data.caption}</div>` : ''}
-            `;
-        } else if (type === 'doc') {
-            div.innerHTML = `
-                <a href="${data.url || '#'}" target="_blank" class="media-doc">
-                    <div class="doc-icon">PDF</div>
-                    <div class="doc-name">${data.name}</div>
-                </a>
-                ${data.caption ? `<div style="margin-top: 4px;">${sender === 'bot' ? formatText(data.caption) : data.caption}</div>` : ''}
-            `;
-        } else if (type === 'audio') {
-            const vnId = 'vn_' + Math.random().toString(36).substring(2, 9);
-            const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-            
-            // Build custom WhatsApp Voice Note UI
-            div.innerHTML = `
-                <div class="vn-container" id="${vnId}">
-                    <div class="vn-avatar-wrapper">
-                        <img src="icon.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%238696a0\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'">
-                        <div class="vn-mic-badge">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
-                        </div>
-                    </div>
-                    <div class="vn-controls">
-                        <div class="vn-main-row">
-                            <button class="vn-play-btn" onclick="toggleVNPlay('${vnId}')">
-                                <svg class="vn-play-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                            </button>
-                            <div class="vn-track-wrapper" onclick="seekVN('${vnId}', event)">
-                                <div class="vn-waveform"></div>
-                                <div class="vn-scrubber" style="left: 0%;"></div>
-                            </div>
-                        </div>
-                        <div class="vn-meta-row">
-                            <span class="vn-timer">0:00</span>
-                            <div class="vn-time-ticks">
-                                <span>${timeStr}</span>
-                                ${sender === 'user' ? `<svg width="15" height="11" viewBox="0 0 16 11" fill="none"><path d="M11.0001 0.600098L4.6001 7.0001L1.8001 4.2001L0.400098 5.6001L4.6001 9.8001L12.4001 2.0001L11.0001 0.600098Z" fill="#53bdeb"/><path d="M14.6001 2.0001L6.8001 9.8001L5.8001 8.8001L7.2001 7.4001L13.2001 1.4001L14.6001 2.0001Z" fill="#53bdeb"/></svg>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <audio src="${data.url}" style="display:none;" preload="metadata"></audio>
-                </div>
-            `;
-            chatBox.appendChild(div);
-            initVoiceNotePlayer(vnId);
-            chatBox.scrollTop = chatBox.scrollHeight;
-            return;
-        } else {
-            div.innerHTML = formatText(data.text);
-        }
-
-        chatBox.appendChild(div);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    /* Custom Voice Note Waveform & Player Logic */
-    function initVoiceNotePlayer(id) {
-        const container = document.getElementById(id);
-        if (!container) return;
-        const audio = container.querySelector('audio');
-        const waveform = container.querySelector('.vn-waveform');
-        const timer = container.querySelector('.vn-timer');
-
-        // Generate synthetic waveform height bars matching WhatsApp style
-        const barHeights = [30, 45, 80, 50, 90, 40, 70, 100, 60, 40, 85, 95, 50, 30, 60, 80, 45, 90, 70, 35, 55, 75, 40, 25];
-        waveform.innerHTML = '';
-        barHeights.forEach(h => {
-            const bar = document.createElement('div');
-            bar.className = 'vn-bar';
-            bar.style.height = `${h}%`;
-            waveform.appendChild(bar);
+      try {
+        const res = await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
         });
-
-        audio.addEventListener('loadedmetadata', () => {
-            if (audio.duration && !isNaN(audio.duration)) {
-                timer.textContent = formatDuration(audio.duration);
-            }
-        });
-
-        audio.addEventListener('timeupdate', () => {
-            const progress = (audio.currentTime / audio.duration) || 0;
-            const scrubber = container.querySelector('.vn-scrubber');
-            const bars = container.querySelectorAll('.vn-bar');
-            
-            scrubber.style.left = `${progress * 100}%`;
-            timer.textContent = formatDuration(audio.currentTime);
-
-            const activeIndex = Math.floor(progress * bars.length);
-            bars.forEach((bar, idx) => {
-                if (idx <= activeIndex) {
-                    bar.classList.add('played');
-                } else {
-                    bar.classList.remove('played');
-                }
-            });
-        });
-
-        audio.addEventListener('ended', () => {
-            const playIcon = container.querySelector('.vn-play-icon');
-            playIcon.innerHTML = `<path d="M8 5v14l11-7z"/>`;
-            container.querySelector('.vn-scrubber').style.left = '0%';
-            container.querySelectorAll('.vn-bar').forEach(b => b.classList.remove('played'));
-            timer.textContent = formatDuration(audio.duration || 0);
-        });
-    }
-
-    function toggleVNPlay(id) {
-        const container = document.getElementById(id);
-        const audio = container.querySelector('audio');
-        const playIcon = container.querySelector('.vn-play-icon');
-
-        // Pause all other audio players
-        document.querySelectorAll('audio').forEach(a => {
-            if (a !== audio) {
-                a.pause();
-                const parent = a.closest('.vn-container');
-                if (parent) {
-                    parent.querySelector('.vn-play-icon').innerHTML = `<path d="M8 5v14l11-7z"/>`;
-                }
-            }
-        });
-
-        if (audio.paused) {
-            audio.play();
-            playIcon.innerHTML = `<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`;
-        } else {
-            audio.pause();
-            playIcon.innerHTML = `<path d="M8 5v14l11-7z"/>`;
-        }
-    }
-
-    function seekVN(id, event) {
-        const container = document.getElementById(id);
-        const audio = container.querySelector('audio');
-        const track = container.querySelector('.vn-track-wrapper');
-        const rect = track.getBoundingClientRect();
-        const clickX = event.clientX - rect.left;
-        const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+        const data = await res.json();
         
-        if (audio.duration) {
-            audio.currentTime = percentage * audio.duration;
-        }
+        const reply = data.output || data.message || data.response || (Array.isArray(data) ? data[0].output : "Message received.");
+
+        appendMessage('bot', reply);
+        history.push({ sender: 'bot', text: reply });
+        saveChat(history);
+      } catch (err) {
+        appendMessage('bot', "Error connecting to service. Please try again.");
+      }
     }
 
-    function formatDuration(seconds) {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
+    window.addEventListener('DOMContentLoaded', loadChat);
 
-    function appendLoadingMessage() {
-        const chatBox = document.getElementById('chatBox');
-        const div = document.createElement('div');
-        div.className = `message bot loading`;
-        div.id = 'loading-msg';
-        div.textContent = 'Typing...';
-        chatBox.appendChild(div);
-        chatBox.scrollTop = chatBox.scrollHeight;
-        return 'loading-msg';
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
     }
-
-    function removeMessage(id) {
-        const el = document.getElementById(id);
-        if (el) el.remove();
-    }
-</script>
-
+  </script>
 </body>
 </html>
