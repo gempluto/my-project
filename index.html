@@ -187,7 +187,26 @@
         input[type="text"]::placeholder { color: var(--placeholder-input); }
         .whatsapp-icon-btn { background: none; border: none; color: var(--icon-color); cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; padding: 4px; }
         .whatsapp-icon-btn:hover { color: var(--icon-hover); }
-        .mic-send-btn { background: #00a884; color: #ffffff; border: none; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0; transition: background 0.2s; }
+        
+        .mic-send-btn { 
+            background: #00a884; 
+            color: #ffffff; 
+            border: none; 
+            width: 42px; 
+            height: 42px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            font-size: 18px; 
+            flex-shrink: 0; 
+            transition: background 0.2s; 
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+        }
         .mic-send-btn:hover { background: #029474; }
         .mic-send-btn.recording { background: #ef4444; color: white; animation: pulse 1.5s infinite; }
 
@@ -237,7 +256,7 @@
             </button>
         </div>
 
-        <button class="mic-send-btn" id="mainActionBtn" onclick="handleMainAction()" title="Record / Send">
+        <button class="mic-send-btn" id="mainActionBtn" title="Hold to Record / Tap to Send">
             <svg id="micIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
         </button>
     </div>
@@ -330,18 +349,22 @@
     let recordedAudioBlob = null;
     let isRecording = false;
 
+    /* Fixed formatText: Converts links BEFORE replacing newlines to prevent iOS highlight bugs */
     function formatText(text) {
         let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        html = html.replace(/\n/g, '<br>');
 
-        // Make URLs natively clickable to external sites & WhatsApp channels
+        // 1. Convert URLs to clickable links before breaking lines
         const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
         html = html.replace(urlRegex, function(url) {
-            let fullUrl = url.startsWith('http') ? url : 'https://' + url;
-            return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+            let cleanUrl = url.replace(/[.,;:]+$/, '');
+            let fullUrl = cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl;
+            return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>`;
         });
 
-        // Copyable phone/account numbers
+        // 2. Convert newlines to <br> after URL processing
+        html = html.replace(/\n/g, '<br>');
+
+        // 3. Copyable phone/account numbers
         const numberRegex = /(?:\d[\s-]*){10,14}/g;
         html = html.replace(numberRegex, function(match) {
             const cleanNumber = match.replace(/[\s-]/g, '');
@@ -390,40 +413,73 @@
         }
     }
 
-    function handleMainAction() {
+    /* Voice Note: Hold to Record & Release to Send (WhatsApp Style) */
+    const actionBtn = document.getElementById('mainActionBtn');
+
+    actionBtn.addEventListener('pointerdown', (e) => {
         const text = document.getElementById('messageInput').value.trim();
         const file = document.getElementById('fileInput').files[0];
+        if (!text && !file) {
+            e.preventDefault();
+            startRecording();
+        }
+    });
 
-        if (text || file || recordedAudioBlob) {
+    actionBtn.addEventListener('pointerup', (e) => {
+        if (isRecording) {
+            e.preventDefault();
+            stopRecording();
+        }
+    });
+
+    actionBtn.addEventListener('pointercancel', (e) => {
+        if (isRecording) {
+            e.preventDefault();
+            stopRecording();
+        }
+    });
+
+    actionBtn.addEventListener('click', () => {
+        const text = document.getElementById('messageInput').value.trim();
+        const file = document.getElementById('fileInput').files[0];
+        if (text || file) {
             sendMessage();
-        } else {
-            toggleRecord();
+        }
+    });
+
+    async function startRecording() {
+        if (isRecording) return;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            
+            mediaRecorder.ondataavailable = e => {
+                if (e.data.size > 0) audioChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                stream.getTracks().forEach(track => track.stop());
+                if (audioChunks.length > 0) {
+                    recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    sendMessage();
+                }
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+            actionBtn.classList.add('recording');
+            actionBtn.innerHTML = `⏹`;
+        } catch (err) {
+            alert('Microphone access denied or not supported.');
         }
     }
 
-    async function toggleRecord() {
-        const btn = document.getElementById('mainActionBtn');
-        if (!isRecording) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    sendMessage();
-                };
-                mediaRecorder.start();
-                isRecording = true;
-                btn.classList.add('recording');
-                btn.innerHTML = `⏹`;
-            } catch (err) {
-                alert('Microphone access denied or not supported.');
-            }
-        } else {
+    function stopRecording() {
+        if (mediaRecorder && isRecording) {
             mediaRecorder.stop();
             isRecording = false;
-            btn.classList.remove('recording');
+            actionBtn.classList.remove('recording');
             toggleInputButton();
         }
     }
