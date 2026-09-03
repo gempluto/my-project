@@ -160,6 +160,42 @@ fbq('track', 'PageView');
         .message.bot { background: var(--bg-bot-msg); color: var(--text-bot-msg); align-self: flex-start; border-top-left-radius: 0; }
         .message.loading { color: var(--text-loading); font-style: italic; background: var(--bg-bot-msg); }
 
+        /* Dynamic Image Gallery Styles */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .gallery-grid img {
+            width: 100%;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .gallery-grid img:hover {
+            transform: scale(1.03);
+        }
+        .view-gallery-btn {
+            display: inline-block;
+            background: #00a884;
+            color: #ffffff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 18px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: background 0.2s;
+        }
+        .view-gallery-btn:hover {
+            background: #029474;
+        }
+
         /* Clickable Links */
         .message a { color: #53bdeb !important; text-decoration: underline !important; pointer-events: auto !important; cursor: pointer !important; word-break: break-all; }
 
@@ -364,6 +400,7 @@ fbq('track', 'PageView');
 
     /* Fixed formatText: Converts links BEFORE replacing newlines to prevent iOS highlight bugs */
     function formatText(text) {
+        if (!text) return '';
         let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
         // 1. Convert URLs to clickable links before breaking lines
@@ -534,15 +571,20 @@ fbq('track', 'PageView');
             removeMessage(loadingId);
 
             const replyText = data.reply || data.output || data.text || '';
-            const imageUrl = data.imageUrl || data.image || '';
             const fileUrl = data.fileUrl || data.pdfUrl || '';
             const audioUrl = data.audioUrl || data.voiceUrl || '';
             const fileName = data.fileName || 'Document.pdf';
 
+            // Check if n8n returns multiple images array
+            const imagesList = data.images || data.gallery || (Array.isArray(data.imageUrl) ? data.imageUrl : null);
+            const singleImageUrl = typeof data.imageUrl === 'string' ? data.imageUrl : (data.image || '');
+
             if (audioUrl) {
                 appendRichMessage('bot', 'audio', { url: audioUrl });
-            } else if (imageUrl) {
-                appendRichMessage('bot', 'image', { url: imageUrl, caption: replyText });
+            } else if (imagesList && Array.isArray(imagesList) && imagesList.length > 0) {
+                appendRichMessage('bot', 'gallery', { images: imagesList, caption: replyText });
+            } else if (singleImageUrl) {
+                appendRichMessage('bot', 'image', { url: singleImageUrl, caption: replyText });
             } else if (fileUrl) {
                 appendRichMessage('bot', 'doc', { name: fileName, url: fileUrl, caption: replyText });
             } else {
@@ -555,6 +597,17 @@ fbq('track', 'PageView');
         }
     }
 
+    function toggleGalleryVisibility(btn, galleryId) {
+        const gallery = document.getElementById(galleryId);
+        if (gallery.style.display === 'none' || !gallery.style.display) {
+            gallery.style.display = 'grid';
+            btn.innerText = '🙈 Hide Pictures';
+        } else {
+            gallery.style.display = 'none';
+            btn.innerText = `📸 View All Pictures (${gallery.children.length})`;
+        }
+    }
+
     function appendRichMessage(sender, type, data) {
         const chatBox = document.getElementById('chatBox');
         const div = document.createElement('div');
@@ -562,12 +615,25 @@ fbq('track', 'PageView');
 
         if (type === 'image') {
             div.innerHTML = `
-                <img src="${data.url}" alt="Image">
+                <img src="${data.url}" alt="Image" onclick="window.open('${data.url}', '_blank')">
                 ${data.caption ? `<div style="margin-top: 4px;">${sender === 'bot' ? formatText(data.caption) : data.caption}</div>` : ''}
+            `;
+        } else if (type === 'gallery') {
+            const galleryId = 'gal_' + Math.random().toString(36).substring(2, 9);
+            let imagesHtml = data.images.map(url => `<img src="${url}" onclick="window.open('${url}', '_blank')">`).join('');
+            
+            div.innerHTML = `
+                ${data.caption ? `<div>${formatText(data.caption)}</div>` : ''}
+                <button class="view-gallery-btn" onclick="toggleGalleryVisibility(this, '${galleryId}')">
+                    📸 View All Pictures (${data.images.length})
+                </button>
+                <div id="${galleryId}" class="gallery-grid" style="display: none;">
+                    ${imagesHtml}
+                </div>
             `;
         } else if (type === 'doc') {
             div.innerHTML = `
-                <div class="media-doc">
+                <div class="media-doc" onclick="window.open('${data.url}', '_blank')">
                     <div class="doc-icon">PDF</div>
                     <div class="doc-name">${data.name}</div>
                 </div>
