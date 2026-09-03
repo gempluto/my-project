@@ -4,21 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="format-detection" content="telephone=no">
-    <title>Customer Service</title>
-<!-- Meta Pixel Code -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '2009304473035607');
-fbq('track', 'PageView');
-</script>
-<!-- End Meta Pixel Code -->
+    <title>Connection Platform</title>
+
     <!-- PWA & iOS Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#202c33" id="theme-color-meta">
@@ -283,7 +270,18 @@ fbq('track', 'PageView');
     </div>
 
     <div id="chatBox" class="chat-box">
-        <div class="message bot">Hi there My name is mercy! we can offer you connection for Sugar mommy or Sugar daddy, Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group, Serious relationship in Nigeria, Serious relationship outside Nigeria and Get paid for chatting with rich people abroad<br><br>So please What's your name and which city are you living in?</div>
+        <div class="message bot">
+            Hi there My name is mercy! we can offer you connection for Sugar mommy or Sugar daddy, Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group, Serious relationship in Nigeria, Serious relationship outside Nigeria and Get paid for chatting with rich people abroad<br><br>So please What's your name and which city are you living in?
+            
+            <button class="view-gallery-btn" onclick="toggleGalleryVisibility(this, 'welcome_gallery')">
+                📸 View All Pictures (3)
+            </button>
+            <div id="welcome_gallery" class="gallery-grid" style="display: none; margin-top: 8px;">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=60" onclick="window.open(this.src, '_blank')" alt="Sample 1">
+                <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=60" onclick="window.open(this.src, '_blank')" alt="Sample 2">
+                <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&auto=format&fit=crop&q=60" onclick="window.open(this.src, '_blank')" alt="Sample 3">
+            </div>
+        </div>
     </div>
     
     <div id="file-preview">
@@ -334,7 +332,6 @@ fbq('track', 'PageView');
         return sessionId;
     }
 
-    /* Save and Restore Chat History across refreshes */
     function saveChatHistory() {
         const chatBox = document.getElementById('chatBox');
         const clone = chatBox.cloneNode(true);
@@ -347,7 +344,6 @@ fbq('track', 'PageView');
         const savedChat = localStorage.getItem('chat_history');
         if (savedChat) {
             document.getElementById('chatBox').innerHTML = savedChat;
-            // Re-bind audio controls for voice notes after reload
             document.querySelectorAll('.vn-container').forEach(vn => initVoiceNotePlayer(vn.id));
             document.getElementById('chatBox').scrollTop = document.getElementById('chatBox').scrollHeight;
         }
@@ -398,12 +394,10 @@ fbq('track', 'PageView');
     let recordedAudioBlob = null;
     let isRecording = false;
 
-    /* Fixed formatText: Converts links BEFORE replacing newlines to prevent iOS highlight bugs */
     function formatText(text) {
         if (!text) return '';
         let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-        // 1. Convert URLs to clickable links before breaking lines
         const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
         html = html.replace(urlRegex, function(url) {
             let cleanUrl = url.replace(/[.,;:]+$/, '');
@@ -411,10 +405,8 @@ fbq('track', 'PageView');
             return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>`;
         });
 
-        // 2. Convert newlines to <br> after URL processing
         html = html.replace(/\n/g, '<br>');
 
-        // 3. Copyable phone/account numbers
         const numberRegex = /(?:\d[\s-]*){10,14}/g;
         html = html.replace(numberRegex, function(match) {
             const cleanNumber = match.replace(/[\s-]/g, '');
@@ -463,7 +455,6 @@ fbq('track', 'PageView');
         }
     }
 
-    /* Voice Note: Hold to Record & Release to Send (WhatsApp Style) */
     const actionBtn = document.getElementById('mainActionBtn');
 
     actionBtn.addEventListener('pointerdown', (e) => {
@@ -575,7 +566,6 @@ fbq('track', 'PageView');
             const audioUrl = data.audioUrl || data.voiceUrl || '';
             const fileName = data.fileName || 'Document.pdf';
 
-            // Check if n8n returns multiple images array
             const imagesList = data.images || data.gallery || (Array.isArray(data.imageUrl) ? data.imageUrl : null);
             const singleImageUrl = typeof data.imageUrl === 'string' ? data.imageUrl : (data.image || '');
 
@@ -593,7 +583,7 @@ fbq('track', 'PageView');
 
         } catch (err) {
             removeMessage(loadingId);
-            appendRichMessage('bot', 'text', { text: 'Error connecting to server. Please check your n8n workflow.' });
+            appendRichMessage('bot', 'text', { text: 'You appear to be offline. Please check your network connection or Wi-Fi, turn on your mobile data, or connect to a Wi-Fi network to continue.' });
         }
     }
 
@@ -604,7 +594,8 @@ fbq('track', 'PageView');
             btn.innerText = '🙈 Hide Pictures';
         } else {
             gallery.style.display = 'none';
-            btn.innerText = `📸 View All Pictures (${gallery.children.length})`;
+            const count = gallery.children.length;
+            btn.innerText = `📸 View All Pictures (${count})`;
         }
     }
 
