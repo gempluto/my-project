@@ -265,6 +265,11 @@
         </div>
     </div>
 
+    <!-- Added missing iOS instruction banner element -->
+    <div class="ios-banner" id="ios-instruction">
+        To install this app on iOS: tap <strong style="font-size:14px;">⎋</strong> / <strong style="font-size:14px;">Share</strong> then select <strong>"Add to Home Screen"</strong>.
+    </div>
+
     <div id="chatBox" class="chat-box">
         <div class="message bot">
             Hi there My name is mercy! we can offer you connection for Sugar mommy or Sugar daddy, Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group, Serious relationship in Nigeria, Serious relationship outside Nigeria and Get paid for chatting with rich people abroad<br><br>So please What's your name and which city are you living in?
@@ -735,7 +740,7 @@
     if (isInStandaloneMode) installBtn.style.display = 'none';
     if (isIOS) {
         installBtn.style.display = 'none';
-        if (!isInStandaloneMode) iosInstruction.style.display = 'block'; 
+        if (!isInStandaloneMode && iosInstruction) iosInstruction.style.display = 'block'; 
     }
 
     window.addEventListener('beforeinstallprompt', (e) => {
