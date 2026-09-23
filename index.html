@@ -1020,75 +1020,80 @@
                     <div class="vn-avatar-wrapper">
                         <img src="icon.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%238696a0\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'">
                         <div class="vn-mic-badge">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#00a884"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
                         </div>
                     </div>
                     <div class="vn-controls">
                         <div class="vn-main-row">
-                            <button class="vn-play-btn" onclick="toggleVNPlay('${vnId}')">
-                                <svg class="vn-play-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            <button class="vn-play-btn" onclick="togglePlay('${vnId}')">
+                                <svg id="play_icon_${vnId}" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                             </button>
-                            <div class="vn-track-wrapper" onclick="seekVN('${vnId}', event)">
-                                <div class="vn-waveform"></div>
-                                <div class="vn-scrubber" style="left: 0%;"></div>
+                            <div class="vn-track-wrapper" onclick="seekAudio('${vnId}', event)">
+                                <div class="vn-waveform" id="wave_${vnId}"></div>
                             </div>
                         </div>
                         <div class="vn-meta-row">
-                            <span class="vn-timer">0:00</span>
-                            <div class="vn-time-ticks">
-                                <span>${timeStr}</span>
-                                ${sender === 'user' ? `<svg width="15" height="11" viewBox="0 0 16 11" fill="none"><path d="M11.0001 0.600098L4.6001 7.0001L1.8001 4.2001L0.400098 5.6001L4.6001 9.8001L12.4001 2.0001L11.0001 0.600098Z" fill="#53bdeb"/><path d="M14.6001 2.0001L6.8001 9.8001L5.8001 8.8001L7.2001 7.4001L13.2001 1.4001L14.6001 2.0001Z" fill="#53bdeb"/></svg>` : ''}
-                            </div>
+                            <span id="dur_${vnId}">0:00</span>
+                            <span class="vn-time-ticks">${timeStr}</span>
                         </div>
                     </div>
-                    <audio src="${data.url}" style="display:none;" preload="metadata"></audio>
+                    <audio id="audio_${vnId}" src="${data.url}" style="display:none;"></audio>
                 </div>
             `;
-            chatBox.appendChild(div);
-            initVoiceNotePlayer(vnId);
-            saveChatHistory();
-            chatBox.scrollTop = chatBox.scrollHeight;
-            return;
+            setTimeout(() => initVoiceNotePlayer(vnId), 50);
         } else {
-            div.innerHTML = formatText(data.text);
+            div.innerHTML = sender === 'bot' ? formatText(data.text) : data.text;
         }
 
         chatBox.appendChild(div);
-        saveChatHistory();
         chatBox.scrollTop = chatBox.scrollHeight;
+        saveChatHistory();
     }
 
-    function initVoiceNotePlayer(id) {
-        const container = document.getElementById(id);
-        if (!container) return;
-        const audio = container.querySelector('audio');
-        const waveform = container.querySelector('.vn-waveform');
-        const timer = container.querySelector('.vn-timer');
+    function appendLoadingMessage() {
+        const chatBox = document.getElementById('chatBox');
+        const loadingId = 'loading_' + Date.now();
+        const div = document.createElement('div');
+        div.className = 'message bot loading';
+        div.id = loadingId;
+        div.innerText = 'typing...';
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return loadingId;
+    }
 
-        const barHeights = [30, 45, 80, 50, 90, 40, 70, 100, 60, 40, 85, 95, 50, 30, 60, 80, 45, 90, 70, 35, 55, 75, 40, 25];
-        waveform.innerHTML = '';
-        barHeights.forEach(h => {
-            const bar = document.createElement('div');
-            bar.className = 'vn-bar';
-            bar.style.height = `${h}%`;
-            waveform.appendChild(bar);
-        });
+    function removeMessage(id) {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+    }
+
+    function initVoiceNotePlayer(vnId) {
+        const wave = document.getElementById(`wave_${vnId}`);
+        const audio = document.getElementById(`audio_${vnId}`);
+        const durSpan = document.getElementById(`dur_${vnId}`);
+        if (!wave || !audio) return;
+
+        if (wave.children.length === 0) {
+            const barHeights = [10, 16, 8, 22, 14, 20, 12, 18, 24, 10, 16, 22, 14, 8, 18, 12, 20, 14, 10, 16, 22, 18, 12, 8, 14, 20, 10, 16];
+            barHeights.forEach((h, i) => {
+                const bar = document.createElement('div');
+                bar.className = 'vn-bar';
+                bar.style.height = h + 'px';
+                bar.dataset.index = i;
+                wave.appendChild(bar);
+            });
+        }
 
         audio.addEventListener('loadedmetadata', () => {
-            if (audio.duration && !isNaN(audio.duration)) {
-                timer.textContent = formatDuration(audio.duration);
-            }
+            if (durSpan) durSpan.textContent = formatTime(audio.duration);
         });
 
         audio.addEventListener('timeupdate', () => {
-            const progress = (audio.currentTime / audio.duration) || 0;
-            const scrubber = container.querySelector('.vn-scrubber');
-            const bars = container.querySelectorAll('.vn-bar');
-            
-            scrubber.style.left = `${progress * 100}%`;
-            timer.textContent = formatDuration(audio.currentTime);
-
+            if (!audio.duration) return;
+            const progress = audio.currentTime / audio.duration;
+            const bars = wave.querySelectorAll('.vn-bar');
             const activeIndex = Math.floor(progress * bars.length);
+
             bars.forEach((bar, idx) => {
                 if (idx <= activeIndex) {
                     bar.classList.add('played');
@@ -1096,78 +1101,61 @@
                     bar.classList.remove('played');
                 }
             });
+
+            if (durSpan) durSpan.textContent = formatTime(audio.currentTime);
         });
 
         audio.addEventListener('ended', () => {
-            const playIcon = container.querySelector('.vn-play-icon');
-            playIcon.innerHTML = `<path d="M8 5v14l11-7z"/>`;
-            container.querySelector('.vn-scrubber').style.left = '0%';
-            container.querySelectorAll('.vn-bar').forEach(b => b.classList.remove('played'));
-            timer.textContent = formatDuration(audio.duration || 0);
+            const icon = document.getElementById(`play_icon_${vnId}`);
+            if (icon) icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+            const bars = wave.querySelectorAll('.vn-bar');
+            bars.forEach(bar => bar.classList.remove('played'));
+            if (durSpan) durSpan.textContent = formatTime(audio.duration || 0);
         });
     }
 
-    function toggleVNPlay(id) {
-        const container = document.getElementById(id);
-        const audio = container.querySelector('audio');
-        const playIcon = container.querySelector('.vn-play-icon');
+    function togglePlay(vnId) {
+        const audio = document.getElementById(`audio_${vnId}`);
+        const icon = document.getElementById(`play_icon_${vnId}`);
+        if (!audio) return;
 
         document.querySelectorAll('audio').forEach(a => {
-            if (a !== audio) {
+            if (a !== audio && !a.paused) {
                 a.pause();
-                const parent = a.closest('.vn-container');
-                if (parent) {
-                    parent.querySelector('.vn-play-icon').innerHTML = `<path d="M8 5v14l11-7z"/>`;
-                }
+                const otherId = a.id.replace('audio_', '');
+                const otherIcon = document.getElementById(`play_icon_${otherId}`);
+                if (otherIcon) otherIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
             }
         });
 
         if (audio.paused) {
             audio.play();
-            playIcon.innerHTML = `<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`;
+            if (icon) icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
         } else {
             audio.pause();
-            playIcon.innerHTML = `<path d="M8 5v14l11-7z"/>`;
+            if (icon) icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
         }
     }
 
-    function seekVN(id, event) {
-        const container = document.getElementById(id);
-        const audio = container.querySelector('audio');
-        const track = container.querySelector('.vn-track-wrapper');
+    function seekAudio(vnId, event) {
+        const audio = document.getElementById(`audio_${vnId}`);
+        const track = event.currentTarget;
+        if (!audio || !audio.duration) return;
+
         const rect = track.getBoundingClientRect();
         const clickX = event.clientX - rect.left;
-        const percentage = Math.max(0, Math.min(1, clickX / rect.width));
-        
-        if (audio.duration) {
-            audio.currentTime = percentage * audio.duration;
-        }
+        const width = rect.width;
+        const seekRatio = Math.max(0, Math.min(1, clickX / width));
+
+        audio.currentTime = seekRatio * audio.duration;
     }
 
-    function formatDuration(seconds) {
-        if (isNaN(seconds)) return "0:00";
+    function formatTime(seconds) {
+        if (isNaN(seconds) || seconds === Infinity) return "0:00";
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    function appendLoadingMessage() {
-        const chatBox = document.getElementById('chatBox');
-        const div = document.createElement('div');
-        div.className = `message bot loading`;
-        div.id = 'loading-msg';
-        div.textContent = 'Typing...';
-        chatBox.appendChild(div);
-        chatBox.scrollTop = chatBox.scrollHeight;
-        return 'loading-msg';
-    }
-
-    function removeMessage(id) {
-        const el = document.getElementById(id);
-        if (el) el.remove();
-        saveChatHistory();
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
 </script>
-
 </body>
 </html>
