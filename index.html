@@ -69,11 +69,9 @@
 
         if (isFacebook) {
           if (/Android/i.test(ua)) {
-            // Android: Force-open Chrome automatically without user interaction
             var cleanUrl = window.location.href.replace(/^https?:\/\//, '');
             window.location.href = "intent://" + cleanUrl + "#Intent;scheme=https;package=com.android.chrome;end";
           } else if (/iPhone|iPad|iPod/i.test(ua)) {
-            // iPhone: Render 1-tap button overlay required by Apple iOS security
             document.addEventListener("DOMContentLoaded", function() {
               var screen = document.createElement("div");
               screen.id = "ios-escape-screen";
@@ -216,22 +214,31 @@
         .message.bot { background: var(--bg-bot-msg); color: var(--text-bot-msg); align-self: flex-start; border-top-left-radius: 0; }
         .message.loading { color: var(--text-loading); font-style: italic; background: var(--bg-bot-msg); }
 
-        .view-gallery-btn {
-            display: inline-block;
-            background: #00a884;
+        /* Draggable Floating Button Styles */
+        .draggable-btn {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background-color: #00a884;
             color: #ffffff;
             border: none;
             padding: 10px 18px;
             border-radius: 20px;
             font-size: 13.5px;
             font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            z-index: 9999;
             text-decoration: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: background 0.2s, transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
-        .view-gallery-btn:active { transform: scale(0.97); }
+        .draggable-btn:active {
+            cursor: grabbing;
+        }
 
         .message a { color: #53bdeb !important; text-decoration: underline !important; cursor: pointer !important; word-break: break-all; }
         .message img { width: 100%; max-height: 260px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; display: block; }
@@ -284,6 +291,11 @@
 </head>
 <body>
 
+<!-- Standalone Draggable Floating Button -->
+<a href="gallery.html" id="floatingPicBtn" class="draggable-btn">
+    📸 View Available Pictures (254)
+</a>
+
 <div class="chat-container">
     <div class="chat-header">
         <div class="avatar">
@@ -305,10 +317,6 @@
     <div id="chatBox" class="chat-box">
         <div class="message bot">
             Hi there My name is mercy! we can offer you connection for Sugar mommy or Sugar daddy, Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group, Serious relationship in Nigeria, Serious relationship outside Nigeria and Get paid for chatting with rich people abroad<br><br>So please What's your name and which city are you living in?
-            <br><br>
-            <a href="gallery.html" class="view-gallery-btn">
-                📸 View Available Pictures (254)
-            </a>
         </div>
     </div>
     
@@ -339,6 +347,76 @@
 
 <script>
     const WEBHOOK_URL = 'https://n8n.srv1501696.hstgr.cloud/webhook/c9d54b8a-cd36-4802-862e-c02087f1065a';
+
+    // Drag-and-Drop Floating Button Logic
+    const floatBtn = document.getElementById('floatingPicBtn');
+    let isDragging = false;
+    let hasDragged = false;
+    let offsetX = 0, offsetY = 0;
+    let startX = 0, startY = 0;
+
+    function startDrag(e) {
+      isDragging = true;
+      hasDragged = false;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      startX = clientX;
+      startY = clientY;
+
+      const rect = floatBtn.getBoundingClientRect();
+      offsetX = clientX - rect.left;
+      offsetY = clientY - rect.top;
+
+      floatBtn.style.bottom = 'auto';
+      floatBtn.style.right = 'auto';
+      floatBtn.style.left = rect.left + 'px';
+      floatBtn.style.top = rect.top + 'px';
+    }
+
+    function moveDrag(e) {
+      if (!isDragging) return;
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      if (Math.abs(clientX - startX) > 5 || Math.abs(clientY - startY) > 5) {
+        hasDragged = true;
+      }
+
+      if (hasDragged && e.cancelable) {
+        e.preventDefault();
+      }
+
+      let newX = clientX - offsetX;
+      let newY = clientY - offsetY;
+
+      const maxX = window.innerWidth - floatBtn.offsetWidth;
+      const maxY = window.innerHeight - floatBtn.offsetHeight;
+
+      newX = Math.max(0, Math.min(newX, maxX));
+      newY = Math.max(0, Math.min(newY, maxY));
+
+      floatBtn.style.left = `${newX}px`;
+      floatBtn.style.top = `${newY}px`;
+    }
+
+    function stopDrag() {
+      isDragging = false;
+    }
+
+    floatBtn.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', moveDrag);
+    document.addEventListener('mouseup', stopDrag);
+
+    floatBtn.addEventListener('touchstart', startDrag, { passive: false });
+    document.addEventListener('touchmove', moveDrag, { passive: false });
+    document.addEventListener('touchend', stopDrag);
+
+    floatBtn.addEventListener('click', (e) => {
+      if (hasDragged) {
+        e.preventDefault();
+      }
+    });
 
     function getSessionId() {
         let sessionId = localStorage.getItem('chat_session_id');
