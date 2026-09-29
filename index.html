@@ -6,7 +6,15 @@
     <meta name="format-detection" content="telephone=no">
     <title>Connection Platform - Chat</title>
 
-    <!-- Universal Facebook In-App Browser Auto-Escape Script -->
+    <!-- PWA & iOS Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#202c33" id="theme-color-meta">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Customer Service">
+    <link rel="apple-touch-icon" href="icon.png">
+
+    <!-- Universal Facebook In-App Escape Script -->
     <script>
       (function() {
         var ua = navigator.userAgent || navigator.vendor || window.opera;
@@ -16,23 +24,15 @@
           var cleanUrl = window.location.href.replace(/^https?:\/\//, '');
 
           if (/Android/i.test(ua)) {
-            // Android: Automatically opens the phone's default browser (Chrome, Samsung Internet, Opera, etc.)
+            // Android: Auto-opens in phone's default browser (Chrome, Samsung Internet, Opera, etc.)
             window.location.href = "intent://" + cleanUrl + "#Intent;scheme=https;action=android.intent.action.VIEW;end";
           } else if (/iPhone|iPad|iPod/i.test(ua)) {
-            // iOS: Automatically attempts to launch Google Chrome
+            // iOS: Force-opens Google Chrome if installed; if not, lets user chat smoothly inside Facebook
             window.location.href = "googlechromes://" + cleanUrl;
           }
         }
       })();
     </script>
-
-    <!-- PWA & iOS Meta Tags -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#202c33" id="theme-color-meta">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Customer Service">
-    <link rel="apple-touch-icon" href="icon.png">
 
     <style>
         :root {
