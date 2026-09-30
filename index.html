@@ -155,22 +155,35 @@
         .message.bot { background: var(--bg-bot-msg); color: var(--text-bot-msg); align-self: flex-start; border-top-left-radius: 0; }
         .message.loading { color: var(--text-loading); font-style: italic; background: var(--bg-bot-msg); }
 
-        .view-gallery-btn {
-            display: inline-block;
+        /* Floating Draggable Button Styles */
+        .draggable-gallery-btn {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            z-index: 99999;
             background: #00a884;
             color: #ffffff;
             border: none;
-            padding: 10px 18px;
-            border-radius: 20px;
+            padding: 12px 20px;
+            border-radius: 25px;
             font-size: 13.5px;
             font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
+            cursor: move;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
             text-decoration: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: background 0.2s, transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
         }
-        .view-gallery-btn:active { transform: scale(0.97); }
+
+        .draggable-gallery-btn:active {
+            transform: scale(0.96);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
 
         .message a { color: #53bdeb !important; text-decoration: underline !important; cursor: pointer !important; word-break: break-all; }
         .message img { width: 100%; max-height: 260px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; display: block; }
@@ -244,10 +257,6 @@
     <div id="chatBox" class="chat-box">
         <div class="message bot">
             Hi there My name is mercy! What's your name and which city are you living in?
-            <br><br>
-            <a href="gallery.html" class="view-gallery-btn">
-                📸 View Available Pictures (254)
-            </a>
         </div>
     </div>
     
@@ -275,6 +284,11 @@
         </button>
     </div>
 </div>
+
+<!-- Floating Draggable Button -->
+<a href="gallery.html" id="draggableBtn" class="draggable-gallery-btn">
+    📸 View Available Pictures (254)
+</a>
 
 <script>
     const WEBHOOK_URL = 'https://n8n.srv1501696.hstgr.cloud/webhook/c9d54b8a-cd36-4802-862e-c02087f1065a';
@@ -497,6 +511,86 @@
         const el = document.getElementById(id);
         if (el) el.remove();
     }
+
+    // Draggable Button Logic
+    (function makeElementDraggable() {
+        const btn = document.getElementById('draggableBtn');
+        if (!btn) return;
+
+        let isDragging = false;
+        let hasMoved = false;
+        let startX = 0, startY = 0;
+        let initialLeft = 0, initialTop = 0;
+
+        function startDrag(e) {
+            isDragging = true;
+            hasMoved = false;
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const rect = btn.getBoundingClientRect();
+            
+            btn.style.bottom = 'auto';
+            btn.style.right = 'auto';
+            btn.style.left = rect.left + 'px';
+            btn.style.top = rect.top + 'px';
+
+            startX = clientX;
+            startY = clientY;
+            initialLeft = rect.left;
+            initialTop = rect.top;
+        }
+
+        function moveDrag(e) {
+            if (!isDragging) return;
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const deltaX = clientX - startX;
+            const deltaY = clientY - startY;
+
+            if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+                hasMoved = true;
+            }
+
+            if (hasMoved) {
+                if (e.cancelable) e.preventDefault();
+
+                let newLeft = initialLeft + deltaX;
+                let newTop = initialTop + deltaY;
+
+                const maxLeft = window.innerWidth - btn.offsetWidth - 10;
+                const maxTop = window.innerHeight - btn.offsetHeight - 10;
+
+                newLeft = Math.max(10, Math.min(newLeft, maxLeft));
+                newTop = Math.max(10, Math.min(newTop, maxTop));
+
+                btn.style.left = newLeft + 'px';
+                btn.style.top = newTop + 'px';
+            }
+        }
+
+        function stopDrag() {
+            isDragging = false;
+        }
+
+        btn.addEventListener('touchstart', startDrag, { passive: false });
+        document.addEventListener('touchmove', moveDrag, { passive: false });
+        document.addEventListener('touchend', stopDrag);
+
+        btn.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', moveDrag);
+        document.addEventListener('mouseup', stopDrag);
+
+        btn.addEventListener('click', (e) => {
+            if (hasMoved) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+    })();
 </script>
 </body>
 </html>
