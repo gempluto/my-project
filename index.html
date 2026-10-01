@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Prevents mobile viewport zooming and layout shifts -->
+  <!-- Prevents page zooming and mobile viewport clipping -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>VIP Connection Platform</title>
-  <!-- Paystack Inline JS v2 SDK -->
-  <script src="https://js.paystack.co/v2/inline.js"></script>
+  <!-- Paystack Inline Script -->
+  <script src="https://js.paystack.co/v1/inline.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -15,7 +15,7 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Enables natural vertical scrolling without cutting off elements */
+    /* Allows smooth full page scrolling on mobile browsers */
     html, body {
       width: 100%;
       min-height: 100vh;
@@ -23,7 +23,6 @@
       color: #FFFFFF;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       touch-action: manipulation;
-      overflow-y: auto;
     }
 
     .app-wrapper {
@@ -31,8 +30,8 @@
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: center;
-      padding: 24px 16px;
+      align-items: flex-start;
+      padding: 20px 16px 40px 16px;
     }
 
     .card {
@@ -45,36 +44,27 @@
       box-shadow: 0 10px 30px rgba(212, 175, 55, 0.15);
       display: flex;
       flex-direction: column;
+      margin: auto 0;
     }
 
-    .card-title {
-      color: #D4AF37; /* Gold */
-      font-size: 22px;
-      font-weight: 800;
-      text-align: center;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .card-subtitle {
+    .card-instruction {
       color: #FFFFFF !important; /* Pure White */
       font-size: 15px;
       font-weight: 700;
       text-align: center;
-      margin-bottom: 20px;
-      line-height: 1.4;
+      margin-bottom: 16px;
+      line-height: 1.5;
     }
 
     .question-label {
-      color: #FFFFFF !important; /* Pure White & Bold */
+      color: #FFFFFF !important;
       font-size: 16px;
       font-weight: 700;
       margin-bottom: 10px;
       display: block;
     }
 
-    /* Minimum 16px font-size prevents iOS Safari zoom */
+    /* Minimum 16px font-size prevents mobile Safari/iOS zoom */
     .input-field {
       width: 100%;
       background-color: #222222;
@@ -108,12 +98,25 @@
       box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
     }
 
+    .btn-gallery {
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
+      color: #000000;
+      font-weight: 800;
+      font-size: 16px;
+      padding: 14px;
+      border-radius: 10px;
+      text-align: center;
+      text-decoration: none;
+      display: block;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+    }
+
     /* Categories List */
     .category-list {
       display: flex;
       flex-direction: column;
       gap: 12px;
-      margin-top: 10px;
     }
 
     .category-btn {
@@ -142,43 +145,11 @@
       border-radius: 6px;
       font-size: 13px;
       font-weight: 800;
-      white-space: nowrap;
     }
 
     .unlocked .price-badge {
       background-color: #D4AF37;
       color: #000000;
-    }
-
-    /* Gallery Section below categories */
-    .gallery-section {
-      margin-top: 24px;
-      padding-top: 18px;
-      border-top: 1px solid #333333;
-      text-align: center;
-    }
-
-    .gallery-instruction {
-      color: #FFFFFF !important;
-      font-size: 14px;
-      font-weight: 700 !important;
-      line-height: 1.5;
-      margin-bottom: 14px;
-    }
-
-    .btn-gallery {
-      display: block;
-      width: 100%;
-      background-color: #222222;
-      border: 1.5px solid #D4AF37;
-      color: #D4AF37;
-      font-weight: 800;
-      font-size: 16px;
-      padding: 14px;
-      border-radius: 10px;
-      text-align: center;
-      text-decoration: none;
-      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
     }
 
     .hidden {
@@ -191,8 +162,7 @@
   <div class="app-wrapper">
     <!-- STEP 1: NAME -->
     <div id="step-1" class="card hidden">
-      <h2 class="card-title">Welcome</h2>
-      <p class="card-subtitle">Please enter your profile details to continue.</p>
+      <p class="card-instruction">Please enter your profile details to continue.</p>
       
       <label class="question-label">Question 1: What is your Full Name?</label>
       <input type="text" id="user-name" class="input-field" placeholder="e.g. David Johnson">
@@ -202,8 +172,7 @@
 
     <!-- STEP 2: LOCATION -->
     <div id="step-2" class="card hidden">
-      <h2 class="card-title">Your Location</h2>
-      <p class="card-subtitle">We use this to match you with available connections near you.</p>
+      <p class="card-instruction">We use this to match you with available connections near you.</p>
       
       <label class="question-label">Question 2: Which city or state are you living in?</label>
       <input type="text" id="user-location" class="input-field" placeholder="e.g. Lagos, Nigeria">
@@ -213,27 +182,20 @@
 
     <!-- STEP 3: CATEGORIES & PAYMENT GATEWAY -->
     <div id="step-3" class="card hidden">
-      <h2 class="card-title">Select Connection Type</h2>
-      <p class="card-subtitle">Unlock a category to view available profiles and connect.</p>
+      <!-- Instruction text -->
+      <p class="card-instruction">Please click on the button below to view pictures of everyone available before selecting a category.</p>
 
-      <!-- 8 Categories List -->
+      <!-- View Pictures Button -->
+      <a href="gallery.html" class="btn-gallery">View Pictures</a>
+
       <div class="category-list" id="category-container">
         <!-- Rendered dynamically via JS -->
-      </div>
-
-      <!-- Bottom View Pictures Section -->
-      <div class="gallery-section">
-        <p class="gallery-instruction">
-          Click on the view pictures button below to see the picture of everyone available on our platform before choosing a category.
-        </p>
-        <a href="gallery.html" class="btn-gallery">View Pictures</a>
       </div>
     </div>
   </div>
 
   <script>
-    // Live Paystack Public Key
-    const PAYSTACK_KEY = "pk_live_88ba11e7af2c83ef0e73e19768947cdf5c2c124f";
+    const PAYSTACK_LIVE_KEY = "pk_live_88ba11e7af2c83ef0e73e19768947cdf5c2c124f";
 
     const categories = [
       { id: 'sugar_mommy', name: '1. VIP Financial Support Match', price: 2000, page: 'sugar_mommy.html' },
@@ -246,16 +208,13 @@
       { id: 'paid_chat', name: '8. International Paid Chat', price: 8000, page: 'paid_chat.html' }
     ];
 
-    // Check on page load if user already passed name & location questions
+    // Auto-check if the user already answered questions previously
     window.addEventListener('DOMContentLoaded', () => {
-      const storedName = localStorage.getItem('user_name');
-      const storedLocation = localStorage.getItem('user_location');
-
-      if (storedName && storedLocation) {
-        // Automatically start at Step 3 (Categories)
+      const onboardingDone = localStorage.getItem('onboarding_complete');
+      if (onboardingDone === 'true') {
         showStep(3);
+        renderCategories();
       } else {
-        // First-time visitor -> Start at Step 1
         showStep(1);
       }
     });
@@ -266,10 +225,6 @@
       document.getElementById('step-3').classList.add('hidden');
 
       document.getElementById(`step-${stepNumber}`).classList.remove('hidden');
-
-      if (stepNumber === 3) {
-        renderCategories();
-      }
     }
 
     function nextStep(stepNumber) {
@@ -277,13 +232,18 @@
         const name = document.getElementById('user-name').value.trim();
         if (!name) return alert('Please enter your full name.');
         localStorage.setItem('user_name', name);
+        showStep(2);
       }
       if (stepNumber === 3) {
         const loc = document.getElementById('user-location').value.trim();
         if (!loc) return alert('Please enter your location.');
         localStorage.setItem('user_location', loc);
+        
+        // Lock onboarding state so user skips questions on future visits/refreshes
+        localStorage.setItem('onboarding_complete', 'true');
+        showStep(3);
+        renderCategories();
       }
-      showStep(stepNumber);
     }
 
     function renderCategories() {
@@ -308,12 +268,14 @@
       const unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
 
       if (unlocked.includes(cat.id)) {
-        // Category already unlocked -> Navigate to page directly
+        // Already paid -> Navigate directly to category page
         localStorage.setItem('selected_category_name', cat.name);
         window.location.href = cat.page;
       } else {
-        // Launch Paystack payment popup
-        payWithPaystack(cat);
+        // Launch payment prompt
+        if (confirm(`To access ${cat.name}, please pay the connection fee of ₦${cat.price.toLocaleString()}. Proceed to Paystack?`)) {
+          payWithPaystack(cat);
+        }
       }
     }
 
@@ -321,14 +283,13 @@
       const userName = localStorage.getItem('user_name') || "Customer";
       const userEmail = userName.replace(/\s+/g, '').toLowerCase() + '@connectionplatform.com';
 
-      const popup = new PaystackPop();
-      popup.newTransaction({
-        key: PAYSTACK_KEY,
+      let handler = PaystackPop.setup({
+        key: PAYSTACK_LIVE_KEY, 
         email: userEmail,
-        amount: cat.price * 100, // Amount in kobo
+        amount: cat.price * 100, // Convert to kobo
         currency: 'NGN',
-        onSuccess: function(transaction) {
-          alert(`Payment successful! ${cat.name} is now unlocked.`);
+        callback: function(response) {
+          alert('Payment successful! Category unlocked.');
           let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
           if (!unlocked.includes(cat.id)) {
             unlocked.push(cat.id);
@@ -338,10 +299,11 @@
           renderCategories();
           window.location.href = cat.page;
         },
-        onCancel: function() {
-          alert('Transaction was not completed.');
+        onClose: function() {
+          alert('Transaction canceled. Please make payment to access this category.');
         }
       });
+      handler.openIframe();
     }
   </script>
 </body>
