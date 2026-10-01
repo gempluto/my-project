@@ -2,65 +2,267 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Prevents page zooming and mobile viewport shifting -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Connection Platform - Profile Matching</title>
     <script src="https://js.paystack.co/v2/inline.js"></script>
     <style>
         :root {
-            --bg-color: #0b141a;
-            --card-bg: #202c33;
-            --accent-color: #00a884;
-            --text-color: #e9edef;
-            --input-bg: #2a3942;
-            --btn-blue: #09a5db;
-            --danger-color: #f87171;
+            --bg-color: #0b0b0b;
+            --card-bg: #161616;
+            --accent-gold: #D4AF37;
+            --accent-gold-dark: #AA7C11;
+            --dark-red: #8B0000;
+            --text-color: #FFFFFF;
+            --input-bg: #222222;
+            --border-color: #333333;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: var(--bg-color); color: var(--text-color); padding: 16px; max-width: 600px; margin: 0 auto; }
-        
-        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid #222d34; margin-bottom: 20px; }
-        h1 { font-size: 18px; color: var(--accent-color); }
-        .nav-link { color: #8696a0; text-decoration: none; font-size: 13px; }
-        .refund-btn { background: rgba(248, 113, 113, 0.15); color: var(--danger-color); padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; }
 
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
-        .profile-card { background: var(--card-bg); border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
-        .profile-card img { width: 100%; height: 200px; object-fit: cover; }
-        .profile-card .info { padding: 10px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-        
-        .btn-primary { background: var(--accent-color); color: #111b21; border: none; width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px; font-size: 14px; }
-        .btn-blue { background: var(--btn-blue); color: #fff; border: none; width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px; font-size: 14px; }
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
 
-        /* Modal Popup */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; padding: 16px; z-index: 99; }
-        .modal-box { background: var(--card-bg); padding: 24px; border-radius: 12px; width: 100%; max-width: 440px; text-align: center; max-height: 90vh; overflow-y: auto; }
-        .modal-box h3 { margin-bottom: 12px; color: var(--accent-color); font-size: 18px; }
-        .modal-box p { font-size: 14px; color: #8696a0; margin-bottom: 16px; line-height: 1.4; text-align: left; }
-        .modal-box input, .modal-box select { width: 100%; padding: 12px; border-radius: 8px; border: none; background: var(--input-bg); color: #fff; margin-bottom: 12px; font-size: 14px; outline: none; }
+        html, body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            width: 100%;
+            height: 100%;
+            touch-action: manipulation;
+            overflow-x: hidden;
+        }
+
+        body { 
+            padding: 16px; 
+            max-width: 600px; 
+            margin: 0 auto; 
+        }
         
-        /* Spinner */
-        .spinner { border: 4px solid rgba(255,255,255,0.1); width: 48px; height: 48px; border-radius: 50%; border-left-color: var(--accent-color); animation: spin 1s linear infinite; margin: 20px auto; }
+        header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding-bottom: 16px; 
+            border-bottom: 1.5px solid var(--accent-gold); 
+            margin-bottom: 20px; 
+        }
+
+        h1 { 
+            font-size: 18px; 
+            color: var(--accent-gold); 
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .nav-link { 
+            color: #FFFFFF; 
+            text-decoration: none; 
+            font-size: 14px; 
+            font-weight: 700;
+        }
+
+        .refund-btn { 
+            background: var(--dark-red); 
+            color: #FFFFFF; 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            text-decoration: none; 
+            font-size: 12px; 
+            font-weight: 800; 
+            border: 1px solid #B30000;
+        }
+
+        .grid-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+            gap: 14px; 
+        }
+
+        .profile-card { 
+            background: var(--card-bg); 
+            border-radius: 12px; 
+            overflow: hidden; 
+            border: 1.5px solid var(--accent-gold);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.15); 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        /* Displays entire photo fully without cropping */
+        .profile-card img { 
+            width: 100%; 
+            height: 220px; 
+            object-fit: contain; 
+            background: #000000;
+        }
+
+        .profile-card .info { 
+            padding: 10px; 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+        }
+        
+        .btn-primary { 
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%); 
+            color: #000000; 
+            border: none; 
+            width: 100%; 
+            padding: 12px; 
+            border-radius: 8px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            margin-top: 8px; 
+            font-size: 14px; 
+            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-blue { 
+            background: linear-gradient(135deg, var(--dark-red) 0%, #660000 100%); 
+            color: #FFFFFF; 
+            border: 1px solid #B30000; 
+            width: 100%; 
+            padding: 12px; 
+            border-radius: 8px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            margin-top: 8px; 
+            font-size: 14px; 
+        }
+
+        /* Fixed Modal Popup Overlay prevents UI shift */
+        .modal-overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100vw; 
+            height: 100vh; 
+            background: rgba(0,0,0,0.9); 
+            justify-content: center; 
+            align-items: center; 
+            padding: 16px; 
+            z-index: 999; 
+        }
+
+        .modal-box { 
+            background: var(--card-bg); 
+            border: 1.5px solid var(--accent-gold);
+            padding: 24px; 
+            border-radius: 16px; 
+            width: 100%; 
+            max-width: 440px; 
+            text-align: center; 
+            max-height: 90vh; 
+            overflow-y: auto; 
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2);
+        }
+
+        .modal-box h3 { 
+            margin-bottom: 12px; 
+            color: var(--accent-gold); 
+            font-size: 20px; 
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        /* Pure white & bold text for subtext and instructions */
+        .modal-box p { 
+            font-size: 15px; 
+            color: #FFFFFF !important; 
+            font-weight: 700; 
+            margin-bottom: 16px; 
+            line-height: 1.5; 
+            text-align: left; 
+        }
+
+        /* Minimum 16px font-size prevents mobile input zoom */
+        .modal-box input, .modal-box select { 
+            width: 100%; 
+            padding: 14px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color); 
+            background: var(--input-bg); 
+            color: #FFFFFF !important; 
+            margin-bottom: 14px; 
+            font-size: 16px !important; 
+            font-weight: 600;
+            outline: none; 
+        }
+
+        .modal-box input:focus, .modal-box select:focus {
+            border-color: var(--accent-gold);
+        }
+        
+        /* Gold Spinner */
+        .spinner { 
+            border: 4px solid rgba(255,255,255,0.1); 
+            width: 48px; 
+            height: 48px; 
+            border-radius: 50%; 
+            border-left-color: var(--accent-gold); 
+            animation: spin 1s linear infinite; 
+            margin: 20px auto; 
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .tier-list { text-align: left; background: var(--input-bg); padding: 14px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; line-height: 1.6; }
-        .tier-list ol { padding-left: 18px; }
-        .tier-list li { margin-bottom: 8px; color: var(--text-color); }
+        .tier-list { 
+            text-align: left; 
+            background: var(--input-bg); 
+            border: 1px solid var(--border-color);
+            padding: 14px; 
+            border-radius: 8px; 
+            margin-bottom: 16px; 
+            font-size: 14px; 
+            line-height: 1.6; 
+        }
 
-        .close-btn { background: transparent; color: #8696a0; border: none; margin-top: 14px; cursor: pointer; font-size: 13px; }
-        .calc-payout { background: rgba(0, 168, 132, 0.15); border: 1px solid var(--accent-color); padding: 10px; border-radius: 8px; color: var(--accent-color); font-weight: bold; margin-bottom: 12px; font-size: 14px; }
+        .tier-list ol { padding-left: 18px; }
+
+        .tier-list li { 
+            margin-bottom: 8px; 
+            color: #FFFFFF !important; 
+            font-weight: 600;
+        }
+
+        .close-btn { 
+            background: transparent; 
+            color: #FFFFFF; 
+            border: none; 
+            margin-top: 14px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            font-weight: 700;
+            text-decoration: underline;
+        }
+
+        .calc-payout { 
+            background: rgba(212, 175, 55, 0.15); 
+            border: 1px solid var(--accent-gold); 
+            padding: 12px; 
+            border-radius: 8px; 
+            color: var(--accent-gold); 
+            font-weight: 800; 
+            margin-bottom: 14px; 
+            font-size: 15px; 
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <a href="index.html" class="nav-link">← Categories</a>
+    <a href="index.html" class="nav-link">&larr; Categories</a>
     <h1 id="pageTitle">Match Gallery</h1>
     <a href="mailto:connectionplatform.ng@gmail.com?subject=Refund%20Request" class="refund-btn">Request Refund</a>
 </header>
 
 <div class="grid-container" id="galleryGrid"></div>
 
-<!-- Flow Modal -->
+<!-- Flow Modal Overlay -->
 <div class="modal-overlay" id="flowModal">
     <div class="modal-box" id="modalContent">
         <!-- Content inserted dynamically by JavaScript -->
@@ -91,20 +293,20 @@
 
     async function loadGalleryPhotos() {
         const grid = document.getElementById('galleryGrid');
-        grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Loading profiles...</p>";
+        grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#FFFFFF; font-weight:700;'>Loading profiles...</p>";
 
         try {
             const response = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/images/${categoryKey}`);
             const files = await response.json();
 
             if (!Array.isArray(files)) {
-                grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>No profiles available in this folder yet.</p>";
+                grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#FFFFFF; font-weight:700;'>No profiles available in this folder yet.</p>";
                 return;
             }
 
             const images = files.filter(f => f.name.match(/\.(jpg|jpeg|png|webp)$/i));
             if (images.length === 0) {
-                grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>No profiles uploaded yet.</p>";
+                grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#FFFFFF; font-weight:700;'>No profiles uploaded yet.</p>";
                 return;
             }
 
@@ -120,7 +322,7 @@
                 `;
             });
         } catch (err) {
-            grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Error loading photos.</p>";
+            grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#FFFFFF; font-weight:700;'>Error loading photos.</p>";
         }
     }
 
@@ -160,7 +362,7 @@
             <p style="text-align:center;">Please wait while we send your profile picture and check if the person you selected is interested in connecting with you...</p>
         `;
 
-        // Random duration between 10,000ms (10s) and 30,000ms (30s)
+        // Random duration between 10s and 30s
         const randomWaitTime = Math.floor(Math.random() * (30000 - 10000 + 1)) + 10000;
 
         setTimeout(() => {
@@ -172,13 +374,13 @@
     function renderApprovalStep() {
         const modal = document.getElementById('modalContent');
         modal.innerHTML = `
-            <h3 style="color:#00a884;">Connection Approved! 🎉</h3>
+            <h3 style="color:#D4AF37;">Connection Approved! 🎉</h3>
             <p style="text-align:center;">Great news! The match you selected has confirmed their interest in connecting with you.</p>
             <button class="btn-primary" onclick="showConnectionFeeStep()">Click this button to get your match's contact</button>
         `;
     }
 
-    /* STEP 4: Category Base Message & Connection Fee Agreement */
+    /* STEP 4: Connection Fee Agreement */
     function showConnectionFeeStep() {
         const modal = document.getElementById('modalContent');
 
@@ -207,7 +409,6 @@
                 <button class="close-btn" onclick="closeModal()">NO</button>
             `;
         } else {
-            // Casual, FWB, Media exchange, Private video, Social group
             userState.connectionFee = 3000;
             modal.innerHTML = `
                 <h3>Connection Fee Agreement</h3>
@@ -263,10 +464,10 @@
     function renderWhatsAppStep() {
         const modal = document.getElementById('modalContent');
         modal.innerHTML = `
-            <h3 style="color:#00a884;">Final Key Verified ✅</h3>
+            <h3 style="color:#D4AF37;">Final Key Verified ✅</h3>
             <p>To facilitate seamless group integration, kindly share your active WhatsApp phone number:</p>
             <input type="text" id="whatsappInput" placeholder="e.g. 08012345678">
-            <button class="btn-primary" onclick="saveWhatsApp()">Continue →</button>
+            <button class="btn-primary" onclick="saveWhatsApp()">Continue &rarr;</button>
         `;
     }
 
@@ -284,7 +485,7 @@
             <h3>Profile Compatibility</h3>
             <p>To help us verify profile compatibility, what is your current occupation or primary line of work?</p>
             <input type="text" id="occupationInput" placeholder="e.g. Business Owner / Engineer">
-            <button class="btn-primary" onclick="saveOccupation()">Continue →</button>
+            <button class="btn-primary" onclick="saveOccupation()">Continue &rarr;</button>
         `;
     }
 
@@ -308,7 +509,7 @@
                     <li><strong>Fast-Track Tier (₦5,500):</strong> Connection access released within 5 hours + 2-Year Profile Insurance.</li>
                     <li><strong>Instant Tier (₦10,500):</strong> Connection access released within 1 hour + Lifetime Profile Insurance.</li>
                 </ol>
-                <p style="margin-top:8px; font-weight:bold; color:#00a884;">Which tier works for you?</p>
+                <p style="margin-top:8px; font-weight:bold; color:#D4AF37;">Which tier works for you?</p>
             </div>
 
             <select id="tierSelect">
@@ -345,7 +546,7 @@
     function renderFinalSuccess() {
         const modal = document.getElementById('modalContent');
         modal.innerHTML = `
-            <h3 style="color:#00a884;">Setup Complete! 🎉</h3>
+            <h3 style="color:#D4AF37;">Setup Complete! 🎉</h3>
             <p style="text-align:center;">Your details have been successfully verified. Our dispatch team will reach out to your WhatsApp number (<strong>${userState.whatsapp}</strong>) within your chosen release timeframe.</p>
             <a href="mailto:connectionplatform.ng@gmail.com" class="nav-link" style="display:block; text-align:center; margin-top:10px;">Need help? Contact support</a>
             <button class="btn-primary" onclick="closeModal()">Done</button>
