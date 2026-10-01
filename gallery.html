@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Candidate Gallery</title>
+  <style>
+    body {
+      background-color: #0B0B0B;
+      color: #FFFFFF;
+      font-family: sans-serif;
+      padding: 16px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .back-btn {
+      color: #D4AF37;
+      text-decoration: none;
+      font-weight: 800;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .img-box {
+      background: #161616;
+      border: 1px solid #D4AF37;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 200px;
+    }
+    .img-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a href="index.html" class="back-btn">&larr; Back to Selection</a>
+    <h3 style="color: #D4AF37;">Available Candidates</h3>
+  </div>
+
+  <div class="grid">
+    <!-- Add representative image paths across categories -->
+    <div class="img-box"><img src="images/sugar_mommy/sample1.jpg" alt="Candidate"></div>
+    <div class="img-box"><img src="images/serious_int/sample2.jpg" alt="Candidate"></div>
+    <div class="img-box"><img src="images/paid_chat/sample3.jpg" alt="Candidate"></div>
+    <div class="img-box"><img src="images/casual_friendship/sample4.jpg" alt="Candidate"></div>
+  </div>
+</body>
+</html>
