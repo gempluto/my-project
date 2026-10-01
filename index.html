@@ -47,13 +47,15 @@
       margin: auto 0;
     }
 
+    /* Formatted for clean 2-line display on mobile screens */
     .card-instruction {
-      color: #FFFFFF !important; /* Pure White */
-      font-size: 15px;
+      color: #FFFFFF !important;
+      font-size: 14px;
       font-weight: 700;
       text-align: center;
       margin-bottom: 16px;
-      line-height: 1.5;
+      line-height: 1.4;
+      display: block;
     }
 
     .question-label {
@@ -182,8 +184,10 @@
 
     <!-- STEP 3: CATEGORIES & PAYMENT GATEWAY -->
     <div id="step-3" class="card hidden">
-      <!-- Instruction text -->
-      <p class="card-instruction">Please click on the button below to view pictures of everyone available before selecting a category.</p>
+      <!-- Clean 2-line instruction text -->
+      <p class="card-instruction">
+        Please click on the button below to view pictures<br>of everyone available before selecting a category.
+      </p>
 
       <!-- View Pictures Button -->
       <a href="gallery.html" class="btn-gallery">View Pictures</a>
@@ -272,10 +276,8 @@
         localStorage.setItem('selected_category_name', cat.name);
         window.location.href = cat.page;
       } else {
-        // Launch payment prompt
-        if (confirm(`To access ${cat.name}, please pay the connection fee of ₦${cat.price.toLocaleString()}. Proceed to Paystack?`)) {
-          payWithPaystack(cat);
-        }
+        // Launches Paystack directly without showing any popup alert
+        payWithPaystack(cat);
       }
     }
 
@@ -300,7 +302,7 @@
           window.location.href = cat.page;
         },
         onClose: function() {
-          alert('Transaction canceled. Please make payment to access this category.');
+          // Silent close on cancellation
         }
       });
       handler.openIframe();
