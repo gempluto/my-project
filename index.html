@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Prevents page zooming on mobile devices -->
+  <!-- Prevents mobile viewport zooming and layout shifts -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>VIP Connection Platform</title>
-  <!-- Paystack Inline Script -->
-  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <!-- Paystack Inline JS v2 SDK -->
+  <script src="https://js.paystack.co/v2/inline.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -15,28 +15,24 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Prevent scrolling and zooming */
+    /* Enables natural vertical scrolling without cutting off elements */
     html, body {
       width: 100%;
-      height: 100%;
-      overflow: hidden;
+      min-height: 100vh;
       background-color: #0B0B0B;
       color: #FFFFFF;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       touch-action: manipulation;
+      overflow-y: auto;
     }
 
-    /* Fixed centered viewport container (stops elements from moving up and down) */
     .app-wrapper {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 16px;
+      padding: 24px 16px;
     }
 
     .card {
@@ -49,8 +45,6 @@
       box-shadow: 0 10px 30px rgba(212, 175, 55, 0.15);
       display: flex;
       flex-direction: column;
-      max-height: 90vh;
-      overflow-y: auto;
     }
 
     .card-title {
@@ -80,7 +74,7 @@
       display: block;
     }
 
-    /* Minimum 16px font-size stops Safari/iOS automatic zooming */
+    /* Minimum 16px font-size prevents iOS Safari zoom */
     .input-field {
       width: 100%;
       background-color: #222222;
@@ -114,30 +108,11 @@
       box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
     }
 
-    .btn-red {
-      background: linear-gradient(135deg, #990000 0%, #660000 100%);
-      color: #FFFFFF;
-      border: 1px solid #B30000;
-    }
-
-    .btn-gallery {
-      margin-bottom: 15px;
-      background: #222222;
-      border: 1px solid #D4AF37;
-      color: #D4AF37;
-      font-weight: 700;
-      padding: 12px;
-      border-radius: 10px;
-      text-align: center;
-      text-decoration: none;
-      display: block;
-    }
-
     /* Categories List */
     .category-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       margin-top: 10px;
     }
 
@@ -163,15 +138,47 @@
     .price-badge {
       background-color: #8B0000; /* Dark Red */
       color: #FFFFFF;
-      padding: 4px 10px;
+      padding: 6px 12px;
       border-radius: 6px;
       font-size: 13px;
       font-weight: 800;
+      white-space: nowrap;
     }
 
     .unlocked .price-badge {
       background-color: #D4AF37;
       color: #000000;
+    }
+
+    /* Gallery Section below categories */
+    .gallery-section {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid #333333;
+      text-align: center;
+    }
+
+    .gallery-instruction {
+      color: #FFFFFF !important;
+      font-size: 14px;
+      font-weight: 700 !important;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .btn-gallery {
+      display: block;
+      width: 100%;
+      background-color: #222222;
+      border: 1.5px solid #D4AF37;
+      color: #D4AF37;
+      font-weight: 800;
+      font-size: 16px;
+      padding: 14px;
+      border-radius: 10px;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
     }
 
     .hidden {
@@ -183,7 +190,7 @@
 
   <div class="app-wrapper">
     <!-- STEP 1: NAME -->
-    <div id="step-1" class="card">
+    <div id="step-1" class="card hidden">
       <h2 class="card-title">Welcome</h2>
       <p class="card-subtitle">Please enter your profile details to continue.</p>
       
@@ -209,16 +216,25 @@
       <h2 class="card-title">Select Connection Type</h2>
       <p class="card-subtitle">Unlock a category to view available profiles and connect.</p>
 
-      <!-- View Pictures Button -->
-      <a href="gallery.html" class="btn-gallery">📷 View All Candidate Pictures</a>
-
+      <!-- 8 Categories List -->
       <div class="category-list" id="category-container">
         <!-- Rendered dynamically via JS -->
+      </div>
+
+      <!-- Bottom View Pictures Section -->
+      <div class="gallery-section">
+        <p class="gallery-instruction">
+          Click on the view pictures button below to see the picture of everyone available on our platform before choosing a category.
+        </p>
+        <a href="gallery.html" class="btn-gallery">View Pictures</a>
       </div>
     </div>
   </div>
 
   <script>
+    // Live Paystack Public Key
+    const PAYSTACK_KEY = "pk_live_88ba11e7af2c83ef0e73e19768947cdf5c2c124f";
+
     const categories = [
       { id: 'sugar_mommy', name: '1. VIP Financial Support Match', price: 2000, page: 'sugar_mommy.html' },
       { id: 'vip_social', name: '2. VIP Social Group Access', price: 1500, page: 'vip_social.html' },
@@ -230,6 +246,32 @@
       { id: 'paid_chat', name: '8. International Paid Chat', price: 8000, page: 'paid_chat.html' }
     ];
 
+    // Check on page load if user already passed name & location questions
+    window.addEventListener('DOMContentLoaded', () => {
+      const storedName = localStorage.getItem('user_name');
+      const storedLocation = localStorage.getItem('user_location');
+
+      if (storedName && storedLocation) {
+        // Automatically start at Step 3 (Categories)
+        showStep(3);
+      } else {
+        // First-time visitor -> Start at Step 1
+        showStep(1);
+      }
+    });
+
+    function showStep(stepNumber) {
+      document.getElementById('step-1').classList.add('hidden');
+      document.getElementById('step-2').classList.add('hidden');
+      document.getElementById('step-3').classList.add('hidden');
+
+      document.getElementById(`step-${stepNumber}`).classList.remove('hidden');
+
+      if (stepNumber === 3) {
+        renderCategories();
+      }
+    }
+
     function nextStep(stepNumber) {
       if (stepNumber === 2) {
         const name = document.getElementById('user-name').value.trim();
@@ -240,14 +282,8 @@
         const loc = document.getElementById('user-location').value.trim();
         if (!loc) return alert('Please enter your location.');
         localStorage.setItem('user_location', loc);
-        renderCategories();
       }
-
-      document.getElementById('step-1').classList.add('hidden');
-      document.getElementById('step-2').classList.add('hidden');
-      document.getElementById('step-3').classList.add('hidden');
-
-      document.getElementById(`step-${stepNumber}`).classList.remove('hidden');
+      showStep(stepNumber);
     }
 
     function renderCategories() {
@@ -272,36 +308,40 @@
       const unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
 
       if (unlocked.includes(cat.id)) {
-        // Already paid -> Go directly to the HTML page
+        // Category already unlocked -> Navigate to page directly
+        localStorage.setItem('selected_category_name', cat.name);
         window.location.href = cat.page;
       } else {
-        // Prompt payment first
-        if (confirm(`To access ${cat.name}, please pay the connection fee of ₦${cat.price.toLocaleString()}. Proceed to Paystack?`)) {
-          payWithPaystack(cat);
-        }
+        // Launch Paystack payment popup
+        payWithPaystack(cat);
       }
     }
 
     function payWithPaystack(cat) {
-      // Replace with your public key if needed
-      let handler = PaystackPop.setup({
-        key: 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 
-        email: 'user@connectionplatform.com',
+      const userName = localStorage.getItem('user_name') || "Customer";
+      const userEmail = userName.replace(/\s+/g, '').toLowerCase() + '@connectionplatform.com';
+
+      const popup = new PaystackPop();
+      popup.newTransaction({
+        key: PAYSTACK_KEY,
+        email: userEmail,
         amount: cat.price * 100, // Amount in kobo
         currency: 'NGN',
-        callback: function(response) {
-          alert('Payment successful! Category unlocked.');
+        onSuccess: function(transaction) {
+          alert(`Payment successful! ${cat.name} is now unlocked.`);
           let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
-          unlocked.push(cat.id);
-          localStorage.setItem('unlocked_cats', JSON.stringify(unlocked));
+          if (!unlocked.includes(cat.id)) {
+            unlocked.push(cat.id);
+            localStorage.setItem('unlocked_cats', JSON.stringify(unlocked));
+          }
+          localStorage.setItem('selected_category_name', cat.name);
           renderCategories();
           window.location.href = cat.page;
         },
-        onClose: function() {
-          alert('Transaction canceled. Please make payment to access this category.');
+        onCancel: function() {
+          alert('Transaction was not completed.');
         }
       });
-      handler.openIframe();
     }
   </script>
 </body>
