@@ -2,10 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Prevents page zooming and mobile viewport clipping -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>VIP Connection Platform</title>
-  <!-- Paystack Inline Script -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
   <style>
     * {
@@ -37,7 +35,7 @@
       width: 100%;
       max-width: 440px;
       background-color: #161616;
-      border: 1.5px solid #D4AF37; /* Gold Border */
+      border: 1.5px solid #D4AF37;
       border-radius: 16px;
       padding: 24px 20px;
       box-shadow: 0 10px 30px rgba(212, 175, 55, 0.15);
@@ -58,9 +56,9 @@
 
     .question-label {
       color: #FFFFFF !important;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       display: block;
     }
 
@@ -74,7 +72,7 @@
       padding: 14px 16px;
       border-radius: 10px;
       outline: none;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .input-field:focus {
@@ -103,14 +101,12 @@
       box-shadow: 0 2px 6px rgba(212, 175, 55, 0.2);
     }
 
-    /* Category & Action List */
     .category-list {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
 
-    /* Tactile "Real-Button" Styling */
     .category-btn {
       display: flex;
       justify-content: space-between;
@@ -150,7 +146,6 @@
       line-height: 1.3;
     }
 
-    /* Price and View Action Badges */
     .price-badge, .view-badge {
       padding: 8px 16px;
       border-radius: 8px;
@@ -188,12 +183,15 @@
 <body>
 
   <div class="app-wrapper">
-    <!-- STEP 1: NAME -->
+    <!-- STEP 1: NAME & EMAIL -->
     <div id="step-1" class="card hidden">
       <p class="card-instruction">Please enter your profile details to continue.</p>
       
       <label class="question-label">Question 1: What is your Full Name?</label>
       <input type="text" id="user-name" class="input-field" placeholder="e.g. David Johnson">
+
+      <label class="question-label">Email Address (for payment receipt):</label>
+      <input type="email" id="user-email" class="input-field" placeholder="e.g. david@gmail.com">
       
       <button class="btn-gold" onclick="nextStep(2)">Next Step &rarr;</button>
     </div>
@@ -208,16 +206,14 @@
       <button class="btn-gold" onclick="nextStep(3)">Continue to Categories &rarr;</button>
     </div>
 
-    <!-- STEP 3: CATEGORIES & GALLERY ACCESS -->
+    <!-- STEP 3: CATEGORIES -->
     <div id="step-3" class="card hidden">
       <div class="category-list">
-        <!-- View Pictures Button Row -->
         <a href="gallery.html" class="category-btn">
           <span class="category-title">View pictures of everyone available</span>
           <span class="view-badge">View</span>
         </a>
 
-        <!-- Dynamic Category Container -->
         <div id="category-container" class="category-list"></div>
       </div>
     </div>
@@ -237,10 +233,9 @@
       { id: 'paid_chat', name: 'Get paid for chatting with rich people abroad', price: 8000, page: 'paid_chat.html' }
     ];
 
-    // Auto-check if the user already answered questions previously
     window.addEventListener('DOMContentLoaded', () => {
       const onboardingDone = localStorage.getItem('onboarding_complete');
-      if (onboardingDone === 'true') {
+      if (onboardingDone === 'true' && localStorage.getItem('user_email')) {
         showStep(3);
         renderCategories();
       } else {
@@ -259,16 +254,18 @@
     function nextStep(stepNumber) {
       if (stepNumber === 2) {
         const name = document.getElementById('user-name').value.trim();
+        const email = document.getElementById('user-email').value.trim();
         if (!name) return alert('Please enter your full name.');
+        if (!email || !email.includes('@')) return alert('Please enter a valid email address.');
+        
         localStorage.setItem('user_name', name);
+        localStorage.setItem('user_email', email);
         showStep(2);
       }
       if (stepNumber === 3) {
         const loc = document.getElementById('user-location').value.trim();
         if (!loc) return alert('Please enter your location.');
         localStorage.setItem('user_location', loc);
-        
-        // Save onboarding completion state
         localStorage.setItem('onboarding_complete', 'true');
         showStep(3);
         renderCategories();
@@ -305,13 +302,12 @@
     }
 
     function payWithPaystack(cat) {
-      const userName = localStorage.getItem('user_name') || "Customer";
-      const userEmail = userName.replace(/\s+/g, '').toLowerCase() + '@connectionplatform.com';
+      const userEmail = localStorage.getItem('user_email') || 'customer@gmail.com';
 
       let handler = PaystackPop.setup({
         key: PAYSTACK_LIVE_KEY, 
         email: userEmail,
-        amount: cat.price * 100, // Amount in kobo
+        amount: cat.price * 100,
         currency: 'NGN',
         callback: function(response) {
           alert('Payment successful! Category unlocked.');
