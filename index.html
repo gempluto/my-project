@@ -189,7 +189,7 @@
       <p class="card-instruction">Please enter your profile details to continue.</p>
       
       <label class="question-label">Question 1: What is your Full Name?</label>
-      <input type="text" id="user-name" class="input-field" placeholder="e.g. David Johnson">
+      <input type="text" id="user-name" class="input-field" placeholder="e.g. Frank Johnson">
       
       <button class="btn-gold" onclick="nextStep(2)">Next Step &rarr;</button>
     </div>
@@ -297,14 +297,21 @@
     }
 
     function payWithPaystack(cat) {
-      // Auto-generates a valid @gmail.com format in background to allow bank transfer generation
-      const rawName = (localStorage.getItem('user_name') || 'user').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const cleanName = rawName.length > 0 ? rawName : 'client';
+      // Get user name and split into firstname & lastname for Paystack bank transfer compliance
+      const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
+      const nameParts = rawFullName.split(/\s+/);
+      const firstName = nameParts[0] || 'Customer';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
+
+      // Generate a clean email based on the user's name
+      const cleanName = firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
       const autoEmail = `${cleanName}${Math.floor(100 + Math.random() * 900)}@gmail.com`;
 
       let handler = PaystackPop.setup({
         key: PAYSTACK_LIVE_KEY, 
         email: autoEmail,
+        firstname: firstName,
+        lastname: lastName,
         amount: cat.price * 100,
         currency: 'NGN',
         callback: function(response) {
