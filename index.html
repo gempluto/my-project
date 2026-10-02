@@ -15,7 +15,6 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Enables smooth scrolling on mobile webview */
     html, body {
       width: 100%;
       min-height: 100vh;
@@ -38,10 +37,10 @@
       width: 100%;
       max-width: 440px;
       background-color: #161616;
-      border: 1.5px solid #D4AF37; /* Gold Frame Border */
-      border-radius: 18px;
-      padding: 20px 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(212, 175, 55, 0.15);
+      border: 1.5px solid #D4AF37; /* Gold Border */
+      border-radius: 16px;
+      padding: 24px 20px;
+      box-shadow: 0 10px 30px rgba(212, 175, 55, 0.15);
       display: flex;
       flex-direction: column;
       margin: auto 0;
@@ -49,10 +48,10 @@
 
     .card-instruction {
       color: #FFFFFF !important;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
       line-height: 1.4;
       display: block;
     }
@@ -65,16 +64,15 @@
       display: block;
     }
 
-    /* Input Styling - Prevents Mobile Auto-Zoom */
     .input-field {
       width: 100%;
       background-color: #222222;
-      border: 1.5px solid #444444;
+      border: 1px solid #444444;
       color: #FFFFFF;
       font-size: 16px !important;
       font-weight: 600;
       padding: 14px 16px;
-      border-radius: 12px;
+      border-radius: 10px;
       outline: none;
       margin-bottom: 20px;
     }
@@ -83,109 +81,103 @@
       border-color: #D4AF37;
     }
 
-    /* Tactile Gold Primary Button */
     .btn-gold {
       width: 100%;
-      background: linear-gradient(180deg, #E6C251 0%, #AA7C11 100%);
+      background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
       color: #000000;
       font-size: 16px;
       font-weight: 800;
-      padding: 16px;
-      border: 1px solid #FFDF73;
-      border-radius: 12px;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
       cursor: pointer;
       text-align: center;
       text-decoration: none;
       display: block;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-      transition: all 0.1s ease-in-out;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
 
     .btn-gold:active {
-      transform: translateY(2px);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+      transform: translateY(2px) scale(0.98);
+      box-shadow: 0 2px 6px rgba(212, 175, 55, 0.2);
     }
 
-    /* "View Pictures" Button - Real Button Tactile Styling */
-    .btn-gallery {
-      margin-bottom: 16px;
-      background: linear-gradient(180deg, #2A2A2A 0%, #1A1A1A 100%);
-      border: 1.5px solid #D4AF37;
-      color: #D4AF37;
-      font-weight: 800;
-      font-size: 16px;
-      padding: 16px;
-      border-radius: 12px;
-      text-align: center;
-      text-decoration: none;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      cursor: pointer;
-      transition: all 0.1s ease-in-out;
-    }
-
-    .btn-gallery:active {
-      transform: translateY(2px);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
-      background: #111111;
-    }
-
-    /* Category Buttons List */
+    /* Category & Action List */
     .category-list {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
 
-    /* Real Tactile Button Design for Categories */
+    /* Tactile "Real-Button" Styling */
     .category-btn {
       display: flex;
       justify-content: space-between;
       align-items: center;
       background: linear-gradient(180deg, #262626 0%, #1A1A1A 100%);
-      border: 1.5px solid #3D3D3D;
+      border: 1.5px solid #3A3A3A;
       padding: 14px 16px;
       border-radius: 12px;
       color: #FFFFFF;
       font-weight: 700;
       font-size: 15px;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-      transition: all 0.1s ease-in-out;
+      text-decoration: none;
       user-select: none;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+    }
+
+    .category-btn:hover {
+      border-color: #D4AF37;
+      background: linear-gradient(180deg, #2E2E2E 0%, #202020 100%);
     }
 
     .category-btn:active {
-      transform: translateY(2px);
+      transform: translateY(2px) scale(0.98);
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
-      border-color: #D4AF37;
     }
 
     .category-btn.unlocked {
       border-color: #D4AF37;
-      background: linear-gradient(180deg, #29220C 0%, #1A1505 100%);
+      background: linear-gradient(180deg, #26200A 0%, #181406 100%);
     }
 
-    /* Price Badge Styled like a Pressed Button Label */
-    .price-badge {
-      background: linear-gradient(180deg, #A80000 0%, #700000 100%);
-      color: #FFFFFF;
-      padding: 6px 12px;
+    .category-title {
+      flex: 1;
+      padding-right: 12px;
+      line-height: 1.3;
+    }
+
+    /* Price and View Action Badges */
+    .price-badge, .view-badge {
+      padding: 8px 16px;
       border-radius: 8px;
       font-size: 13px;
       font-weight: 800;
-      border: 1px solid #DC2626;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      flex-shrink: 0;
+    }
+
+    .price-badge {
+      background: linear-gradient(135deg, #A80000 0%, #700000 100%);
+      color: #FFFFFF;
+      border: 1px solid #C00000;
+    }
+
+    .view-badge {
+      background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
+      color: #000000;
+      border: 1px solid #E5C158;
     }
 
     .unlocked .price-badge {
-      background: linear-gradient(180deg, #E6C251 0%, #AA7C11 100%);
+      background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
       color: #000000;
-      border: 1px solid #FFDF73;
+      border: none;
     }
 
     .hidden {
@@ -216,15 +208,21 @@
       <button class="btn-gold" onclick="nextStep(3)">Continue to Categories &rarr;</button>
     </div>
 
-    <!-- STEP 3: CATEGORIES & PAYMENT GATEWAY -->
+    <!-- STEP 3: CATEGORIES & GALLERY ACCESS -->
     <div id="step-3" class="card hidden">
-      <!-- View Pictures Button (Real Button Feel) -->
-      <a href="gallery.html" class="btn-gallery">
-        <span>📷 View Pictures</span>
-      </a>
+      <p class="card-instruction">
+        Please click on the button below to view pictures<br>of everyone available.
+      </p>
 
-      <div class="category-list" id="category-container">
-        <!-- Rendered dynamically via JS -->
+      <div class="category-list">
+        <!-- View Pictures Item styled identically to Category Cards -->
+        <a href="gallery.html" class="category-btn">
+          <span class="category-title">View pictures of everyone available</span>
+          <span class="view-badge">View</span>
+        </a>
+
+        <!-- Dynamic Category Container -->
+        <div id="category-container" class="category-list"></div>
       </div>
     </div>
   </div>
@@ -232,19 +230,19 @@
   <script>
     const PAYSTACK_LIVE_KEY = "pk_live_88ba11e7af2c83ef0e73e19768947cdf5c2c124f";
 
-    // Categories array matching screenshot text
+    // Categories without numbers
     const categories = [
-      { id: 'sugar_mommy', name: '1. Sugar mommy or Sugar daddy', price: 2000, page: 'sugar_mommy.html' },
-      { id: 'vip_social', name: '2. Hookup girls group', price: 1500, page: 'vip_social.html' },
-      { id: 'private_video', name: '3. Sex video call', price: 1000, page: 'private_video.html' },
-      { id: 'casual_friendship', name: '4. Friends with benefits', price: 1000, page: 'casual_friendship.html' },
-      { id: 'media_exchange', name: '5. Sex video and sex tape group', price: 1000, page: 'media_exchange.html' },
-      { id: 'serious_ng', name: '6. Serious relationship in Nigeria', price: 1000, page: 'serious_ng.html' },
-      { id: 'serious_int', name: '7. Serious relationship outside Nigeria', price: 5000, page: 'serious_int.html' },
-      { id: 'paid_chat', name: '8. Get paid for chatting with clients', price: 8000, page: 'paid_chat.html' }
+      { id: 'sugar_mommy', name: 'Sugar mommy or Sugar daddy', price: 2000, page: 'sugar_mommy.html' },
+      { id: 'vip_social', name: 'Hookup girls group', price: 1500, page: 'vip_social.html' },
+      { id: 'private_video', name: 'Sex video call', price: 1000, page: 'private_video.html' },
+      { id: 'casual_friendship', name: 'Friends with benefits', price: 1000, page: 'casual_friendship.html' },
+      { id: 'media_exchange', name: 'Sex video and sex tape group', price: 1000, page: 'media_exchange.html' },
+      { id: 'serious_ng', name: 'Serious relationship in Nigeria', price: 1000, page: 'serious_ng.html' },
+      { id: 'serious_int', name: 'Serious relationship outside Nigeria', price: 5000, page: 'serious_int.html' },
+      { id: 'paid_chat', name: 'Get paid for chatting with clients', price: 8000, page: 'paid_chat.html' }
     ];
 
-    // Auto-check if the user already answered onboarding questions
+    // Auto-check if the user already answered questions previously
     window.addEventListener('DOMContentLoaded', () => {
       const onboardingDone = localStorage.getItem('onboarding_complete');
       if (onboardingDone === 'true') {
@@ -275,7 +273,7 @@
         if (!loc) return alert('Please enter your location.');
         localStorage.setItem('user_location', loc);
         
-        // Save onboarding completed flag so user skips questions on return
+        // Save onboarding completion state
         localStorage.setItem('onboarding_complete', 'true');
         showStep(3);
         renderCategories();
@@ -292,7 +290,7 @@
         const btn = document.createElement('div');
         btn.className = `category-btn ${isUnlocked ? 'unlocked' : ''}`;
         btn.innerHTML = `
-          <span>${cat.name}</span>
+          <span class="category-title">${cat.name}</span>
           <span class="price-badge">${isUnlocked ? 'UNLOCKED' : '₦' + cat.price.toLocaleString()}</span>
         `;
         btn.onclick = () => handleCategoryClick(cat);
@@ -304,11 +302,9 @@
       const unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
 
       if (unlocked.includes(cat.id)) {
-        // Already paid -> Navigate straight to category match gallery
         localStorage.setItem('selected_category_name', cat.name);
         window.location.href = cat.page;
       } else {
-        // Launches Paystack directly without alert dialogs
         payWithPaystack(cat);
       }
     }
@@ -333,9 +329,7 @@
           renderCategories();
           window.location.href = cat.page;
         },
-        onClose: function() {
-          // Silent close on payment cancel
-        }
+        onClose: function() {}
       });
       handler.openIframe();
     }
