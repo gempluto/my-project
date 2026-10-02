@@ -57,9 +57,9 @@
 
     .question-label {
       color: #FFFFFF !important;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
       display: block;
     }
 
@@ -70,10 +70,10 @@
       color: #FFFFFF;
       font-size: 16px !important;
       font-weight: 600;
-      padding: 14px 16px;
+      padding: 12px 14px;
       border-radius: 10px;
       outline: none;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
     }
 
     .input-field:focus {
@@ -95,6 +95,7 @@
       display: block;
       box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
       transition: transform 0.1s ease, box-shadow 0.1s ease;
+      margin-top: 6px;
     }
 
     .btn-gold:active {
@@ -184,12 +185,18 @@
 <body>
 
   <div class="app-wrapper">
-    <!-- STEP 1: NAME -->
+    <!-- STEP 1: PROFILE INFORMATION -->
     <div id="step-1" class="card hidden">
       <p class="card-instruction">Please enter your profile details to continue.</p>
       
-      <label class="question-label">Question 1: What is your Full Name?</label>
+      <label class="question-label">Full Name:</label>
       <input type="text" id="user-name" class="input-field" placeholder="e.g. Frank Johnson">
+
+      <label class="question-label">WhatsApp / Phone Number:</label>
+      <input type="tel" id="user-phone" class="input-field" placeholder="e.g. 08012345678">
+
+      <label class="question-label">Email Address:</label>
+      <input type="email" id="user-email" class="input-field" placeholder="e.g. frank@gmail.com">
       
       <button class="btn-gold" onclick="nextStep(2)">Next Step &rarr;</button>
     </div>
@@ -198,7 +205,7 @@
     <div id="step-2" class="card hidden">
       <p class="card-instruction">We use this to match you with available connections near you.</p>
       
-      <label class="question-label">Question 2: Which city or state are you living in?</label>
+      <label class="question-label">Which city or state are you living in?</label>
       <input type="text" id="user-location" class="input-field" placeholder="e.g. Lagos, Nigeria">
       
       <button class="btn-gold" onclick="nextStep(3)">Continue to Categories &rarr;</button>
@@ -252,9 +259,16 @@
     function nextStep(stepNumber) {
       if (stepNumber === 2) {
         const name = document.getElementById('user-name').value.trim();
+        const phone = document.getElementById('user-phone').value.trim();
+        const email = document.getElementById('user-email').value.trim();
+
         if (!name) return alert('Please enter your full name.');
+        if (!phone || phone.length < 10) return alert('Please enter a valid phone number.');
+        if (!email || !email.includes('@')) return alert('Please enter a valid email address.');
         
         localStorage.setItem('user_name', name);
+        localStorage.setItem('user_phone', phone);
+        localStorage.setItem('user_email', email);
         showStep(2);
       }
       if (stepNumber === 3) {
@@ -298,27 +312,22 @@
 
     function payWithPaystack(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
+      const userPhone = localStorage.getItem('user_phone') || '';
+      const userEmail = localStorage.getItem('user_email') || '';
+
       const nameParts = rawFullName.split(/\s+/);
       const firstName = nameParts[0] || 'Customer';
       const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
 
-      // Keep email fixed per user session to avoid triggering Paystack rate limits
-      let userEmail = localStorage.getItem('user_session_email');
-      if (!userEmail) {
-        const cleanName = firstName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'client';
-        const randomNum = Math.floor(1000 + Math.random() * 9000);
-        userEmail = `${cleanName}${randomNum}@gmail.com`;
-        localStorage.setItem('user_session_email', userEmail);
-      }
-
       let handler = PaystackPop.setup({
         key: PAYSTACK_LIVE_KEY, 
         email: userEmail,
+        phone: userPhone,
         firstname: firstName,
         lastname: lastName,
         amount: cat.price * 100,
         currency: 'NGN',
-        channels: ['bank_transfer', 'card', 'ussd', 'bank', 'qr'],
+        channels: ['bank_transfer'], // Strictly Bank Transfer only
         callback: function(response) {
           alert('Payment successful! Category unlocked.');
           let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
