@@ -194,9 +194,6 @@
 
       <label class="question-label">WhatsApp / Phone Number:</label>
       <input type="tel" id="user-phone" class="input-field" placeholder="e.g. 08012345678">
-
-      <label class="question-label">Email Address:</label>
-      <input type="email" id="user-email" class="input-field" placeholder="e.g. frank@gmail.com">
       
       <button class="btn-gold" onclick="nextStep(2)">Next Step &rarr;</button>
     </div>
@@ -226,6 +223,7 @@
 
   <script>
     const PAYSTACK_LIVE_KEY = "pk_live_88ba11e7af2c83ef0e73e19768947cdf5c2c124f";
+    const PLATFORM_EMAIL = "connectionplatform.ng@gmail.com";
 
     const categories = [
       { id: 'sugar_mommy', name: 'Sugar mommy or Sugar daddy', price: 2000, page: 'sugar_mommy.html' },
@@ -260,15 +258,12 @@
       if (stepNumber === 2) {
         const name = document.getElementById('user-name').value.trim();
         const phone = document.getElementById('user-phone').value.trim();
-        const email = document.getElementById('user-email').value.trim();
 
         if (!name) return alert('Please enter your full name.');
         if (!phone || phone.length < 10) return alert('Please enter a valid phone number.');
-        if (!email || !email.includes('@')) return alert('Please enter a valid email address.');
         
         localStorage.setItem('user_name', name);
         localStorage.setItem('user_phone', phone);
-        localStorage.setItem('user_email', email);
         showStep(2);
       }
       if (stepNumber === 3) {
@@ -312,8 +307,7 @@
 
     function payWithPaystack(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
-      const userPhone = localStorage.getItem('user_phone') || '';
-      const userEmail = localStorage.getItem('user_email') || '';
+      const userPhone = (localStorage.getItem('user_phone') || '08000000000').trim();
 
       const nameParts = rawFullName.split(/\s+/);
       const firstName = nameParts[0] || 'Customer';
@@ -321,13 +315,13 @@
 
       let handler = PaystackPop.setup({
         key: PAYSTACK_LIVE_KEY, 
-        email: userEmail,
+        email: PLATFORM_EMAIL, // Always uses connectionplatform.ng@gmail.com
         phone: userPhone,
         firstname: firstName,
         lastname: lastName,
         amount: cat.price * 100,
         currency: 'NGN',
-        channels: ['bank_transfer'], // Strictly Bank Transfer only
+        channels: ['bank_transfer'],
         callback: function(response) {
           alert('Payment successful! Category unlocked.');
           let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
