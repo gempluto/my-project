@@ -228,7 +228,7 @@
       { id: 'media_exchange', name: 'Sex video and sex tape group', price: 1000, page: 'media_exchange.html' },
       { id: 'serious_ng', name: 'Serious relationship in Nigeria', price: 1000, page: 'serious_ng.html' },
       { id: 'serious_int', name: 'Serious relationship outside Nigeria', price: 5000, page: 'serious_int.html' },
-      { id: 'paid_chat', name: 'Get paid for chatting with rich people abroad', price: 8000, page: 'paid_chat.html' }
+      { id: 'paid_chat', name: 'Get paid for chatting with clients', price: 8000, page: 'paid_chat.html' }
     ];
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -297,23 +297,28 @@
     }
 
     function payWithPaystack(cat) {
-      // Get user name and split into firstname & lastname for Paystack bank transfer compliance
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const nameParts = rawFullName.split(/\s+/);
       const firstName = nameParts[0] || 'Customer';
       const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
 
-      // Generate a clean email based on the user's name
-      const cleanName = firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const autoEmail = `${cleanName}${Math.floor(100 + Math.random() * 900)}@gmail.com`;
+      // Keep email fixed per user session to avoid triggering Paystack rate limits
+      let userEmail = localStorage.getItem('user_session_email');
+      if (!userEmail) {
+        const cleanName = firstName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'client';
+        const randomNum = Math.floor(1000 + Math.random() * 9000);
+        userEmail = `${cleanName}${randomNum}@gmail.com`;
+        localStorage.setItem('user_session_email', userEmail);
+      }
 
       let handler = PaystackPop.setup({
         key: PAYSTACK_LIVE_KEY, 
-        email: autoEmail,
+        email: userEmail,
         firstname: firstName,
         lastname: lastName,
         amount: cat.price * 100,
         currency: 'NGN',
+        channels: ['bank_transfer', 'card', 'ussd', 'bank', 'qr'],
         callback: function(response) {
           alert('Payment successful! Category unlocked.');
           let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
