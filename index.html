@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>VIP Connection Platform</title>
+  <!-- Paystack Inline Script -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
   <style>
     * {
@@ -56,9 +57,9 @@
 
     .question-label {
       color: #FFFFFF !important;
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 700;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       display: block;
     }
 
@@ -72,7 +73,7 @@
       padding: 14px 16px;
       border-radius: 10px;
       outline: none;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
 
     .input-field:focus {
@@ -183,15 +184,12 @@
 <body>
 
   <div class="app-wrapper">
-    <!-- STEP 1: NAME & EMAIL -->
+    <!-- STEP 1: NAME -->
     <div id="step-1" class="card hidden">
       <p class="card-instruction">Please enter your profile details to continue.</p>
       
       <label class="question-label">Question 1: What is your Full Name?</label>
       <input type="text" id="user-name" class="input-field" placeholder="e.g. David Johnson">
-
-      <label class="question-label">Email Address (for payment receipt):</label>
-      <input type="email" id="user-email" class="input-field" placeholder="e.g. david@gmail.com">
       
       <button class="btn-gold" onclick="nextStep(2)">Next Step &rarr;</button>
     </div>
@@ -235,7 +233,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       const onboardingDone = localStorage.getItem('onboarding_complete');
-      if (onboardingDone === 'true' && localStorage.getItem('user_email')) {
+      if (onboardingDone === 'true') {
         showStep(3);
         renderCategories();
       } else {
@@ -254,12 +252,9 @@
     function nextStep(stepNumber) {
       if (stepNumber === 2) {
         const name = document.getElementById('user-name').value.trim();
-        const email = document.getElementById('user-email').value.trim();
         if (!name) return alert('Please enter your full name.');
-        if (!email || !email.includes('@')) return alert('Please enter a valid email address.');
         
         localStorage.setItem('user_name', name);
-        localStorage.setItem('user_email', email);
         showStep(2);
       }
       if (stepNumber === 3) {
@@ -302,11 +297,14 @@
     }
 
     function payWithPaystack(cat) {
-      const userEmail = localStorage.getItem('user_email') || 'customer@gmail.com';
+      // Auto-generates a valid @gmail.com format in background to allow bank transfer generation
+      const rawName = (localStorage.getItem('user_name') || 'user').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const cleanName = rawName.length > 0 ? rawName : 'client';
+      const autoEmail = `${cleanName}${Math.floor(100 + Math.random() * 900)}@gmail.com`;
 
       let handler = PaystackPop.setup({
         key: PAYSTACK_LIVE_KEY, 
-        email: userEmail,
+        email: autoEmail,
         amount: cat.price * 100,
         currency: 'NGN',
         callback: function(response) {
