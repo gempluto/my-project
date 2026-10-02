@@ -223,7 +223,6 @@
 
   <script>
     const PAYSTACK_LIVE_KEY = "pk_live_88ba11e7af2c83ef0e73e19768947cdf5c2c124f";
-    const PLATFORM_EMAIL = "connectionplatform.ng@gmail.com";
 
     const categories = [
       { id: 'sugar_mommy', name: 'Sugar mommy or Sugar daddy', price: 2000, page: 'sugar_mommy.html' },
@@ -307,7 +306,11 @@
 
     function payWithPaystack(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
-      const userPhone = (localStorage.getItem('user_phone') || '08000000000').trim();
+      const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
+
+      // Dynamic unique email per session to prevent Paystack NUBAN throttling
+      const sessionTimestamp = Date.now();
+      const sessionEmail = `pay_${userPhone}_${sessionTimestamp}@mercy.name.ng`;
 
       const nameParts = rawFullName.split(/\s+/);
       const firstName = nameParts[0] || 'Customer';
@@ -315,7 +318,7 @@
 
       let handler = PaystackPop.setup({
         key: PAYSTACK_LIVE_KEY, 
-        email: PLATFORM_EMAIL, // Always uses connectionplatform.ng@gmail.com
+        email: sessionEmail,
         phone: userPhone,
         firstname: firstName,
         lastname: lastName,
