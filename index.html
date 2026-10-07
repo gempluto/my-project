@@ -620,7 +620,6 @@
       countSpan.innerText = updatedLikes;
     }
 
-    // Always builds and injects a fresh modal on every click to prevent freezing
     function openPaymentModal() {
       if (!activeCategory) return;
       
@@ -653,6 +652,7 @@
       }
     }
 
+    // Creates a brand-new Paystack handler instance on every click to prevent second-try freezing
     function payWithPaystack(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
@@ -683,7 +683,7 @@
           window.location.href = cat.page;
         },
         onClose: function() {
-          // Removes any leftover iframe or overlay layers left by Paystack
+          // Cleans up any remaining iframe overlays so clicking again always opens cleanly
           document.querySelectorAll('iframe[name^="paystack"], div[style*="z-index: 10000"]').forEach(el => {
             if (el && el.parentNode) el.parentNode.removeChild(el);
           });
