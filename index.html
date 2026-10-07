@@ -186,6 +186,12 @@
       transform: translateY(2px) scale(0.98);
     }
 
+    /* Unlocked category button styling */
+    .category-btn.unlocked {
+      border-color: #D4AF37;
+      background: linear-gradient(180deg, #26200A 0%, #181406 100%);
+    }
+
     .category-title {
       flex: 1;
       padding-right: 12px;
@@ -202,6 +208,13 @@
       color: #FFFFFF;
       border: 1px solid #C00000;
       flex-shrink: 0;
+    }
+
+    /* Unlocked badge styling */
+    .unlocked .price-badge {
+      background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
+      color: #000000;
+      border: none;
     }
 
     /* Step 4: Gallery / Profiles Styles */
@@ -222,13 +235,18 @@
     .profile-img-wrapper {
       position: relative;
       width: 100%;
-      height: 320px;
+      min-height: 280px;
+      max-height: 420px;
       background-color: var(--input-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .profile-img {
       width: 100%;
       height: 100%;
+      max-height: 420px;
       object-fit: cover;
       display: block;
     }
@@ -419,16 +437,16 @@
   <script>
     const PAYSTACK_LIVE_KEY = "pk_live_88ba11e7af2c83ef0e73e19768947cdf5c2c124f";
 
-    // 8 Categories with folder paths corresponding to your repository setup
+    // Categories mapping matching your html target pages & GitHub image folders
     const categories = [
-      { id: 'sugar_mommy', folder: 'sugar_mommy', name: 'Sugar mommy or Sugar daddy', price: 2000 },
-      { id: 'vip_social', folder: 'social_group', name: 'Hookup girls group', price: 1500 },
-      { id: 'private_video', folder: 'private_video', name: 'Sex video call', price: 1000 },
-      { id: 'casual_friendship', folder: 'casual_friendship', name: 'Friends with benefits', price: 1000 },
-      { id: 'media_exchange', folder: 'media_exchange', name: 'Sex video and sex tape group', price: 1000 },
-      { id: 'serious_ng', folder: 'serious_ng', name: 'Serious relationship in Nigeria', price: 1000 },
-      { id: 'serious_int', folder: 'serious_int', name: 'Serious relationship outside Nigeria', price: 5000 },
-      { id: 'paid_chat', folder: 'paid_chat', name: 'Get paid for chatting with clients', price: 8000 }
+      { id: 'sugar_mommy', folder: 'sugar_mommy', name: 'Sugar mommy or Sugar daddy', price: 2000, page: 'sugar_mommy.html' },
+      { id: 'vip_social', folder: 'social_group', name: 'Hookup girls group', price: 1500, page: 'vip_social.html' },
+      { id: 'private_video', folder: 'private_video', name: 'Sex video call', price: 1000, page: 'private_video.html' },
+      { id: 'casual_friendship', folder: 'casual_friendship', name: 'Friends with benefits', price: 1000, page: 'casual_friendship.html' },
+      { id: 'media_exchange', folder: 'media_exchange', name: 'Sex video and sex tape group', price: 1000, page: 'media_exchange.html' },
+      { id: 'serious_ng', folder: 'serious_ng', name: 'Serious relationship in Nigeria', price: 1000, page: 'serious_ng.html' },
+      { id: 'serious_int', folder: 'serious_int', name: 'Serious relationship outside Nigeria', price: 5000, page: 'serious_int.html' },
+      { id: 'paid_chat', folder: 'paid_chat', name: 'Get paid for chatting with clients', price: 8000, page: 'paid_chat.html' }
     ];
 
     let selectedCategory = null;
@@ -476,39 +494,59 @@
     }
 
     function renderCategories() {
+      const unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
       const container = document.getElementById('category-container');
       container.innerHTML = '';
 
       categories.forEach(cat => {
+        const isUnlocked = unlocked.includes(cat.id);
         const btn = document.createElement('div');
-        btn.className = 'category-btn';
+        btn.className = `category-btn ${isUnlocked ? 'unlocked' : ''}`;
         btn.innerHTML = `
           <span class="category-title">${cat.name}</span>
-          <span class="price-badge">₦${cat.price.toLocaleString()}</span>
+          <span class="price-badge">${isUnlocked ? 'UNLOCKED' : '₦' + cat.price.toLocaleString()}</span>
         `;
-        btn.onclick = () => openCategoryGallery(cat);
+        
+        // If unlocked, clicking goes straight to the page. If not, opens pictures gallery.
+        btn.onclick = () => {
+          if (isUnlocked) {
+            localStorage.setItem('selected_category_name', cat.name);
+            window.location.href = cat.page;
+          } else {
+            openCategoryGallery(cat);
+          }
+        };
+
         container.appendChild(btn);
       });
     }
 
-    // Step 4: Open Gallery / Profiles for clicked category
+    // Step 4: Open Gallery for category
     function openCategoryGallery(cat) {
       selectedCategory = cat;
+      const unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
+      const isUnlocked = unlocked.includes(cat.id);
+
       document.getElementById('gallery-title').innerText = `${cat.name} - Available Profiles`;
 
       const container = document.getElementById('gallery-container');
       container.innerHTML = '';
 
-      // Sample profile data mapped to category folders
-      const profilesCount = 4; // Generates 4 sample profile cards per connection category
+      const numberOfPictures = 10; 
 
-      for (let i = 1; i <= profilesCount; i++) {
-        // Dynamic views count generator between 9.0k and 15.0k views
+      for (let i = 1; i <= numberOfPictures; i++) {
         const randomViews = (Math.random() * (15.0 - 9.0) + 9.0).toFixed(1) + 'k views';
         const randomLikes = Math.floor(Math.random() * 800) + 120;
 
         const card = document.createElement('div');
         card.className = 'profile-card';
+        card.id = `card-${cat.folder}-${i}`;
+
+        const buttonText = isUnlocked ? 'Enter Connection &rarr;' : 'Get Connected &rarr;';
+        const buttonAction = isUnlocked 
+          ? `window.location.href='${cat.page}'` 
+          : `openPaymentModal('${cat.name}', ${cat.price})`;
+
         card.innerHTML = `
           <div class="profile-img-wrapper">
             <span class="view-count-badge">
@@ -516,20 +554,21 @@
             </span>
             <img class="profile-img" 
                  src="images/${cat.folder}/${i}.jpg" 
-                 onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80';" 
-                 alt="Profile Picture ${i}">
+                 data-ext-index="0"
+                 onerror="handleImgError(this, '${cat.folder}', ${i})"
+                 alt="Available Profile ${i}">
           </div>
           <div class="profile-body">
             <div class="profile-header">
               <span class="profile-name">Available Profile #${i}</span>
-              <button class="like-btn" onclick="toggleLike(this, ${randomLikes})">
+              <button class="like-btn" onclick="toggleLike(this)">
                 <svg viewBox="0 0 24 24">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                 </svg>
                 <span>${randomLikes}</span>
               </button>
             </div>
-            <button class="btn-gold" onclick="openPaymentModal('${cat.name}', ${cat.price})">Get Connected &rarr;</button>
+            <button class="btn-gold" onclick="${buttonAction}">${buttonText}</button>
           </div>
         `;
         container.appendChild(card);
@@ -538,8 +577,22 @@
       showStep(4);
     }
 
+    // Handles image extensions (.png, .jpeg, etc.)
+    function handleImgError(img, folder, index) {
+      const extensions = ['.png', '.jpeg', '.JPG', '.PNG', '.JPEG', '.webp'];
+      let extIndex = parseInt(img.getAttribute('data-ext-index') || '0');
+
+      if (extIndex < extensions.length) {
+        img.setAttribute('data-ext-index', extIndex + 1);
+        img.src = `images/${folder}/${index}${extensions[extIndex]}`;
+      } else {
+        const card = document.getElementById(`card-${folder}-${index}`);
+        if (card) card.style.display = 'none';
+      }
+    }
+
     // Toggle heart like button
-    function toggleLike(btnElement, initialCount) {
+    function toggleLike(btnElement) {
       const isLiked = btnElement.classList.toggle('liked');
       const countSpan = btnElement.querySelector('span');
       let currentCount = parseInt(countSpan.innerText);
@@ -570,7 +623,7 @@
       }
     }
 
-    // Paystack Trigger function
+    // Paystack Payment with automatic unlock and redirection to required HTML page
     function payWithPaystack(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
@@ -592,12 +645,18 @@
         currency: 'NGN',
         channels: ['bank_transfer', 'card'],
         callback: function(response) {
-          alert('Payment successful! You are now connected.');
+          alert('Payment successful! Category unlocked. Opening connection...');
+          
+          // Save unlocked category
           let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
           if (!unlocked.includes(cat.id)) {
             unlocked.push(cat.id);
             localStorage.setItem('unlocked_cats', JSON.stringify(unlocked));
           }
+          localStorage.setItem('selected_category_name', cat.name);
+          
+          // Redirect directly to the paid connection HTML page
+          window.location.href = cat.page;
         },
         onClose: function() {
           alert('Payment window closed.');
