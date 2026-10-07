@@ -437,10 +437,10 @@
     const GITHUB_REPO_OWNER = "gempluto";
     const GITHUB_REPO_NAME = "my-project";
     
-    // Fixed base timestamp for calculating +5 views/hr and +1 like/hr reliably
+    // Fixed base timestamp for calculating +5 views/hr and +1 like/hr
     const BASE_TIME_REF = 1735689600000; // Jan 1, 2025
 
-    // 8 Categories linked to your exact GitHub repository folder names and target HTML pages
+    // 8 Categories linked to exact GitHub repository folder names and target HTML pages
     const categories = [
       { id: 'sugar_mommy', folder: 'sugar_mommy', name: 'Sugar mommy or Sugar daddy', price: 2000, page: 'sugar_mommy.html' },
       { id: 'vip_social', folder: 'social_group', name: 'Hookup girls group', price: 1500, page: 'vip_social.html' },
@@ -565,7 +565,6 @@
         return;
       }
 
-      // Calculate elapsed hours since reference point to increase +5 views/hr and +1 like/hr
       const now = Date.now();
       const hoursElapsed = Math.max(0, Math.floor((now - BASE_TIME_REF) / (1000 * 60 * 60)));
 
@@ -573,7 +572,6 @@
         const profileNum = index + 1;
         const imageId = `${cat.id}_${filename}`;
 
-        // Fixed base calculation seed based on image ID
         let hash = 0;
         for (let i = 0; i < imageId.length; i++) {
           hash = (hash << 5) - hash + imageId.charCodeAt(i);
@@ -581,19 +579,15 @@
         }
         hash = Math.abs(hash);
 
-        // Fixed Base Starting Values
-        const baseViews = 9000 + (hash % 5000); // 9,000 to 14,000 base
-        const baseLikes = 250 + (hash % 400);   // 250 to 650 base
+        const baseViews = 9000 + (hash % 5000); 
+        const baseLikes = 250 + (hash % 400);   
 
-        // Total Views (+5 views per hour)
         const totalViews = baseViews + (hoursElapsed * 5);
         const viewsFormatted = (totalViews / 1000).toFixed(1) + 'k views';
 
-        // User Like Persistence from localStorage
         const isUserLiked = localStorage.getItem(`liked_${imageId}`) === 'true';
         const userBonus = isUserLiked ? 1 : 0;
 
-        // Total Likes (+1 like per hour + user's saved like)
         const totalLikes = baseLikes + hoursElapsed + userBonus;
 
         const card = document.createElement('div');
@@ -629,7 +623,7 @@
       });
     }
 
-    // Handles Get Connected button click reliably
+    // Handles Get Connected button click reliably every single time
     function handleConnectClick(catId) {
       const cat = categories.find(c => c.id === catId);
       if (!cat) return;
@@ -676,11 +670,12 @@
       }
     }
 
-    // Paystack Payment & Automatic Redirection Function (Restricted ONLY to Bank Transfer)
+    // Paystack Payment function with quiet close & multi-retry support
     function payWithPaystack(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
 
+      // Generates a fresh timestamp per checkout attempt to prevent gateway caching
       const sessionTimestamp = Date.now();
       const sessionEmail = `pay_${userPhone}_${sessionTimestamp}@mercy.name.ng`;
 
@@ -696,10 +691,8 @@
         lastname: lastName,
         amount: cat.price * 100,
         currency: 'NGN',
-        channels: ['bank_transfer'], // FORCES ONLY PAY WITH TRANSFER
+        channels: ['bank_transfer'], // Forces Pay with Transfer
         callback: function(response) {
-          alert('Payment successful! Category unlocked. Opening connection...');
-          
           let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
           if (!unlocked.includes(cat.id)) {
             unlocked.push(cat.id);
@@ -710,9 +703,10 @@
           window.location.href = cat.page;
         },
         onClose: function() {
-          alert('Payment window closed.');
+          // Closes quietly without any browser alert window
         }
       });
+      
       handler.openIframe();
     }
   </script>
