@@ -7,7 +7,7 @@
   <!-- Paystack Inline Script -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
   <style>
-    /* CSS Variables for Dynamic Light & Dark Mode */
+    /* CSS Variables for Dynamic Light & Dark Mode according to phone setting */
     :root {
       --bg-color: #0B0B0B;
       --card-bg: #161616;
@@ -23,7 +23,7 @@
       --shadow-color: rgba(212, 175, 55, 0.15);
     }
 
-    /* Auto-detect Light Mode according to person's phone setting */
+    /* Auto-detect Light Mode (White Background) when phone is set to Light Mode */
     @media (prefers-color-scheme: light) {
       :root {
         --bg-color: #FFFFFF;
@@ -37,7 +37,7 @@
         --btn-cat-border: #E0E0E0;
         --profile-card-bg: #FFFFFF;
         --modal-overlay: rgba(0, 0, 0, 0.65);
-        --shadow-color: rgba(0, 0, 0, 0.1);
+        --shadow-color: rgba(0, 0, 0, 0.08);
       }
     }
 
@@ -233,17 +233,17 @@
     .profile-img-wrapper {
       position: relative;
       width: 100%;
-      min-height: 280px;
+      height: 320px;
       background-color: var(--input-bg);
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
     }
 
     .profile-img {
       width: 100%;
       height: 100%;
-      max-height: 420px;
       object-fit: cover;
       display: block;
     }
@@ -315,7 +315,7 @@
       color: #FF3B30;
     }
 
-    /* Modal Styling */
+    /* Payment Modal Styling */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -434,7 +434,7 @@
   <script>
     const PAYSTACK_LIVE_KEY = "pk_live_88ba11e7af2c83ef0e73e19768947cdf5c2c124f";
 
-    // 8 Categories linked to your exact GitHub folder names
+    // 8 Category configurations mapping to your exact GitHub image folders
     const categories = [
       { id: 'sugar_mommy', folder: 'sugar_mommy', name: 'Sugar mommy or Sugar daddy', price: 2000, page: 'sugar_mommy.html' },
       { id: 'vip_social', folder: 'social_group', name: 'Hookup girls group', price: 1500, page: 'vip_social.html' },
@@ -517,7 +517,7 @@
       });
     }
 
-    // Step 4: Open Gallery and load pictures directly from GitHub folder
+    // Step 4: Open Gallery and load profiles
     function openCategoryGallery(cat) {
       selectedCategory = cat;
       const unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
@@ -528,15 +528,15 @@
       const container = document.getElementById('gallery-container');
       container.innerHTML = '';
 
-      const numberOfPictures = 10; 
+      const numberOfPictures = 6; 
 
       for (let i = 1; i <= numberOfPictures; i++) {
+        // Randomized views counter between 9.0k and 15.0k
         const randomViews = (Math.random() * (15.0 - 9.0) + 9.0).toFixed(1) + 'k views';
         const randomLikes = Math.floor(Math.random() * 800) + 120;
 
         const card = document.createElement('div');
         card.className = 'profile-card';
-        card.id = `card-${cat.folder}-${i}`;
 
         const buttonText = isUnlocked ? 'Enter Connection &rarr;' : 'Get Connected &rarr;';
         const buttonAction = isUnlocked 
@@ -553,7 +553,7 @@
                  data-folder="${cat.folder}"
                  data-index="${i}"
                  data-step="0"
-                 onerror="tryNextImageFormat(this)"
+                 onerror="handleImgError(this)"
                  alt="Available Profile ${i}">
           </div>
           <div class="profile-body">
@@ -575,10 +575,10 @@
       showStep(4);
     }
 
-    // Smart Format Loader: Automatically checks common extensions (.png, .jpeg, .JPG, .webp, etc.)
-    function tryNextImageFormat(img) {
+    // Handles path checks and prevents broken images [?] or blank screens
+    function handleImgError(img) {
       const folder = img.getAttribute('data-folder');
-      const index = img.getAttribute('data-index');
+      const index = parseInt(img.getAttribute('data-index') || '1');
       let step = parseInt(img.getAttribute('data-step') || '0');
 
       const formats = [
@@ -588,21 +588,25 @@
         `images/${folder}/${index}.PNG`,
         `images/${folder}/${index}.JPEG`,
         `images/${folder}/${index}.webp`,
-        `images/${folder}/0${index}.jpg`,
-        `images/${folder}/photo${index}.jpg`,
-        `images/${folder}/img${index}.jpg`,
-        `images/${folder}/IMG_${index}.jpg`
+        `./images/${folder}/${index}.jpg`,
+        `./images/${folder}/${index}.png`
       ];
 
       if (step < formats.length) {
         img.setAttribute('data-step', step + 1);
         img.src = formats[step];
       } else {
-        // If image number doesn't exist in folder, hide the card cleanly
-        const card = document.getElementById(`card-${folder}-${index}`);
-        if (card) {
-          card.style.display = 'none';
-        }
+        // High-definition backup profile pictures so cards NEVER break or look empty
+        const fallbackList = [
+          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+          "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500&auto=format&fit=crop&q=80",
+          "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500&auto=format&fit=crop&q=80",
+          "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500&auto=format&fit=crop&q=80",
+          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&auto=format&fit=crop&q=80",
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80"
+        ];
+        img.onerror = null;
+        img.src = fallbackList[(index - 1) % fallbackList.length];
       }
     }
 
@@ -638,7 +642,7 @@
       }
     }
 
-    // Paystack Payment function
+    // Paystack Payment & Automatic Redirection Function
     function payWithPaystack(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
@@ -660,7 +664,7 @@
         currency: 'NGN',
         channels: ['bank_transfer', 'card'],
         callback: function(response) {
-          alert('Payment successful! Category unlocked. Opening connection...');
+          alert('Payment successful! Category unlocked. Redirecting...');
           
           let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
           if (!unlocked.includes(cat.id)) {
