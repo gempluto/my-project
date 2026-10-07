@@ -676,7 +676,7 @@
       }
     }
 
-    // Paystack Payment & Automatic Redirection Function
+    // Paystack Payment & Automatic Redirection Function (Restricted ONLY to Bank Transfer)
     function payWithPaystack(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
@@ -696,7 +696,7 @@
         lastname: lastName,
         amount: cat.price * 100,
         currency: 'NGN',
-        channels: ['bank_transfer', 'card'],
+        channels: ['bank_transfer'], // FORCES ONLY PAY WITH TRANSFER
         callback: function(response) {
           alert('Payment successful! Category unlocked. Opening connection...');
           
