@@ -440,23 +440,6 @@
     let activeCategory = null;
 
     window.addEventListener('DOMContentLoaded', () => {
-      // Check if user returned from successful payment
-      const urlParams = new URLSearchParams(window.location.search);
-      const paidCatId = urlParams.get('paid');
-      if (paidCatId) {
-        let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
-        if (!unlocked.includes(paidCatId)) {
-          unlocked.push(paidCatId);
-          localStorage.setItem('unlocked_cats', JSON.stringify(unlocked));
-        }
-        const unlockedCat = categories.find(c => c.id === paidCatId);
-        if (unlockedCat) {
-          localStorage.setItem('selected_category_name', unlockedCat.name);
-          window.location.href = unlockedCat.page;
-          return;
-        }
-      }
-
       const onboardingDone = localStorage.getItem('onboarding_complete');
       if (onboardingDone === 'true') {
         showStep(3);
@@ -663,37 +646,57 @@
       const catToPay = activeCategory;
       closeModal();
       if (catToPay) {
-        redirectToPaystackCheckout(catToPay);
+        payWithPaystack(catToPay);
       }
     }
 
-    // Uses Paystack Standard Checkout URL via Base64 payload encoding for 100% reliable client-side checkout
-    function redirectToPaystackCheckout(cat) {
+    // Dynamically reloads the Paystack SDK script on every attempt to ensure bank transfer modal opens repeatedly
+    function payWithPaystack(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
 
       const sessionTimestamp = Date.now();
       const sessionEmail = `pay_${userPhone}_${sessionTimestamp}@mercy.name.ng`;
-      const callbackUrl = window.location.origin + window.location.pathname + `?paid=${cat.id}`;
 
-      // Build the standard Paystack checkout URL directly using public parameters
-      const params = new URLSearchParams({
-        key: PAYSTACK_LIVE_KEY,
-        email: sessionEmail,
-        amount: cat.price * 100,
-        currency: 'NGN',
-        channels: 'bank_transfer',
-        callback_url: callbackUrl,
-        metadata: JSON.stringify({
-          custom_fields: [
-            { display_name: "Customer Name", variable_name: "customer_name", value: rawFullName },
-            { display_name: "Phone Number", variable_name: "phone_number", value: userPhone }
-          ]
-        })
-      });
+      const nameParts = rawFullName.split(/\s+/);
+      const firstName = nameParts[0] || 'Customer';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
 
-      // Redirect directly to Paystack payment page
-      window.location.href = `https://checkout.paystack.com/` + `?` + params.toString();
+      // Remove any existing Paystack script tag so it re-initializes fresh every time
+      const existingScript = document.getElementById('paystack-inline-js');
+      if (existingScript) existingScript.remove();
+
+      const script = document.createElement('script');
+      script.id = 'paystack-inline-js';
+      script.src = 'https://js.paystack.co/v1/inline.js';
+      script.onload = function() {
+        let handler = PaystackPop.setup({
+          key: PAYSTACK_LIVE_KEY, 
+          email: sessionEmail,
+          phone: userPhone,
+          firstname: firstName,
+          lastname: lastName,
+          amount: cat.price * 100,
+          currency: 'NGN',
+          channels: ['bank_transfer'],
+          callback: function(response) {
+            let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
+            if (!unlocked.includes(cat.id)) {
+              unlocked.push(cat.id);
+              localStorage.setItem('unlocked_cats', JSON.stringify(unlocked));
+            }
+            localStorage.setItem('selected_category_name', cat.name);
+            window.location.href = cat.page;
+          },
+          onClose: function() {
+            document.querySelectorAll('iframe[name^="paystack"], div[style*="z-index: 10000"]').forEach(el => {
+              if (el && el.parentNode) el.parentNode.removeChild(el);
+            });
+          }
+        });
+        handler.openIframe();
+      };
+      document.head.appendChild(script);
     }
   </script>
 </body>
