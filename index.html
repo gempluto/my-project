@@ -26,14 +26,14 @@
     /* Auto-detect Light Mode according to person's phone setting */
     @media (prefers-color-scheme: light) {
       :root {
-        --bg-color: #F4F6F9;
-        --card-bg: #FFFFFF;
+        --bg-color: #FFFFFF;
+        --card-bg: #F8F9FA;
         --text-primary: #111111;
         --text-secondary: #555555;
         --border-gold: #D4AF37;
-        --input-bg: #F0F2F5;
+        --input-bg: #FFFFFF;
         --input-border: #CCCCCC;
-        --btn-cat-bg: linear-gradient(180deg, #FFFFFF 0%, #F5F5F5 100%);
+        --btn-cat-bg: linear-gradient(180deg, #FFFFFF 0%, #F1F3F5 100%);
         --btn-cat-border: #E0E0E0;
         --profile-card-bg: #FFFFFF;
         --modal-overlay: rgba(0, 0, 0, 0.65);
@@ -186,7 +186,6 @@
       transform: translateY(2px) scale(0.98);
     }
 
-    /* Unlocked category button styling */
     .category-btn.unlocked {
       border-color: #D4AF37;
       background: linear-gradient(180deg, #26200A 0%, #181406 100%);
@@ -210,7 +209,6 @@
       flex-shrink: 0;
     }
 
-    /* Unlocked badge styling */
     .unlocked .price-badge {
       background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
       color: #000000;
@@ -236,7 +234,6 @@
       position: relative;
       width: 100%;
       min-height: 280px;
-      max-height: 420px;
       background-color: var(--input-bg);
       display: flex;
       align-items: center;
@@ -255,7 +252,7 @@
       position: absolute;
       top: 12px;
       right: 12px;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(4px);
       color: #FFFFFF;
       padding: 5px 10px;
@@ -437,7 +434,7 @@
   <script>
     const PAYSTACK_LIVE_KEY = "pk_live_88ba11e7af2c83ef0e73e19768947cdf5c2c124f";
 
-    // Categories mapping matching your html target pages & GitHub image folders
+    // 8 Categories linked to your exact GitHub folder names
     const categories = [
       { id: 'sugar_mommy', folder: 'sugar_mommy', name: 'Sugar mommy or Sugar daddy', price: 2000, page: 'sugar_mommy.html' },
       { id: 'vip_social', folder: 'social_group', name: 'Hookup girls group', price: 1500, page: 'vip_social.html' },
@@ -507,7 +504,6 @@
           <span class="price-badge">${isUnlocked ? 'UNLOCKED' : '₦' + cat.price.toLocaleString()}</span>
         `;
         
-        // If unlocked, clicking goes straight to the page. If not, opens pictures gallery.
         btn.onclick = () => {
           if (isUnlocked) {
             localStorage.setItem('selected_category_name', cat.name);
@@ -521,7 +517,7 @@
       });
     }
 
-    // Step 4: Open Gallery for category
+    // Step 4: Open Gallery and load pictures directly from GitHub folder
     function openCategoryGallery(cat) {
       selectedCategory = cat;
       const unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
@@ -554,8 +550,10 @@
             </span>
             <img class="profile-img" 
                  src="images/${cat.folder}/${i}.jpg" 
-                 data-ext-index="0"
-                 onerror="handleImgError(this, '${cat.folder}', ${i})"
+                 data-folder="${cat.folder}"
+                 data-index="${i}"
+                 data-step="0"
+                 onerror="tryNextImageFormat(this)"
                  alt="Available Profile ${i}">
           </div>
           <div class="profile-body">
@@ -577,17 +575,34 @@
       showStep(4);
     }
 
-    // Handles image extensions (.png, .jpeg, etc.)
-    function handleImgError(img, folder, index) {
-      const extensions = ['.png', '.jpeg', '.JPG', '.PNG', '.JPEG', '.webp'];
-      let extIndex = parseInt(img.getAttribute('data-ext-index') || '0');
+    // Smart Format Loader: Automatically checks common extensions (.png, .jpeg, .JPG, .webp, etc.)
+    function tryNextImageFormat(img) {
+      const folder = img.getAttribute('data-folder');
+      const index = img.getAttribute('data-index');
+      let step = parseInt(img.getAttribute('data-step') || '0');
 
-      if (extIndex < extensions.length) {
-        img.setAttribute('data-ext-index', extIndex + 1);
-        img.src = `images/${folder}/${index}${extensions[extIndex]}`;
+      const formats = [
+        `images/${folder}/${index}.png`,
+        `images/${folder}/${index}.jpeg`,
+        `images/${folder}/${index}.JPG`,
+        `images/${folder}/${index}.PNG`,
+        `images/${folder}/${index}.JPEG`,
+        `images/${folder}/${index}.webp`,
+        `images/${folder}/0${index}.jpg`,
+        `images/${folder}/photo${index}.jpg`,
+        `images/${folder}/img${index}.jpg`,
+        `images/${folder}/IMG_${index}.jpg`
+      ];
+
+      if (step < formats.length) {
+        img.setAttribute('data-step', step + 1);
+        img.src = formats[step];
       } else {
+        // If image number doesn't exist in folder, hide the card cleanly
         const card = document.getElementById(`card-${folder}-${index}`);
-        if (card) card.style.display = 'none';
+        if (card) {
+          card.style.display = 'none';
+        }
       }
     }
 
@@ -623,7 +638,7 @@
       }
     }
 
-    // Paystack Payment with automatic unlock and redirection to required HTML page
+    // Paystack Payment function
     function payWithPaystack(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
@@ -647,7 +662,6 @@
         callback: function(response) {
           alert('Payment successful! Category unlocked. Opening connection...');
           
-          // Save unlocked category
           let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
           if (!unlocked.includes(cat.id)) {
             unlocked.push(cat.id);
@@ -655,7 +669,6 @@
           }
           localStorage.setItem('selected_category_name', cat.name);
           
-          // Redirect directly to the paid connection HTML page
           window.location.href = cat.page;
         },
         onClose: function() {
