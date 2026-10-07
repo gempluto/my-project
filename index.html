@@ -426,7 +426,7 @@
         To get the contact details for this profile, you are required to pay the connection fee of <strong id="modal-amount">₦0</strong>.
       </p>
       <div class="modal-actions">
-        <button class="btn-gold" onclick="proceedToPaystack()">Proceed to Payment</button>
+        <button class="btn-gold" onclick="proceedToPayment()">Proceed to Payment</button>
         <button class="btn-cancel" onclick="closeModal()">Cancel</button>
       </div>
     </div>
@@ -437,10 +437,10 @@
     const GITHUB_REPO_OWNER = "gempluto";
     const GITHUB_REPO_NAME = "my-project";
     
-    // Fixed base timestamp for calculating +5 views/hr and +1 like/hr
+    // Fixed base timestamp for calculating +5 views/hr and +1 like/hr reliably
     const BASE_TIME_REF = 1735689600000; // Jan 1, 2025
 
-    // 8 Categories linked to exact GitHub repository folder names and target HTML pages
+    // 8 Categories linked to your exact GitHub repository folder names and target HTML pages
     const categories = [
       { id: 'sugar_mommy', folder: 'sugar_mommy', name: 'Sugar mommy or Sugar daddy', price: 2000, page: 'sugar_mommy.html' },
       { id: 'vip_social', folder: 'social_group', name: 'Hookup girls group', price: 1500, page: 'vip_social.html' },
@@ -454,18 +454,6 @@
 
     let selectedCategory = null;
 
-    // Force removes stuck Paystack overlay elements from DOM
-    function clearPaystackIframes() {
-      const iframes = document.querySelectorAll('iframe[src*="paystack"], div[style*="position: fixed"][style*="z-index"]');
-      iframes.forEach(el => {
-        if (el.src && el.src.includes('paystack')) {
-          el.remove();
-        } else if (el.innerText && el.innerText.toLowerCase().includes('paystack')) {
-          el.remove();
-        }
-      });
-    }
-
     window.addEventListener('DOMContentLoaded', () => {
       const onboardingDone = localStorage.getItem('onboarding_complete');
       if (onboardingDone === 'true') {
@@ -477,7 +465,6 @@
     });
 
     function showStep(stepNumber) {
-      clearPaystackIframes();
       document.getElementById('step-1').classList.add('hidden');
       document.getElementById('step-2').classList.add('hidden');
       document.getElementById('step-3').classList.add('hidden');
@@ -592,15 +579,14 @@
         }
         hash = Math.abs(hash);
 
-        const baseViews = 9000 + (hash % 5000); 
-        const baseLikes = 250 + (hash % 400);   
+        const baseViews = 9000 + (hash % 5000);
+        const baseLikes = 250 + (hash % 400);
 
         const totalViews = baseViews + (hoursElapsed * 5);
         const viewsFormatted = (totalViews / 1000).toFixed(1) + 'k views';
 
         const isUserLiked = localStorage.getItem(`liked_${imageId}`) === 'true';
         const userBonus = isUserLiked ? 1 : 0;
-
         const totalLikes = baseLikes + hoursElapsed + userBonus;
 
         const card = document.createElement('div');
@@ -636,9 +622,7 @@
       });
     }
 
-    // Handles Get Connected button click reliably every time
     function handleConnectClick(catId) {
-      clearPaystackIframes();
       const cat = categories.find(c => c.id === catId);
       if (!cat) return;
 
@@ -651,7 +635,6 @@
       }
     }
 
-    // Toggle heart like button & save state permanently in localStorage
     function toggleLike(btnElement, imageId, currentBaseLikes) {
       const isCurrentlyLiked = btnElement.classList.contains('liked');
       const newLikedState = !isCurrentlyLiked;
@@ -664,7 +647,6 @@
       countSpan.innerText = updatedLikes;
     }
 
-    // Payment Modal Functions
     function openPaymentModal(cat) {
       selectedCategory = cat;
       document.getElementById('modal-amount').innerText = `₦${cat.price.toLocaleString()}`;
@@ -675,24 +657,20 @@
 
     function closeModal() {
       document.getElementById('payment-modal').classList.add('hidden');
-      clearPaystackIframes();
     }
 
-    function proceedToPaystack() {
+    function proceedToPayment() {
       closeModal();
       if (selectedCategory) {
         payWithPaystack(selectedCategory);
       }
     }
 
-    // Paystack Payment function with forced DOM cleanup for infinite retries
+    // Paystack Payment Function (Fixed cancellation looping & removed closed alert popup)
     function payWithPaystack(cat) {
-      clearPaystackIframes();
-
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
 
-      // Dynamic unique email & reference per click guarantees a fresh Paystack session every retry
       const sessionTimestamp = Date.now();
       const sessionEmail = `pay_${userPhone}_${sessionTimestamp}@mercy.name.ng`;
 
@@ -704,28 +682,24 @@
         key: PAYSTACK_LIVE_KEY, 
         email: sessionEmail,
         phone: userPhone,
-        ref: 'TX_' + sessionTimestamp,
         firstname: firstName,
         lastname: lastName,
         amount: cat.price * 100,
         currency: 'NGN',
-        channels: ['bank_transfer'], // Forces Pay with Transfer
+        channels: ['bank_transfer'],
         callback: function(response) {
-          clearPaystackIframes();
           let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
           if (!unlocked.includes(cat.id)) {
             unlocked.push(cat.id);
             localStorage.setItem('unlocked_cats', JSON.stringify(unlocked));
           }
           localStorage.setItem('selected_category_name', cat.name);
-          
           window.location.href = cat.page;
         },
         onClose: function() {
-          clearPaystackIframes();
+          // Silently resets without showing any alert popup so buttons keep working smoothly
         }
       });
-      
       handler.openIframe();
     }
   </script>
