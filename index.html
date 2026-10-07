@@ -357,6 +357,11 @@
     }
 
     .modal-actions {
+      div {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -450,7 +455,7 @@
       { id: 'paid_chat', folder: 'paid_chat', name: 'Get paid for chatting with clients', price: 8000, page: 'paid_chat.html' }
     ];
 
-    let pendingPaymentCategory = null;
+    let activeCategory = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       const onboardingDone = localStorage.getItem('onboarding_complete');
@@ -522,6 +527,7 @@
     }
 
     async function openCategoryGallery(cat) {
+      activeCategory = cat;
       const unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
       const isUnlocked = unlocked.includes(cat.id);
 
@@ -611,24 +617,11 @@
                 <span>${totalLikes}</span>
               </button>
             </div>
-            <button class="btn-gold" onclick='handleConnectClick("${cat.id}")'>${buttonText}</button>
+            <button class="btn-gold" onclick="openPaymentModal()">Get Connected &rarr;</button>
           </div>
         `;
         container.appendChild(card);
       });
-    }
-
-    function handleConnectClick(catId) {
-      const cat = categories.find(c => c.id === catId);
-      if (!cat) return;
-
-      const unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
-      if (unlocked.includes(cat.id)) {
-        localStorage.setItem('selected_category_name', cat.name);
-        window.location.href = cat.page;
-      } else {
-        openPaymentModal(cat);
-      }
     }
 
     function toggleLike(btnElement, imageId, currentBaseLikes) {
@@ -643,21 +636,20 @@
       countSpan.innerText = updatedLikes;
     }
 
-    function openPaymentModal(cat) {
-      pendingPaymentCategory = cat;
-      document.getElementById('modal-amount').innerText = `₦${cat.price.toLocaleString()}`;
+    function openPaymentModal() {
+      if (!activeCategory) return;
+      document.getElementById('modal-amount').innerText = `₦${activeCategory.price.toLocaleString()}`;
       document.getElementById('modal-description').innerHTML = 
-        `To get the contact details for this connection in <strong>${cat.name}</strong>, you are required to pay the fee of <strong>₦${cat.price.toLocaleString()}</strong>.`;
+        `To get the contact details for this connection in <strong>${activeCategory.name}</strong>, you are required to pay the fee of <strong>₦${activeCategory.price.toLocaleString()}</strong>.`;
       document.getElementById('payment-modal').classList.remove('hidden');
     }
 
     function closeModal() {
       document.getElementById('payment-modal').classList.add('hidden');
-      pendingPaymentCategory = null;
     }
 
     function proceedToPayment() {
-      const catToPay = pendingPaymentCategory;
+      const catToPay = activeCategory;
       closeModal();
       if (catToPay) {
         payWithPaystack(catToPay);
@@ -694,7 +686,10 @@
           window.location.href = cat.page;
         },
         onClose: function() {
-          pendingPaymentCategory = null;
+          // Removes any leftover invisible Paystack iframe overlays so buttons never freeze
+          document.querySelectorAll('iframe[name^="paystack"], div[style*="z-index: 10000"]').forEach(el => {
+            if (el && el.parentNode) el.parentNode.removeChild(el);
+          });
         }
       });
       handler.openIframe();
