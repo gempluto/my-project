@@ -357,11 +357,6 @@
     }
 
     .modal-actions {
-      div {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -423,19 +418,8 @@
     </div>
   </div>
 
-  <!-- PAYMENT CONFIRMATION MODAL -->
-  <div id="payment-modal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <h3 class="modal-title">Get Connected</h3>
-      <p class="modal-text" id="modal-description">
-        To get the contact details for this profile, you are required to pay the connection fee of <strong id="modal-amount">₦0</strong>.
-      </p>
-      <div class="modal-actions">
-        <button class="btn-gold" onclick="proceedToPayment()">Proceed to Payment</button>
-        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      </div>
-    </div>
-  </div>
+  <!-- DYNAMIC PAYMENT MODAL CONTAINER -->
+  <div id="modal-root"></div>
 
   <script>
     const PAYSTACK_LIVE_KEY = "pk_live_88ba11e7af2c83ef0e73e19768947cdf5c2c124f";
@@ -636,16 +620,29 @@
       countSpan.innerText = updatedLikes;
     }
 
+    // Always builds and injects a fresh modal on every click to prevent freezing
     function openPaymentModal() {
       if (!activeCategory) return;
-      document.getElementById('modal-amount').innerText = `₦${activeCategory.price.toLocaleString()}`;
-      document.getElementById('modal-description').innerHTML = 
-        `To get the contact details for this connection in <strong>${activeCategory.name}</strong>, you are required to pay the fee of <strong>₦${activeCategory.price.toLocaleString()}</strong>.`;
-      document.getElementById('payment-modal').classList.remove('hidden');
+      
+      const root = document.getElementById('modal-root');
+      root.innerHTML = `
+        <div id="payment-modal" class="modal-overlay">
+          <div class="modal-card">
+            <h3 class="modal-title">Get Connected</h3>
+            <p class="modal-text">
+              To get the contact details for this connection in <strong>${activeCategory.name}</strong>, you are required to pay the fee of <strong>₦${activeCategory.price.toLocaleString()}</strong>.
+            </p>
+            <div class="modal-actions">
+              <button class="btn-gold" onclick="proceedToPayment()">Proceed to Payment</button>
+              <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     function closeModal() {
-      document.getElementById('payment-modal').classList.add('hidden');
+      document.getElementById('modal-root').innerHTML = '';
     }
 
     function proceedToPayment() {
@@ -686,7 +683,7 @@
           window.location.href = cat.page;
         },
         onClose: function() {
-          // Removes any leftover invisible Paystack iframe overlays so buttons never freeze
+          // Removes any leftover iframe or overlay layers left by Paystack
           document.querySelectorAll('iframe[name^="paystack"], div[style*="z-index: 10000"]').forEach(el => {
             if (el && el.parentNode) el.parentNode.removeChild(el);
           });
