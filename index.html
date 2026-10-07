@@ -454,6 +454,18 @@
 
     let selectedCategory = null;
 
+    // Force removes stuck Paystack overlay elements from DOM
+    function clearPaystackIframes() {
+      const iframes = document.querySelectorAll('iframe[src*="paystack"], div[style*="position: fixed"][style*="z-index"]');
+      iframes.forEach(el => {
+        if (el.src && el.src.includes('paystack')) {
+          el.remove();
+        } else if (el.innerText && el.innerText.toLowerCase().includes('paystack')) {
+          el.remove();
+        }
+      });
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       const onboardingDone = localStorage.getItem('onboarding_complete');
       if (onboardingDone === 'true') {
@@ -465,6 +477,7 @@
     });
 
     function showStep(stepNumber) {
+      clearPaystackIframes();
       document.getElementById('step-1').classList.add('hidden');
       document.getElementById('step-2').classList.add('hidden');
       document.getElementById('step-3').classList.add('hidden');
@@ -623,8 +636,9 @@
       });
     }
 
-    // Handles Get Connected button click reliably every single time
+    // Handles Get Connected button click reliably every time
     function handleConnectClick(catId) {
+      clearPaystackIframes();
       const cat = categories.find(c => c.id === catId);
       if (!cat) return;
 
@@ -661,6 +675,7 @@
 
     function closeModal() {
       document.getElementById('payment-modal').classList.add('hidden');
+      clearPaystackIframes();
     }
 
     function proceedToPaystack() {
@@ -670,12 +685,14 @@
       }
     }
 
-    // Paystack Payment function with quiet close & multi-retry support
+    // Paystack Payment function with forced DOM cleanup for infinite retries
     function payWithPaystack(cat) {
+      clearPaystackIframes();
+
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
 
-      // Generates a fresh timestamp per checkout attempt to prevent gateway caching
+      // Dynamic unique email & reference per click guarantees a fresh Paystack session every retry
       const sessionTimestamp = Date.now();
       const sessionEmail = `pay_${userPhone}_${sessionTimestamp}@mercy.name.ng`;
 
@@ -687,12 +704,14 @@
         key: PAYSTACK_LIVE_KEY, 
         email: sessionEmail,
         phone: userPhone,
+        ref: 'TX_' + sessionTimestamp,
         firstname: firstName,
         lastname: lastName,
         amount: cat.price * 100,
         currency: 'NGN',
         channels: ['bank_transfer'], // Forces Pay with Transfer
         callback: function(response) {
+          clearPaystackIframes();
           let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
           if (!unlocked.includes(cat.id)) {
             unlocked.push(cat.id);
@@ -703,7 +722,7 @@
           window.location.href = cat.page;
         },
         onClose: function() {
-          // Closes quietly without any browser alert window
+          clearPaystackIframes();
         }
       });
       
