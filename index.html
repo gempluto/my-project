@@ -23,7 +23,7 @@
       --shadow-color: rgba(212, 175, 55, 0.15);
     }
 
-    /* Auto-detect Light Mode (White Background) when person's phone is set to Light Mode */
+    /* Auto-detect Light Mode (White Background) when phone is set to Light Mode */
     @media (prefers-color-scheme: light) {
       :root {
         --bg-color: #FFFFFF;
@@ -423,10 +423,10 @@
     <div class="modal-card">
       <h3 class="modal-title">Get Connected</h3>
       <p class="modal-text" id="modal-description">
-        To connect with this profile, you are required to pay the connection fee of <strong id="modal-amount">₦0</strong>.
+        To get the contact details for this profile, you are required to pay the connection fee of <strong id="modal-amount">₦0</strong>.
       </p>
       <div class="modal-actions">
-        <button class="btn-gold" onclick="proceedToPaystack()">Proceed to Pay</button>
+        <button class="btn-gold" onclick="proceedToPaystack()">Proceed to Payment</button>
         <button class="btn-cancel" onclick="closeModal()">Cancel</button>
       </div>
     </div>
@@ -436,8 +436,11 @@
     const PAYSTACK_LIVE_KEY = "pk_live_88ba11e7af2c83ef0e73e19768947cdf5c2c124f";
     const GITHUB_REPO_OWNER = "gempluto";
     const GITHUB_REPO_NAME = "my-project";
+    
+    // Fixed base timestamp for calculating +5 views/hr and +1 like/hr reliably
+    const BASE_TIME_REF = 1735689600000; // Jan 1, 2025
 
-    // 8 Categories linked to your exact GitHub repository folder names
+    // 8 Categories linked to your exact GitHub repository folder names and target HTML pages
     const categories = [
       { id: 'sugar_mommy', folder: 'sugar_mommy', name: 'Sugar mommy or Sugar daddy', price: 2000, page: 'sugar_mommy.html' },
       { id: 'vip_social', folder: 'social_group', name: 'Hookup girls group', price: 1500, page: 'vip_social.html' },
@@ -540,12 +543,10 @@
         imageFiles = JSON.parse(cachedData);
       } else {
         try {
-          // Queries GitHub API for the list of exact picture filenames in this folder
           const apiUrl = `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/images/${cat.folder}`;
           const response = await fetch(apiUrl);
           if (response.ok) {
             const data = await response.json();
-            // Filter out system files like .gitkeep
             imageFiles = data
               .filter(file => file.type === 'file' && !file.name.startsWith('.'))
               .map(file => file.name);
@@ -564,27 +565,47 @@
         return;
       }
 
-      // Render every picture that exists inside your folder on GitHub
+      // Calculate elapsed hours since reference point to increase +5 views/hr and +1 like/hr
+      const now = Date.now();
+      const hoursElapsed = Math.max(0, Math.floor((now - BASE_TIME_REF) / (1000 * 60 * 60)));
+
       imageFiles.forEach((filename, index) => {
         const profileNum = index + 1;
-        // Generate realistic random views between 9.0k and 15.0k
-        const randomViews = (Math.random() * (15.0 - 9.0) + 9.0).toFixed(1) + 'k views';
-        const randomLikes = Math.floor(Math.random() * 800) + 120;
+        const imageId = `${cat.id}_${filename}`;
+
+        // Fixed base calculation seed based on image ID
+        let hash = 0;
+        for (let i = 0; i < imageId.length; i++) {
+          hash = (hash << 5) - hash + imageId.charCodeAt(i);
+          hash |= 0;
+        }
+        hash = Math.abs(hash);
+
+        // Fixed Base Starting Values
+        const baseViews = 9000 + (hash % 5000); // 9,000 to 14,000 base
+        const baseLikes = 250 + (hash % 400);   // 250 to 650 base
+
+        // Total Views (+5 views per hour)
+        const totalViews = baseViews + (hoursElapsed * 5);
+        const viewsFormatted = (totalViews / 1000).toFixed(1) + 'k views';
+
+        // User Like Persistence from localStorage
+        const isUserLiked = localStorage.getItem(`liked_${imageId}`) === 'true';
+        const userBonus = isUserLiked ? 1 : 0;
+
+        // Total Likes (+1 like per hour + user's saved like)
+        const totalLikes = baseLikes + hoursElapsed + userBonus;
 
         const card = document.createElement('div');
         card.className = 'profile-card';
 
         const buttonText = isUnlocked ? 'Enter Connection &rarr;' : 'Get Connected &rarr;';
-        const buttonAction = isUnlocked 
-          ? `window.location.href='${cat.page}'` 
-          : `openPaymentModal("${cat.name.replace(/"/g, '&quot;')}", ${cat.price})`;
-
         const imagePath = `images/${cat.folder}/${filename}`;
 
         card.innerHTML = `
           <div class="profile-img-wrapper">
             <span class="view-count-badge">
-              👁️ ${randomViews}
+              👁️ ${viewsFormatted}
             </span>
             <img class="profile-img" 
                  src="${imagePath}" 
@@ -593,38 +614,54 @@
           <div class="profile-body">
             <div class="profile-header">
               <span class="profile-name">Available Profile #${profileNum}</span>
-              <button class="like-btn" onclick="toggleLike(this)">
+              <button class="like-btn ${isUserLiked ? 'liked' : ''}" 
+                      onclick="toggleLike(this, '${imageId}', ${baseLikes + hoursElapsed})">
                 <svg viewBox="0 0 24 24">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                 </svg>
-                <span>${randomLikes}</span>
+                <span>${totalLikes}</span>
               </button>
             </div>
-            <button class="btn-gold" onclick="${buttonAction}">${buttonText}</button>
+            <button class="btn-gold" onclick="handleConnectClick('${cat.id}')">${buttonText}</button>
           </div>
         `;
         container.appendChild(card);
       });
     }
 
-    // Toggle heart like button
-    function toggleLike(btnElement) {
-      const isLiked = btnElement.classList.toggle('liked');
-      const countSpan = btnElement.querySelector('span');
-      let currentCount = parseInt(countSpan.innerText);
-      
-      if (isLiked) {
-        countSpan.innerText = currentCount + 1;
+    // Handles Get Connected button click reliably
+    function handleConnectClick(catId) {
+      const cat = categories.find(c => c.id === catId);
+      if (!cat) return;
+
+      const unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
+      if (unlocked.includes(cat.id)) {
+        localStorage.setItem('selected_category_name', cat.name);
+        window.location.href = cat.page;
       } else {
-        countSpan.innerText = currentCount - 1;
+        openPaymentModal(cat);
       }
     }
 
+    // Toggle heart like button & save state permanently in localStorage
+    function toggleLike(btnElement, imageId, currentBaseLikes) {
+      const isCurrentlyLiked = btnElement.classList.contains('liked');
+      const newLikedState = !isCurrentlyLiked;
+      
+      btnElement.classList.toggle('liked', newLikedState);
+      localStorage.setItem(`liked_${imageId}`, newLikedState ? 'true' : 'false');
+
+      const countSpan = btnElement.querySelector('span');
+      const updatedLikes = currentBaseLikes + (newLikedState ? 1 : 0);
+      countSpan.innerText = updatedLikes;
+    }
+
     // Payment Modal Functions
-    function openPaymentModal(categoryName, price) {
-      document.getElementById('modal-amount').innerText = `₦${price.toLocaleString()}`;
+    function openPaymentModal(cat) {
+      selectedCategory = cat;
+      document.getElementById('modal-amount').innerText = `₦${cat.price.toLocaleString()}`;
       document.getElementById('modal-description').innerHTML = 
-        `To get connected in <strong>${categoryName}</strong>, a required connection fee of <strong>₦${price.toLocaleString()}</strong> is needed.`;
+        `To get the contact details for this connection in <strong>${cat.name}</strong>, you are required to pay the fee of <strong>₦${cat.price.toLocaleString()}</strong>.`;
       document.getElementById('payment-modal').classList.remove('hidden');
     }
 
@@ -661,7 +698,7 @@
         currency: 'NGN',
         channels: ['bank_transfer', 'card'],
         callback: function(response) {
-          alert('Payment successful! Category unlocked. Redirecting...');
+          alert('Payment successful! Category unlocked. Opening connection...');
           
           let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
           if (!unlocked.includes(cat.id)) {
