@@ -437,10 +437,8 @@
     const GITHUB_REPO_OWNER = "gempluto";
     const GITHUB_REPO_NAME = "my-project";
     
-    // Fixed base timestamp for calculating +5 views/hr and +1 like/hr reliably
     const BASE_TIME_REF = 1735689600000; // Jan 1, 2025
 
-    // 8 Categories linked to your exact GitHub repository folder names and target HTML pages
     const categories = [
       { id: 'sugar_mommy', folder: 'sugar_mommy', name: 'Sugar mommy or Sugar daddy', price: 2000, page: 'sugar_mommy.html' },
       { id: 'vip_social', folder: 'social_group', name: 'Hookup girls group', price: 1500, page: 'vip_social.html' },
@@ -452,7 +450,7 @@
       { id: 'paid_chat', folder: 'paid_chat', name: 'Get paid for chatting with clients', price: 8000, page: 'paid_chat.html' }
     ];
 
-    let selectedCategory = null;
+    let pendingPaymentCategory = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       const onboardingDone = localStorage.getItem('onboarding_complete');
@@ -523,9 +521,7 @@
       });
     }
 
-    // Step 4: Dynamically fetch exact pictures from GitHub folder
     async function openCategoryGallery(cat) {
-      selectedCategory = cat;
       const unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
       const isUnlocked = unlocked.includes(cat.id);
 
@@ -615,7 +611,7 @@
                 <span>${totalLikes}</span>
               </button>
             </div>
-            <button class="btn-gold" onclick="handleConnectClick('${cat.id}')">${buttonText}</button>
+            <button class="btn-gold" onclick='handleConnectClick("${cat.id}")'>${buttonText}</button>
           </div>
         `;
         container.appendChild(card);
@@ -648,7 +644,7 @@
     }
 
     function openPaymentModal(cat) {
-      selectedCategory = cat;
+      pendingPaymentCategory = cat;
       document.getElementById('modal-amount').innerText = `₦${cat.price.toLocaleString()}`;
       document.getElementById('modal-description').innerHTML = 
         `To get the contact details for this connection in <strong>${cat.name}</strong>, you are required to pay the fee of <strong>₦${cat.price.toLocaleString()}</strong>.`;
@@ -657,16 +653,17 @@
 
     function closeModal() {
       document.getElementById('payment-modal').classList.add('hidden');
+      pendingPaymentCategory = null;
     }
 
     function proceedToPayment() {
+      const catToPay = pendingPaymentCategory;
       closeModal();
-      if (selectedCategory) {
-        payWithPaystack(selectedCategory);
+      if (catToPay) {
+        payWithPaystack(catToPay);
       }
     }
 
-    // Paystack Payment Function (Fixed cancellation looping & removed closed alert popup)
     function payWithPaystack(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
@@ -697,7 +694,7 @@
           window.location.href = cat.page;
         },
         onClose: function() {
-          // Silently resets without showing any alert popup so buttons keep working smoothly
+          pendingPaymentCategory = null;
         }
       });
       handler.openIframe();
