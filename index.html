@@ -23,7 +23,7 @@
       --shadow-color: rgba(212, 175, 55, 0.15);
     }
 
-    /* Auto-detect Light Mode (White Background) when phone is set to Light Mode */
+    /* Auto-detect Light Mode (White Background) when person's phone is set to Light Mode */
     @media (prefers-color-scheme: light) {
       :root {
         --bg-color: #FFFFFF;
@@ -233,7 +233,7 @@
     .profile-img-wrapper {
       position: relative;
       width: 100%;
-      height: 320px;
+      min-height: 300px;
       background-color: var(--input-bg);
       display: flex;
       align-items: center;
@@ -244,6 +244,7 @@
     .profile-img {
       width: 100%;
       height: 100%;
+      max-height: 420px;
       object-fit: cover;
       display: block;
     }
@@ -315,7 +316,7 @@
       color: #FF3B30;
     }
 
-    /* Payment Modal Styling */
+    /* Modal Styling */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -433,8 +434,10 @@
 
   <script>
     const PAYSTACK_LIVE_KEY = "pk_live_88ba11e7af2c83ef0e73e19768947cdf5c2c124f";
+    const GITHUB_REPO_OWNER = "gempluto";
+    const GITHUB_REPO_NAME = "my-project";
 
-    // 8 Category configurations mapping to your exact GitHub image folders
+    // 8 Categories linked to your exact GitHub repository folder names
     const categories = [
       { id: 'sugar_mommy', folder: 'sugar_mommy', name: 'Sugar mommy or Sugar daddy', price: 2000, page: 'sugar_mommy.html' },
       { id: 'vip_social', folder: 'social_group', name: 'Hookup girls group', price: 1500, page: 'vip_social.html' },
@@ -517,21 +520,54 @@
       });
     }
 
-    // Step 4: Open Gallery and load profiles
-    function openCategoryGallery(cat) {
+    // Step 4: Dynamically fetch exact pictures from GitHub folder
+    async function openCategoryGallery(cat) {
       selectedCategory = cat;
       const unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
       const isUnlocked = unlocked.includes(cat.id);
 
       document.getElementById('gallery-title').innerText = `${cat.name} - Available Profiles`;
-
       const container = document.getElementById('gallery-container');
+      container.innerHTML = '<p class="card-instruction">Loading pictures...</p>';
+
+      showStep(4);
+
+      let imageFiles = [];
+      const cacheKey = `gh_files_${cat.folder}`;
+      const cachedData = sessionStorage.getItem(cacheKey);
+
+      if (cachedData) {
+        imageFiles = JSON.parse(cachedData);
+      } else {
+        try {
+          // Queries GitHub API for the list of exact picture filenames in this folder
+          const apiUrl = `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/images/${cat.folder}`;
+          const response = await fetch(apiUrl);
+          if (response.ok) {
+            const data = await response.json();
+            // Filter out system files like .gitkeep
+            imageFiles = data
+              .filter(file => file.type === 'file' && !file.name.startsWith('.'))
+              .map(file => file.name);
+            
+            sessionStorage.setItem(cacheKey, JSON.stringify(imageFiles));
+          }
+        } catch (e) {
+          console.error("Error fetching folder contents from GitHub:", e);
+        }
+      }
+
       container.innerHTML = '';
 
-      const numberOfPictures = 6; 
+      if (!imageFiles || imageFiles.length === 0) {
+        container.innerHTML = '<p class="card-instruction">No pictures currently available in this category folder.</p>';
+        return;
+      }
 
-      for (let i = 1; i <= numberOfPictures; i++) {
-        // Randomized views counter between 9.0k and 15.0k
+      // Render every picture that exists inside your folder on GitHub
+      imageFiles.forEach((filename, index) => {
+        const profileNum = index + 1;
+        // Generate realistic random views between 9.0k and 15.0k
         const randomViews = (Math.random() * (15.0 - 9.0) + 9.0).toFixed(1) + 'k views';
         const randomLikes = Math.floor(Math.random() * 800) + 120;
 
@@ -541,7 +577,9 @@
         const buttonText = isUnlocked ? 'Enter Connection &rarr;' : 'Get Connected &rarr;';
         const buttonAction = isUnlocked 
           ? `window.location.href='${cat.page}'` 
-          : `openPaymentModal('${cat.name}', ${cat.price})`;
+          : `openPaymentModal("${cat.name.replace(/"/g, '&quot;')}", ${cat.price})`;
+
+        const imagePath = `images/${cat.folder}/${filename}`;
 
         card.innerHTML = `
           <div class="profile-img-wrapper">
@@ -549,16 +587,12 @@
               👁️ ${randomViews}
             </span>
             <img class="profile-img" 
-                 src="images/${cat.folder}/${i}.jpg" 
-                 data-folder="${cat.folder}"
-                 data-index="${i}"
-                 data-step="0"
-                 onerror="handleImgError(this)"
-                 alt="Available Profile ${i}">
+                 src="${imagePath}" 
+                 alt="Available Profile ${profileNum}">
           </div>
           <div class="profile-body">
             <div class="profile-header">
-              <span class="profile-name">Available Profile #${i}</span>
+              <span class="profile-name">Available Profile #${profileNum}</span>
               <button class="like-btn" onclick="toggleLike(this)">
                 <svg viewBox="0 0 24 24">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
@@ -570,44 +604,7 @@
           </div>
         `;
         container.appendChild(card);
-      }
-
-      showStep(4);
-    }
-
-    // Handles path checks and prevents broken images [?] or blank screens
-    function handleImgError(img) {
-      const folder = img.getAttribute('data-folder');
-      const index = parseInt(img.getAttribute('data-index') || '1');
-      let step = parseInt(img.getAttribute('data-step') || '0');
-
-      const formats = [
-        `images/${folder}/${index}.png`,
-        `images/${folder}/${index}.jpeg`,
-        `images/${folder}/${index}.JPG`,
-        `images/${folder}/${index}.PNG`,
-        `images/${folder}/${index}.JPEG`,
-        `images/${folder}/${index}.webp`,
-        `./images/${folder}/${index}.jpg`,
-        `./images/${folder}/${index}.png`
-      ];
-
-      if (step < formats.length) {
-        img.setAttribute('data-step', step + 1);
-        img.src = formats[step];
-      } else {
-        // High-definition backup profile pictures so cards NEVER break or look empty
-        const fallbackList = [
-          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
-          "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500&auto=format&fit=crop&q=80",
-          "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500&auto=format&fit=crop&q=80",
-          "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500&auto=format&fit=crop&q=80",
-          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&auto=format&fit=crop&q=80",
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80"
-        ];
-        img.onerror = null;
-        img.src = fallbackList[(index - 1) % fallbackList.length];
-      }
+      });
     }
 
     // Toggle heart like button
