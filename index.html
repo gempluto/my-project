@@ -420,7 +420,7 @@
   <div id="modal-root"></div>
 
   <script>
-    const FLUTTERWAVE_PUBLIC_KEY = "FLWPUBK-bfddfbdfcef1764bb5a3bf60923b7125a-X"; 
+    const FLUTTERWAVE_PUBLIC_KEY = "FLWPUBK-bfddfbdfcef1764bb5a3bf60923b7125a-X";
     const GITHUB_REPO_OWNER = "gempluto";
     const GITHUB_REPO_NAME = "my-project";
     
@@ -506,7 +506,6 @@
       });
     }
 
-    // Intermediary Screen: "Pay Now" vs "View Pictures Available Before Making Payment"
     function openPrePaymentChoiceModal(cat) {
       const root = document.getElementById('modal-root');
       root.innerHTML = `
@@ -671,26 +670,26 @@
       }
     }
 
-    // Flutterwave Inline Checkout Integration
     function payWithFlutterwave(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
+
       const sessionTimestamp = Date.now();
       const sessionEmail = `pay_${userPhone}_${sessionTimestamp}@mercy.name.ng`;
 
-      const existingScript = document.getElementById('flutterwave-inline-js');
+      const existingScript = document.getElementById('fw-inline-js');
       if (existingScript) existingScript.remove();
 
       const script = document.createElement('script');
-      script.id = 'flutterwave-inline-js';
+      script.id = 'fw-inline-js';
       script.src = 'https://checkout.flutterwave.com/v3.js';
       script.onload = function() {
-        FlutterwaveCheckout({
+        window.FlutterwaveCheckout({
           public_key: FLUTTERWAVE_PUBLIC_KEY,
-          tx_ref: `tx_ref_${sessionTimestamp}_${Math.floor(Math.random() * 1000)}`,
+          tx_ref: `tx_${sessionTimestamp}_${Math.floor(Math.random() * 10000)}`,
           amount: cat.price,
           currency: "NGN",
-          payment_options: "card, banktransfer, ussd",
+          payment_options: "card,banktransfer,ussd",
           customer: {
             email: sessionEmail,
             phone_number: userPhone,
@@ -701,7 +700,7 @@
             description: `Payment for ${cat.name}`,
             logo: "https://mercy.name.ng/favicon.ico",
           },
-          callback: function(data) {
+          callback: function (data) {
             let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
             if (!unlocked.includes(cat.id)) {
               unlocked.push(cat.id);
@@ -711,7 +710,7 @@
             window.location.href = cat.page;
           },
           onclose: function() {
-            console.log("Payment modal closed");
+            console.log("Checkout modal closed");
           }
         });
       };
