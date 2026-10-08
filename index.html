@@ -497,12 +497,49 @@
             localStorage.setItem('selected_category_name', cat.name);
             window.location.href = cat.page;
           } else {
-            openCategoryGallery(cat);
+            activeCategory = cat;
+            openPrePaymentChoiceModal(cat);
           }
         };
 
         container.appendChild(btn);
       });
+    }
+
+    // NEW INTERMEDIARY SCREEN ADDED HERE: "Pay Now" vs "View Pictures Before Making Payment"
+    function openPrePaymentChoiceModal(cat) {
+      const root = document.getElementById('modal-root');
+      root.innerHTML = `
+        <div id="payment-modal" class="modal-overlay">
+          <div class="modal-card">
+            <h3 class="modal-title">Get Connected</h3>
+            <p class="modal-text">
+              You are required to pay the membership fee of <strong>₦${cat.price.toLocaleString()}</strong> for <strong>${cat.name}</strong>. You can proceed directly to payment or view available pictures first.
+            </p>
+            <div class="modal-actions">
+              <button class="btn-gold" onclick="proceedToPaymentDirectly()">Pay Now</button>
+              <button class="btn-gold" style="background: transparent; border: 1px solid var(--border-gold); color: var(--text-primary);" onclick="proceedToGallery()">View the Pictures Available Before Making Payment</button>
+              <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function proceedToPaymentDirectly() {
+      const catToPay = activeCategory;
+      closeModal();
+      if (catToPay) {
+        payWithPaystack(catToPay);
+      }
+    }
+
+    function proceedToGallery() {
+      const cat = activeCategory;
+      closeModal();
+      if (cat) {
+        openCategoryGallery(cat);
+      }
     }
 
     async function openCategoryGallery(cat) {
@@ -596,26 +633,14 @@
                 <span>${totalLikes}</span>
               </button>
             </div>
-            <button class="btn-gold" onclick="openPaymentModal()">Get Connected &rarr;</button>
+            <button class="btn-gold" onclick="openPaymentModalFromGallery()">Get Connected &rarr;</button>
           </div>
         `;
         container.appendChild(card);
       });
     }
 
-    function toggleLike(btnElement, imageId, currentBaseLikes) {
-      const isCurrentlyLiked = btnElement.classList.contains('liked');
-      const newLikedState = !isCurrentlyLiked;
-      
-      btnElement.classList.toggle('liked', newLikedState);
-      localStorage.setItem(`liked_${imageId}`, newLikedState ? 'true' : 'false');
-
-      const countSpan = btnElement.querySelector('span');
-      const updatedLikes = currentBaseLikes + (newLikedState ? 1 : 0);
-      countSpan.innerText = updatedLikes;
-    }
-
-    function openPaymentModal() {
+    function openPaymentModalFromGallery() {
       if (!activeCategory) return;
       
       const root = document.getElementById('modal-root');
@@ -625,9 +650,9 @@
             <h3 class="modal-title">Get Connected</h3>
             <p class="modal-text">
               Please note that we cannot take any further steps with your request until the <strong>₦${activeCategory.price.toLocaleString()}</strong> membership fee for <strong>${activeCategory.name}</strong> is paid. Kindly make the payment so we can continue.
-           </p>
+             </p>
             <div class="modal-actions">
-              <button class="btn-gold" onclick="proceedToPayment()">Proceed to Payment</button>
+              <button class="btn-gold" onclick="proceedToPaymentFromGallery()">Proceed to Payment</button>
               <button class="btn-cancel" onclick="closeModal()">Cancel</button>
             </div>
           </div>
@@ -639,7 +664,7 @@
       document.getElementById('modal-root').innerHTML = '';
     }
 
-    function proceedToPayment() {
+    function proceedToPaymentFromGallery() {
       const catToPay = activeCategory;
       closeModal();
       if (catToPay) {
@@ -694,6 +719,18 @@
         handler.openIframe();
       };
       document.head.appendChild(script);
+    }
+
+    function toggleLike(btnElement, imageId, currentBaseLikes) {
+      const isCurrentlyLiked = btnElement.classList.contains('liked');
+      const newLikedState = !isCurrentlyLiked;
+      
+      btnElement.classList.toggle('liked', newLikedState);
+      localStorage.setItem(`liked_${imageId}`, newLikedState ? 'true' : 'false');
+
+      const countSpan = btnElement.querySelector('span');
+      const updatedLikes = currentBaseLikes + (newLikedState ? 1 : 0);
+      countSpan.innerText = updatedLikes;
     }
   </script>
 </body>
