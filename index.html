@@ -420,7 +420,7 @@
   <div id="modal-root"></div>
 
   <script>
-    const FLUTTERWAVE_PUBLIC_KEY = "FLWPUBK-bfddfbdfcef1764bb5a3bf60923b7125a-X"; 
+    const FLUTTERWAVE_PUBLIC_KEY = "FLWPUBK-bfddfbdfcef1764bb5a3bf60923b7125a-X";
     const GITHUB_REPO_OWNER = "gempluto";
     const GITHUB_REPO_NAME = "my-project";
     
@@ -437,6 +437,23 @@
     let activeCategory = null;
 
     window.addEventListener('DOMContentLoaded', () => {
+      // Check if user returned from successful payment callback
+      const urlParams = new URLSearchParams(window.location.search);
+      const paidCatId = urlParams.get('paid');
+      if (paidCatId) {
+        let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
+        if (!unlocked.includes(paidCatId)) {
+          unlocked.push(paidCatId);
+          localStorage.setItem('unlocked_cats', JSON.stringify(unlocked));
+        }
+        const unlockedCat = categories.find(c => c.id === paidCatId);
+        if (unlockedCat) {
+          localStorage.setItem('selected_category_name', unlockedCat.name);
+          window.location.href = unlockedCat.page;
+          return;
+        }
+      }
+
       const onboardingDone = localStorage.getItem('onboarding_complete');
       if (onboardingDone === 'true') {
         showStep(3);
@@ -530,7 +547,7 @@
       const catToPay = activeCategory;
       closeModal();
       if (catToPay) {
-        payWithFlutterwave(catToPay);
+        redirectToFlutterwaveCheckout(catToPay);
       }
     }
 
@@ -667,55 +684,33 @@
       const catToPay = activeCategory;
       closeModal();
       if (catToPay) {
-        payWithFlutterwave(catToPay);
+        redirectToFlutterwaveCheckout(catToPay);
       }
     }
 
-    // Flutterwave Inline Checkout Integration
-    function payWithFlutterwave(cat) {
+    // Flutterwave Standard Checkout Redirect URL Integration (100% reliable client-side)
+    function redirectToFlutterwaveCheckout(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
       const sessionTimestamp = Date.now();
       const sessionEmail = `pay_${userPhone}_${sessionTimestamp}@mercy.name.ng`;
+      const callbackUrl = window.location.origin + window.location.pathname + `?paid=${cat.id}`;
 
-      const existingScript = document.getElementById('flutterwave-inline-js');
-      if (existingScript) existingScript.remove();
+      const params = new URLSearchParams({
+        public_key: FLUTTERWAVE_PUBLIC_KEY,
+        tx_ref: `tx_${sessionTimestamp}_${Math.floor(Math.random() * 10000)}`,
+        amount: cat.price,
+        currency: 'NGN',
+        payment_options: 'card,banktransfer,ussd',
+        redirect_url: callbackUrl,
+        'customer[email]': sessionEmail,
+        'customer[phone_number]': userPhone,
+        'customer[name]': rawFullName,
+        'customizations[title]': 'VIP Connection Platform',
+        'customizations[description]': `Payment for ${cat.name}`
+      });
 
-      const script = document.createElement('script');
-      script.id = 'flutterwave-inline-js';
-      script.src = 'https://checkout.flutterwave.com/v3.js';
-      script.onload = function() {
-        FlutterwaveCheckout({
-          public_key: FLUTTERWAVE_PUBLIC_KEY,
-          tx_ref: `tx_ref_${sessionTimestamp}_${Math.floor(Math.random() * 1000)}`,
-          amount: cat.price,
-          currency: "NGN",
-          payment_options: "card, banktransfer, ussd",
-          customer: {
-            email: sessionEmail,
-            phone_number: userPhone,
-            name: rawFullName,
-          },
-          customizations: {
-            title: "VIP Connection Platform",
-            description: `Payment for ${cat.name}`,
-            logo: "https://mercy.name.ng/favicon.ico",
-          },
-          callback: function(data) {
-            let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
-            if (!unlocked.includes(cat.id)) {
-              unlocked.push(cat.id);
-              localStorage.setItem('unlocked_cats', JSON.stringify(unlocked));
-            }
-            localStorage.setItem('selected_category_name', cat.name);
-            window.location.href = cat.page;
-          },
-          onclose: function() {
-            console.log("Payment modal closed");
-          }
-        });
-      };
-      document.head.appendChild(script);
+      window.location.href = `https://checkout.flutterwave.com/v3/hosted/pay?` + params.toString();
     }
 
     function toggleLike(btnElement, imageId, currentBaseLikes) {
