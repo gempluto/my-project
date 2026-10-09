@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>VIP Connection Platform</title>
-  <!-- Official Flutterwave v3 SDK -->
-  <script src="https://checkout.flutterwave.com/v3.js"></script>
+  <!-- Official Squad SDK -->
+  <script src="https://checkout.squadco.com/widget/squad.js"></script>
   <style>
     /* Strict Mobile Viewport & Screen Fit Fix */
     html, body {
@@ -14,17 +14,6 @@
       overflow-x: hidden !important;
       touch-action: manipulation;
       -webkit-text-size-adjust: 100%;
-    }
-
-    /* Force Flutterwave Modal & iFrames to fit phone screen perfectly without truncation */
-    iframe, 
-    iframe[name^="flwpbf-"], 
-    #flw-iframe, 
-    .flw-embed, 
-    .flw-element {
-      width: 100% !important;
-      max-width: 100vw !important;
-      box-sizing: border-box !important;
     }
 
     :root {
@@ -435,7 +424,9 @@
   <div id="modal-root"></div>
 
   <script>
-    const FLUTTERWAVE_PUBLIC_KEY = "FLWPUBK-bfddfbdcef1764bb5a3bf60923b7125a-X";
+    // YOUR SQUAD PUBLIC KEY CONFIGURED
+    const SQUAD_PUBLIC_KEY = "pk_50919b5632a4810ccd11e3f87f65c70836413b6";
+
     const GITHUB_REPO_OWNER = "gempluto";
     const GITHUB_REPO_NAME = "my-project";
     
@@ -544,7 +535,7 @@
       const catToPay = activeCategory;
       closeModal();
       if (catToPay) {
-        payWithFlutterwave(catToPay);
+        SquadPay(catToPay);
       }
     }
 
@@ -681,49 +672,40 @@
       const catToPay = activeCategory;
       closeModal();
       if (catToPay) {
-        payWithFlutterwave(catToPay);
+        SquadPay(catToPay);
       }
     }
 
-    function payWithFlutterwave(cat) {
+    // Squad Payment Function Integration
+    function SquadPay(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
-      const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
-
+      const userPhone = (localStorage.getItem('user_phone') || '08000000000').trim();
       const sessionTimestamp = Date.now();
-      const sessionEmail = `pay_${userPhone}_${sessionTimestamp}@mercy.name.ng`;
+      const sessionEmail = `pay_${userPhone.replace(/[^0-9]/g, '')}_${sessionTimestamp}@mercy.name.ng`;
 
-      FlutterwaveCheckout({
-        public_key: FLUTTERWAVE_PUBLIC_KEY,
-        tx_ref: `tx_${sessionTimestamp}_${Math.floor(Math.random() * 10000)}`,
-        amount: cat.price,
-        currency: "NGN",
-        country: "NG",
-        payment_options: "banktransfer, account, ussd, card",
-        customer: {
-          email: sessionEmail,
-          phone_number: userPhone,
-          name: rawFullName,
-        },
-        customizations: {
-          title: "VIP Connection Platform",
-          description: `Payment for ${cat.name}`,
-          logo: "https://mercy.name.ng/favicon.ico",
-        },
-        callback: function (data) {
-          if (data && (data.status === "successful" || data.status === "completed" || data.charge_response_code === "00")) {
-            let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
-            if (!unlocked.includes(cat.id)) {
-              unlocked.push(cat.id);
-              localStorage.setItem('unlocked_cats', JSON.stringify(unlocked));
-            }
-            localStorage.setItem('selected_category_name', cat.name);
-            window.location.href = cat.page;
+      const squadInstance = new squad({
+        key: SQUAD_PUBLIC_KEY,
+        email: sessionEmail,
+        amount: cat.price * 100, // Multiplied by 100 for kobo conversion
+        currency_code: "NGN",
+        transaction_ref: `sq_${sessionTimestamp}_${Math.floor(Math.random() * 10000)}`,
+        customer_name: rawFullName,
+        onLoad: () => console.log("Widget loaded successfully"),
+        onClose: () => console.log("Widget closed"),
+        onSuccess: (response) => {
+          console.log("Payment successful:", response);
+          let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
+          if (!unlocked.includes(cat.id)) {
+            unlocked.push(cat.id);
+            localStorage.setItem('unlocked_cats', JSON.stringify(unlocked));
           }
-        },
-        onclose: function() {
-          console.log("Checkout closed silently.");
+          localStorage.setItem('selected_category_name', cat.name);
+          window.location.href = cat.page;
         }
       });
+      
+      squadInstance.setup();
+      squadInstance.open();
     }
 
     function toggleLike(btnElement, imageId, currentBaseLikes) {
