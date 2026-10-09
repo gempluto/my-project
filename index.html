@@ -424,8 +424,8 @@
   <div id="modal-root"></div>
 
   <script>
-    // YOUR SQUAD PUBLIC KEY CONFIGURED
-    const SQUAD_PUBLIC_KEY = "pk_50919b5632a4810ccd11e3f87f65c70836413b6";
+    // SQUAD TEST PUBLIC KEY (Used for testing while KYC is pending)
+    const SQUAD_PUBLIC_KEY = "test_pk_sample-public-key-1";
 
     const GITHUB_REPO_OWNER = "gempluto";
     const GITHUB_REPO_NAME = "my-project";
@@ -676,7 +676,7 @@
       }
     }
 
-    // Squad Payment Function Integration (Forced Bank Transfer View)
+    // Squad Payment Function Integration (Test Mode)
     function SquadPay(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').trim();
@@ -690,7 +690,7 @@
         currency_code: "NGN",
         transaction_ref: `sq_${sessionTimestamp}_${Math.floor(Math.random() * 10000)}`,
         customer_name: rawFullName,
-        payment_channels: ["bank_transfer"], // Forces Squad to display bank transfer account number directly
+        payment_channels: ["bank_transfer"],
         onLoad: () => console.log("Widget loaded successfully"),
         onClose: () => console.log("Widget closed"),
         onSuccess: (response) => {
