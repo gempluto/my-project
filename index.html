@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>VIP Connection Platform</title>
-  <!-- Official Flutterwave v3 Inline SDK -->
+  <!-- Official Flutterwave v3 SDK -->
   <script src="https://checkout.flutterwave.com/v3.js"></script>
   <style>
     /* CSS Variables for Dynamic Light & Dark Mode according to phone setting */
@@ -422,7 +422,8 @@
   <div id="modal-root"></div>
 
   <script>
-    const FLUTTERWAVE_PUBLIC_KEY = "FLWPUBK-bfddfbdfcef1764bb5a3bf60923b7125a-X";
+    // Exact Live Public Key
+    const FLUTTERWAVE_PUBLIC_KEY = "FLWPUBK-bfddfbdcef1764bb5a3bf60923b7125a-X";
     const GITHUB_REPO_OWNER = "gempluto";
     const GITHUB_REPO_NAME = "my-project";
     
@@ -508,6 +509,7 @@
       });
     }
 
+    // Intermediary Screen: "Pay Now" vs "View Pictures Available Before Making Payment"
     function openPrePaymentChoiceModal(cat) {
       const root = document.getElementById('modal-root');
       root.innerHTML = `
@@ -672,7 +674,7 @@
       }
     }
 
-    // Direct Bank Transfer using official Flutterwave v3 option ("banktransfer")
+    // Direct Bank Transfer using Flutterwave Inline SDK
     function payWithFlutterwave(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
