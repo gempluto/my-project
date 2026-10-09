@@ -670,6 +670,7 @@
       }
     }
 
+    // Flutterwave restricted strictly to Bank Transfer ("account")
     function payWithFlutterwave(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
@@ -689,7 +690,7 @@
           tx_ref: `tx_${sessionTimestamp}_${Math.floor(Math.random() * 10000)}`,
           amount: cat.price,
           currency: "NGN",
-          payment_options: "card,banktransfer,ussd",
+          payment_options: "account",
           customer: {
             email: sessionEmail,
             phone_number: userPhone,
