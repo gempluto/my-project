@@ -7,7 +7,6 @@
   <!-- Official Flutterwave v3 SDK -->
   <script src="https://checkout.flutterwave.com/v3.js"></script>
   <style>
-    /* CSS Variables for Dynamic Light & Dark Mode according to phone setting */
     :root {
       --bg-color: #0B0B0B;
       --card-bg: #161616;
@@ -23,7 +22,6 @@
       --shadow-color: rgba(212, 175, 55, 0.15);
     }
 
-    /* Auto-detect Light Mode (White Background) when phone is set to Light Mode */
     @media (prefers-color-scheme: light) {
       :root {
         --bg-color: #FFFFFF;
@@ -215,7 +213,6 @@
       border: none;
     }
 
-    /* Step 4: Gallery / Profiles Styles */
     .gallery-container {
       display: flex;
       flex-direction: column;
@@ -316,7 +313,6 @@
       color: #FF3B30;
     }
 
-    /* Modal Styling */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -418,16 +414,14 @@
     </div>
   </div>
 
-  <!-- DYNAMIC PAYMENT MODAL CONTAINER -->
   <div id="modal-root"></div>
 
   <script>
-    // Exact Live Public Key
     const FLUTTERWAVE_PUBLIC_KEY = "FLWPUBK-bfddfbdcef1764bb5a3bf60923b7125a-X";
     const GITHUB_REPO_OWNER = "gempluto";
     const GITHUB_REPO_NAME = "my-project";
     
-    const BASE_TIME_REF = 1735689600000; // Jan 1, 2025
+    const BASE_TIME_REF = 1735689600000;
 
     const categories = [
       { id: 'sugar_mommy', folder: 'sugar_mommy', name: 'Sugar mommy or Sugar daddy', price: 2000, page: 'sugar_mommy.html' },
@@ -509,7 +503,6 @@
       });
     }
 
-    // Intermediary Screen: "Pay Now" vs "View Pictures Available Before Making Payment"
     function openPrePaymentChoiceModal(cat) {
       const root = document.getElementById('modal-root');
       root.innerHTML = `
@@ -674,7 +667,7 @@
       }
     }
 
-    // Direct Bank Transfer using Flutterwave Inline SDK
+    // Fixed & Secured Flutterwave Bank Transfer Flow
     function payWithFlutterwave(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
@@ -687,6 +680,7 @@
         tx_ref: `tx_${sessionTimestamp}_${Math.floor(Math.random() * 10000)}`,
         amount: cat.price,
         currency: "NGN",
+        country: "NG",
         payment_options: "banktransfer",
         customer: {
           email: sessionEmail,
@@ -699,16 +693,21 @@
           logo: "https://mercy.name.ng/favicon.ico",
         },
         callback: function (data) {
-          let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
-          if (!unlocked.includes(cat.id)) {
-            unlocked.push(cat.id);
-            localStorage.setItem('unlocked_cats', JSON.stringify(unlocked));
+          // STRICT SECURITY VERIFICATION: Only unlock if transaction is explicitly SUCCESSFUL
+          if (data && (data.status === "successful" || data.status === "completed" || data.charge_response_code === "00")) {
+            let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
+            if (!unlocked.includes(cat.id)) {
+              unlocked.push(cat.id);
+              localStorage.setItem('unlocked_cats', JSON.stringify(unlocked));
+            }
+            localStorage.setItem('selected_category_name', cat.name);
+            window.location.href = cat.page;
+          } else {
+            alert("Payment was not completed. Connection remains locked.");
           }
-          localStorage.setItem('selected_category_name', cat.name);
-          window.location.href = cat.page;
         },
         onclose: function() {
-          console.log("Checkout modal closed");
+          console.log("Payment modal closed by user without completing transaction.");
         }
       });
     }
