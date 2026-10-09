@@ -424,7 +424,7 @@
   <div id="modal-root"></div>
 
   <script>
-    // SQUAD TEST PUBLIC KEY (Used for testing while KYC is pending)
+    // SQUAD PUBLIC KEY (Test mode active for verification)
     const SQUAD_PUBLIC_KEY = "test_pk_sample-public-key-1";
 
     const GITHUB_REPO_OWNER = "gempluto";
@@ -522,21 +522,21 @@
               You are required to pay the membership fee of <strong>₦${cat.price.toLocaleString()}</strong> for <strong>${cat.name}</strong>. You can proceed directly to payment or view available pictures first.
             </p>
             <div class="modal-actions">
-              <button class="btn-gold" onclick="proceedToPaymentDirectly()">Pay Now</button>
+              <button id="modal-pay-btn" class="btn-gold">Pay Now</button>
               <button class="btn-gold" style="background: transparent; border: 1px solid var(--border-gold); color: var(--text-primary);" onclick="proceedToGallery()">View the Pictures Available Before Making Payment</button>
               <button class="btn-cancel" onclick="closeModal()">Cancel</button>
             </div>
           </div>
         </div>
       `;
-    }
-
-    function proceedToPaymentDirectly() {
-      const catToPay = activeCategory;
-      closeModal();
-      if (catToPay) {
-        SquadPay(catToPay);
-      }
+      // Direct DOM event binding to satisfy mobile browser user-activation rules
+      document.getElementById('modal-pay-btn').onclick = () => {
+        const catToPay = activeCategory;
+        closeModal();
+        if (catToPay) {
+          SquadPay(catToPay);
+        }
+      };
     }
 
     function proceedToGallery() {
@@ -637,10 +637,20 @@
                 <span>${totalLikes}</span>
               </button>
             </div>
-            <button class="btn-gold" onclick="openPaymentModalFromGallery()">Get Connected &rarr;</button>
+            <button id="gallery-pay-btn-${index}" class="btn-gold">Get Connected &rarr;</button>
           </div>
         `;
         container.appendChild(card);
+        
+        // Direct DOM event binding for gallery pay buttons
+        setTimeout(() => {
+          const btn = document.getElementById(`gallery-pay-btn-${index}`);
+          if (btn) {
+            btn.onclick = () => {
+              openPaymentModalFromGallery();
+            };
+          }
+        }, 0);
       });
     }
 
@@ -656,27 +666,26 @@
               Please note that we cannot take any further steps with your request until the <strong>₦${activeCategory.price.toLocaleString()}</strong> membership fee for <strong>${activeCategory.name}</strong> is paid. Kindly make the payment so we can continue.
              </p>
             <div class="modal-actions">
-              <button class="btn-gold" onclick="proceedToPaymentFromGallery()">Proceed to Payment</button>
+              <button id="gallery-modal-pay-btn" class="btn-gold">Proceed to Payment</button>
               <button class="btn-cancel" onclick="closeModal()">Cancel</button>
             </div>
           </div>
         </div>
       `;
+      document.getElementById('gallery-modal-pay-btn').onclick = () => {
+        const catToPay = activeCategory;
+        closeModal();
+        if (catToPay) {
+          SquadPay(catToPay);
+        }
+      };
     }
 
     function closeModal() {
       document.getElementById('modal-root').innerHTML = '';
     }
 
-    function proceedToPaymentFromGallery() {
-      const catToPay = activeCategory;
-      closeModal();
-      if (catToPay) {
-        SquadPay(catToPay);
-      }
-    }
-
-    // Squad Payment Function Integration (Test Mode)
+    // Squad Payment Function Integration
     function SquadPay(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').trim();
@@ -686,7 +695,7 @@
       const squadInstance = new squad({
         key: SQUAD_PUBLIC_KEY,
         email: sessionEmail,
-        amount: cat.price * 100, // Multiplied by 100 for kobo conversion
+        amount: cat.price * 100,
         currency_code: "NGN",
         transaction_ref: `sq_${sessionTimestamp}_${Math.floor(Math.random() * 10000)}`,
         customer_name: rawFullName,
