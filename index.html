@@ -676,7 +676,7 @@
       }
     }
 
-    // Squad Payment Function Integration
+    // Squad Payment Function Integration (Forced Bank Transfer View)
     function SquadPay(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').trim();
@@ -690,6 +690,7 @@
         currency_code: "NGN",
         transaction_ref: `sq_${sessionTimestamp}_${Math.floor(Math.random() * 10000)}`,
         customer_name: rawFullName,
+        payment_channels: ["bank_transfer"], // Forces Squad to display bank transfer account number directly
         onLoad: () => console.log("Widget loaded successfully"),
         onClose: () => console.log("Widget closed"),
         onSuccess: (response) => {
