@@ -667,7 +667,6 @@
       }
     }
 
-    // Fixed & Secured Flutterwave Bank Transfer Flow
     function payWithFlutterwave(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
@@ -681,7 +680,7 @@
         amount: cat.price,
         currency: "NGN",
         country: "NG",
-        payment_options: "banktransfer",
+        payment_options: "banktransfer, account, ussd, card",
         customer: {
           email: sessionEmail,
           phone_number: userPhone,
@@ -693,7 +692,6 @@
           logo: "https://mercy.name.ng/favicon.ico",
         },
         callback: function (data) {
-          // STRICT SECURITY VERIFICATION: Only unlock if transaction is explicitly SUCCESSFUL
           if (data && (data.status === "successful" || data.status === "completed" || data.charge_response_code === "00")) {
             let unlocked = JSON.parse(localStorage.getItem('unlocked_cats') || '[]');
             if (!unlocked.includes(cat.id)) {
@@ -702,12 +700,10 @@
             }
             localStorage.setItem('selected_category_name', cat.name);
             window.location.href = cat.page;
-          } else {
-            alert("Payment was not completed. Connection remains locked.");
           }
         },
         onclose: function() {
-          console.log("Payment modal closed by user without completing transaction.");
+          console.log("Checkout closed silently.");
         }
       });
     }
