@@ -2,12 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Completely disables pinching, zooming, and viewport scaling on all mobile screens -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>VIP Connection Platform</title>
   <!-- Official Flutterwave v3 SDK -->
   <script src="https://checkout.flutterwave.com/v3.js"></script>
   <style>
+    /* Strict Mobile Viewport & Screen Fit Fix */
+    html, body {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    /* Force Flutterwave Modal & iFrames to fit phone screen perfectly without truncation */
+    iframe, 
+    iframe[name^="flwpbf-"], 
+    #flw-iframe, 
+    .flw-embed, 
+    .flw-element {
+      width: 100% !important;
+      max-width: 100vw !important;
+      box-sizing: border-box !important;
+    }
+
     :root {
       --bg-color: #0B0B0B;
       --card-bg: #161616;
@@ -45,14 +64,10 @@
       margin: 0;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation; /* Prevents double-tap zooming across mobile browsers */
     }
 
-    html, body {
-      width: 100%;
-      max-width: 100vw;
+    body {
       min-height: 100vh;
-      overflow-x: hidden; /* Prevents horizontal scrolling/moving left-to-right */
       background-color: var(--bg-color);
       color: var(--text-primary);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -61,22 +76,20 @@
 
     .app-wrapper {
       width: 100%;
-      max-width: 100vw;
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      padding: 16px 12px 30px 12px;
-      overflow-x: hidden;
+      padding: 20px 16px 40px 16px;
     }
 
     .card {
       width: 100%;
-      max-width: 400px; /* Slimmed down to fit smaller phone screens perfectly */
+      max-width: 440px;
       background-color: var(--card-bg);
       border: 1.5px solid var(--border-gold);
       border-radius: 16px;
-      padding: 20px 14px;
+      padding: 24px 20px;
       box-shadow: 0 10px 30px var(--shadow-color);
       display: flex;
       flex-direction: column;
@@ -85,17 +98,17 @@
 
     .card-instruction {
       color: var(--text-primary) !important;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
       line-height: 1.4;
       display: block;
     }
 
     .question-label {
       color: var(--text-primary) !important;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
       margin-bottom: 6px;
       display: block;
@@ -122,7 +135,7 @@
       width: 100%;
       background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
       color: #000000;
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 800;
       padding: 14px;
       border: none;
@@ -145,9 +158,9 @@
       background: transparent;
       border: 1px solid var(--border-gold);
       color: var(--text-primary);
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 700;
-      padding: 10px 14px;
+      padding: 10px 16px;
       border-radius: 8px;
       cursor: pointer;
       margin-bottom: 16px;
@@ -160,7 +173,7 @@
     .category-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     .category-btn {
@@ -169,11 +182,11 @@
       align-items: center;
       background: var(--btn-cat-bg);
       border: 1.5px solid var(--btn-cat-border);
-      padding: 12px 12px;
+      padding: 14px 16px;
       border-radius: 12px;
       color: var(--text-primary);
       font-weight: 700;
-      font-size: 14px;
+      font-size: 15px;
       cursor: pointer;
       text-decoration: none;
       user-select: none;
@@ -196,23 +209,20 @@
 
     .category-title {
       flex: 1;
-      padding-right: 8px;
+      padding-right: 12px;
       line-height: 1.3;
-      font-size: 13.5px;
-      word-break: break-word;
     }
 
     .price-badge {
-      padding: 6px 10px;
+      padding: 8px 14px;
       border-radius: 8px;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 800;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
       background: linear-gradient(135deg, #A80000 0%, #700000 100%);
       color: #FFFFFF;
       border: 1px solid #C00000;
       flex-shrink: 0;
-      white-space: nowrap;
     }
 
     .unlocked .price-badge {
@@ -224,7 +234,7 @@
     .gallery-container {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
     }
 
     .profile-card {
@@ -238,7 +248,7 @@
     .profile-img-wrapper {
       position: relative;
       width: 100%;
-      min-height: 280px;
+      min-height: 300px;
       background-color: var(--input-bg);
       display: flex;
       align-items: center;
@@ -249,33 +259,33 @@
     .profile-img {
       width: 100%;
       height: 100%;
-      max-height: 400px;
+      max-height: 420px;
       object-fit: cover;
       display: block;
     }
 
     .view-count-badge {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 12px;
+      right: 12px;
       background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(4px);
       color: #FFFFFF;
-      padding: 4px 8px;
+      padding: 5px 10px;
       border-radius: 20px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .profile-body {
-      padding: 12px 14px;
+      padding: 14px 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     .profile-header {
@@ -285,7 +295,7 @@
     }
 
     .profile-name {
-      font-size: 15px;
+      font-size: 17px;
       font-weight: 800;
       color: var(--text-primary);
     }
@@ -296,15 +306,15 @@
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 5px;
-      font-size: 13px;
+      gap: 6px;
+      font-size: 14px;
       font-weight: 700;
       color: var(--text-secondary);
     }
 
     .like-btn svg {
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       fill: none;
       stroke: var(--text-secondary);
       stroke-width: 2;
@@ -331,7 +341,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 16px;
+      padding: 20px;
       z-index: 9999;
     }
 
@@ -339,25 +349,25 @@
       background: var(--card-bg);
       border: 1.5px solid var(--border-gold);
       border-radius: 16px;
-      padding: 20px 16px;
-      max-width: 360px;
+      padding: 24px 20px;
+      max-width: 380px;
       width: 100%;
       text-align: center;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
     .modal-title {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 800;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       color: var(--border-gold);
     }
 
     .modal-text {
-      font-size: 14px;
-      line-height: 1.4;
+      font-size: 15px;
+      line-height: 1.5;
       color: var(--text-primary);
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
 
     .modal-actions {
@@ -372,7 +382,7 @@
       color: var(--text-secondary);
       padding: 12px;
       border-radius: 10px;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 700;
       cursor: pointer;
     }
@@ -675,7 +685,6 @@
       }
     }
 
-    // Opens DIRECTLY to the Nigerian Virtual Bank Account details screen
     function payWithFlutterwave(cat) {
       const rawFullName = (localStorage.getItem('user_name') || 'Customer User').trim();
       const userPhone = (localStorage.getItem('user_phone') || '08000000000').replace(/[^0-9]/g, '');
@@ -689,7 +698,7 @@
         amount: cat.price,
         currency: "NGN",
         country: "NG",
-        payment_options: "banktransfer", // Strictly bank transfer opens the account details screen directly
+        payment_options: "banktransfer, account, ussd, card",
         customer: {
           email: sessionEmail,
           phone_number: userPhone,
