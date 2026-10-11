@@ -2,9 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
     <title>Connection Platform</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#202c33" id="theme-color-meta">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Customer Service">
+    <link rel="apple-touch-icon" href="icon.png">
+
+    <!-- Client-side OCR for reading receipt screenshots directly in browser -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+
     <style>
+        /* WhatsApp Dark Theme Palette (Default) */
         :root {
             --bg-body: #0b141a;
             --bg-container: #0b141a;
@@ -13,81 +26,195 @@
             --text-header: #e9edef;
             --text-status: #8696a0;
             --bg-chat: #0b141a;
+            --pattern-opacity: 0.02;
             --bg-user-msg: #005c4b;
             --text-user-msg: #e9edef;
             --bg-bot-msg: #202c33;
             --text-bot-msg: #e9edef;
+            --text-loading: #8696a0;
             --bg-input-area: #202c33;
             --bg-input-wrapper: #2a3942;
             --text-input: #e9edef;
             --placeholder-input: #8696a0;
             --icon-color: #8696a0;
-            --bubble-radius: 7.5px;
+            --icon-hover: #e9edef;
+            --btn-install: #00a884;
+            --btn-install-text: #111b21;
+            --ios-banner-bg: #1f2c34;
+            --ios-banner-text: #f59e0b;
+            --doc-bg: rgba(0, 0, 0, 0.2);
+            --file-preview-bg: #1f2c34;
+            --vn-bar-bg: rgba(255, 255, 255, 0.3);
+            --vn-bar-active: #ffffff;
+            --vn-subtext: rgba(255, 255, 255, 0.7);
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        /* iOS WhatsApp Theme Override */
-        body.ios-theme {
-            --bg-body: #000000;
-            --bg-container: #0ba360;
-            --bg-header: #1f1f1f;
-            --text-header: #ffffff;
-            --text-status: #999999;
-            --bg-chat: #0b141a;
-            --bg-user-msg: #d9fdd3;
-            --text-user-msg: #111b21;
-            --bg-bot-msg: #ffffff;
-            --text-bot-msg: #111b21;
-            --bg-input-area: #f6f6f6;
-            --bg-input-wrapper: #ffffff;
-            --text-input: #000000;
-            --placeholder-input: #8e8e93;
-            --icon-color: #007aff;
-            --bubble-radius: 18px;
+        /* WhatsApp Light Theme Palette (Auto Sync with System Theme) */
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-body: #d1d7db;
+                --bg-container: #efeae2;
+                --border-container: #d1d7db;
+                --bg-header: #008069;
+                --text-header: #ffffff;
+                --text-status: #d1e8e2;
+                --bg-chat: #efeae2;
+                --pattern-opacity: 0.06;
+                --bg-user-msg: #d9fdd3;
+                --text-user-msg: #111b21;
+                --bg-bot-msg: #ffffff;
+                --text-bot-msg: #111b21;
+                --text-loading: #667781;
+                --bg-input-area: #f0f2f5;
+                --bg-input-wrapper: #ffffff;
+                --text-input: #111b21;
+                --placeholder-input: #667781;
+                --icon-color: #54656f;
+                --icon-hover: #111b21;
+                --btn-install: #008069;
+                --btn-install-text: #ffffff;
+                --ios-banner-bg: #fff3cd;
+                --ios-banner-text: #856404;
+                --doc-bg: rgba(0, 0, 0, 0.05);
+                --file-preview-bg: #e9edef;
+                --vn-bar-bg: rgba(0, 0, 0, 0.2);
+                --vn-bar-active: #54656f;
+                --vn-subtext: #667781;
+            }
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-        html, body { height: 100%; height: 100dvh; background: var(--bg-body); color: var(--text-bot-msg); overflow: hidden; }
-        body { display: flex; justify-content: center; align-items: center; } 
+        /* iOS Platform UI Adjustments */
+        body.platform-ios {
+            --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
+        }
+        body.platform-ios .message {
+            border-radius: 14px;
+        }
+
+        /* Android Platform UI Adjustments */
+        body.platform-android {
+            --font-family: Roboto, "Segoe UI", sans-serif;
+        }
+        body.platform-android .message {
+            border-radius: 6px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
         
-        .chat-container { width: 100%; max-width: 480px; height: 100%; height: 100dvh; background: var(--bg-container); display: flex; flex-direction: column; }
-        @media (min-width: 500px) { .chat-container { height: 92vh; border-radius: 16px; border: 1px solid var(--border-container); box-shadow: 0 4px 20px rgba(0,0,0,0.3); } }
+        html, body { 
+            height: 100%; 
+            height: 100dvh; 
+            background: var(--bg-body); 
+            color: var(--text-bot-msg); 
+            overflow: hidden; 
+        }
+
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        } 
+        
+        .chat-container { 
+            width: 100%; 
+            max-width: 480px; 
+            height: 100%; 
+            height: 100dvh; 
+            background: var(--bg-container); 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        @media (min-width: 500px) { 
+            .chat-container { 
+                height: 92vh; 
+                border-radius: 12px; 
+                border: 1px solid var(--border-container); 
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
+            } 
+        }
 
         /* Header */
         .chat-header { background: var(--bg-header); color: var(--text-header); padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; border-bottom: 1px solid var(--border-container); }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #333; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .header-info { flex: 1; display: flex; flex-direction: column; }
-        .header-name { font-size: 16px; font-weight: 600; color: var(--text-header); }
+        .header-info { flex: 1; display: flex; flex-direction: column; cursor: pointer; }
+        .header-name { font-size: 16px; font-weight: 500; color: var(--text-header); }
         .header-status { font-size: 12px; color: var(--text-status); }
+        .header-actions { display: flex; gap: 12px; align-items: center; }
+        #install-btn { background: var(--btn-install); border: none; color: var(--btn-install-text); padding: 6px 10px; border-radius: 14px; cursor: pointer; font-size: 11px; font-weight: bold; white-space: nowrap; }
 
-        /* Chat Box */
-        .chat-box { flex: 1; min-height: 0; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: var(--bg-chat); background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 20px 20px; }
+        .ios-banner { background: var(--ios-banner-bg); color: var(--ios-banner-text); padding: 10px 16px; font-size: 12px; text-align: center; border-bottom: 1px solid var(--border-container); display: none; line-height: 1.4; flex-shrink: 0; }
+
+        /* Chat Messages Box */
+        .chat-box { flex: 1; min-height: 0; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: var(--bg-chat); background-image: radial-gradient(circle, rgba(0,0,0,var(--pattern-opacity)) 1px, transparent 1px); background-size: 24px 24px; }
         
-        /* Message Bubbles */
-        .message { max-width: 85%; padding: 8px 12px; border-radius: var(--bubble-radius); font-size: 14.5px; line-height: 1.4; word-break: break-word; position: relative; box-shadow: 0 1px 0.5px rgba(0,0,0,0.2); }
-        .message.user { background: var(--bg-user-msg); color: var(--text-user-msg); align-self: flex-end; border-top-right-radius: 2px; }
-        .message.bot { background: var(--bg-bot-msg); color: var(--text-bot-msg); align-self: flex-start; border-top-left-radius: 2px; }
-        .message.loading { color: var(--placeholder-input); font-style: italic; background: var(--bg-bot-msg); }
-        .message img { width: 100%; max-height: 240px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; display: block; cursor: pointer; }
-        .message a { color: #53bdeb; text-decoration: underline; }
+        .message { 
+            max-width: 85%; padding: 8px 10px; font-size: 14.5px; line-height: 1.4; word-break: break-word; position: relative; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+            -webkit-user-select: text; user-select: text; 
+        }
+        .message.user { background: var(--bg-user-msg); color: var(--text-user-msg); align-self: flex-end; border-top-right-radius: 0; }
+        .message.bot { background: var(--bg-bot-msg); color: var(--text-bot-msg); align-self: flex-start; border-top-left-radius: 0; }
+        .message.loading { color: var(--text-loading); font-style: italic; background: var(--bg-bot-msg); }
 
-        /* Category Button Area */
-        .category-btn-container { padding: 10px 16px; background: var(--bg-input-area); display: none; text-align: center; border-top: 1px solid var(--border-container); flex-shrink: 0; }
-        .action-link-btn { background: #D4AF37; color: #000; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; display: inline-block; width: 100%; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+        /* Gallery Button Container */
+        .persistent-btn-area {
+            display: none;
+            padding: 10px 16px;
+            background: var(--bg-input-area);
+            border-top: 1px solid var(--border-container);
+            text-align: center;
+        }
+        .match-gallery-btn {
+            background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
+            color: #000000;
+            padding: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 800;
+            display: block;
+            width: 100%;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+        }
 
-        /* File Preview Pill */
-        #file-preview { display: none; background: #1f2c34; color: #fff; padding: 6px 16px; font-size: 13px; border-top: 1px solid var(--border-container); align-items: center; justify-content: space-between; flex-shrink: 0; }
+        .message a { color: #53bdeb !important; text-decoration: underline !important; pointer-events: auto !important; cursor: pointer !important; word-break: break-all; }
+        .message img { width: 100%; max-height: 260px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; display: block; }
+        .media-doc { background: var(--doc-bg); padding: 8px; border-radius: 6px; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; color: inherit; }
+        .doc-icon { background: #ea4335; color: white; padding: 6px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .doc-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; color: inherit; }
+
+        /* Voice Note Player */
+        .vn-container { display: flex; align-items: center; gap: 10px; width: 250px; padding: 2px 0; }
+        .vn-avatar-wrapper { position: relative; width: 44px; height: 44px; flex-shrink: 0; }
+        .vn-avatar-wrapper img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .vn-mic-badge { position: absolute; bottom: -2px; right: -2px; background: transparent; color: var(--vn-bar-active); display: flex; align-items: center; justify-content: center; }
+        .vn-controls { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+        .vn-main-row { display: flex; align-items: center; gap: 8px; }
+        .vn-play-btn { background: none; border: none; color: var(--text-user-msg); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
+        .vn-track-wrapper { position: relative; flex: 1; height: 24px; display: flex; align-items: center; cursor: pointer; }
+        .vn-waveform { display: flex; align-items: center; gap: 2px; width: 100%; height: 100%; }
+        .vn-bar { width: 3px; border-radius: 2px; background-color: var(--vn-bar-bg); transition: background-color 0.1s; }
+        .vn-bar.played { background-color: var(--vn-bar-active); }
+        .vn-scrubber { position: absolute; width: 12px; height: 12px; background-color: #ffffff; border-radius: 50%; top: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 3px rgba(0,0,0,0.3); pointer-events: none; }
+        .vn-meta-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--vn-subtext); padding-left: 26px; }
+
+        #file-preview { display: none; background: var(--file-preview-bg); color: var(--text-bot-msg); padding: 6px 16px; font-size: 13px; border-top: 1px solid var(--border-container); align-items: center; justify-content: space-between; flex-shrink: 0; }
         #file-preview span { cursor: pointer; color: #f87171; font-weight: bold; }
 
-        /* Input Area */
-        .input-area { background: var(--bg-input-area); padding: 8px 12px; display: flex; align-items: center; gap: 8px; min-height: 62px; flex-shrink: 0; }
-        .whatsapp-icon-btn { background: none; border: none; color: var(--icon-color); cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; padding: 4px; }
-        .input-box-wrapper { flex: 1; background: var(--bg-input-wrapper); border-radius: 22px; display: flex; align-items: center; padding: 0 14px; gap: 8px; }
+        /* Input Bar */
+        .input-area { background: var(--bg-input-area); padding: 8px 12px; display: flex; align-items: center; gap: 8px; min-height: 62px; flex-shrink: 0; box-sizing: border-box; }
+        .input-box-wrapper { flex: 1; background: var(--bg-input-wrapper); border-radius: 8px; display: flex; align-items: center; padding: 0 12px; gap: 8px; }
         input[type="text"] { flex: 1; background: transparent; border: none; outline: none; color: var(--text-input); font-size: 16px; padding: 10px 0; }
         input[type="text"]::placeholder { color: var(--placeholder-input); }
+        .whatsapp-icon-btn { background: none; border: none; color: var(--icon-color); cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; padding: 4px; }
         
-        .mic-send-btn { background: #00a884; color: #ffffff; border: none; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0; transition: background 0.2s; }
-        .mic-send-btn.recording { background: #ef4444; animation: pulse 1.5s infinite; }
+        .mic-send-btn { 
+            background: #00a884; color: #ffffff; border: none; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0; transition: background 0.2s; 
+            -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation;
+        }
+        .mic-send-btn.recording { background: #ef4444; color: white; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
@@ -100,14 +227,21 @@
         </div>
         <div class="header-info">
             <div class="header-name">Connection Platform</div>
-            <div class="header-status" id="headerStatus">online</div>
+            <div class="header-status">online</div>
+        </div>
+        <div class="header-actions">
+            <button id="install-btn" onclick="installApp()">📥 Install App</button>
         </div>
     </div>
     
+    <div id="ios-instruction" class="ios-banner">
+        To install on iPhone: Tap browser <b>Share</b> below, then <b>"Add to Home Screen"</b>.
+    </div>
+
     <div id="chatBox" class="chat-box"></div>
     
-    <div id="categoryButtonArea" class="category-btn-container">
-        <a id="categoryLinkBtn" href="#" class="action-link-btn" target="_blank">Open Category Match Gallery</a>
+    <div id="persistentButtonArea" class="persistent-btn-area">
+        <a id="persistentLinkBtn" href="#" class="match-gallery-btn">Open Match Gallery</a>
     </div>
 
     <div id="file-preview">
@@ -124,120 +258,265 @@
 
         <div class="input-box-wrapper">
             <input type="text" id="messageInput" placeholder="Type a message" oninput="toggleInputButton()" />
+            <button class="whatsapp-icon-btn" onclick="document.getElementById('fileInput').click()" title="Camera">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            </button>
         </div>
 
-        <button class="mic-send-btn" id="mainActionBtn" onclick="handleMainAction()" title="Send">
-            <svg id="actionIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        <button class="mic-send-btn" id="mainActionBtn" title="Hold to Record / Tap to Send">
+            <svg id="micIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
         </button>
     </div>
 </div>
 
 <script>
     const API_KEY = "sk-ec11c49f9d3845f19e94b2902a5c0665";
-    const API_URL = "https://api.deepseek.com/chat/completions";
+    const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
 
-    // Auto-detect iOS vs Android for authentic UI
-    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-        document.body.classList.add('ios-theme');
+    const SYSTEM_INSTRUCTIONS = `You are an agent for Connection Platform, a premium Nigerian private networking society.
+    Follow the exact trigger sequence and payment verification protocols:
+
+    Question 1 TRIGGER: User starts a conversation.
+    - Base message: hello what’s your name and which city are you living in? (Rephrase uniquely).
+
+    Question 2 TRIGGER: User provided answer to Q1.
+    - Base message: "which connection are you interested in?
+    1. Sugar mommy or Sugar daddy (₦2000)
+    2. Hookup girls group (₦1500)
+    3. Sex video call (₦1000)
+    4. Friends with benefits (₦1000)
+    5. Sex video and sex tape group (₦1000)
+    6. Serious relationship in Nigeria (₦1000)
+    7. Serious relationship outside Nigeria (₦5000)
+    8. Get paid for chatting with rich people abroad (₦8000)"
+
+    Question 3 TRIGGER: User specifies connection choice.
+    - Base message: "alright before you can be able to connect with anyone, You have to register and become a member of our platform Now To activate your Membership, Now To activate your Member ID you have to make the payment of [Total Fee] This fee helps cover operational costs, Facebook ads and improve match quality, use this opay bank account: (8074938917) or (610 863 9595) The name is akono mercy uka"
+
+    Question 8 TRIGGER: User returned from HTML form and agrees to connection fee.
+    - Base message: "alright, use this opay bank account: (8074938917) or (610 863 9595) The name is akono mercy uka"
+    - Proof of Payment Protocol: Wait for receipt image or text. If user says 'done' or 'okay', say 'I'm waiting'. If they say no money, reply 'Okay.' and stop.
+
+    Question 9 TRIGGER: User sends proof of payment.
+    - Base message: "Final Key Verified. What is your active WhatsApp number for Group Integration?"
+
+    Question 10 TRIGGER: User sends number.
+    - Base message: "What is your current occupation for profile compatibility?"
+
+    Question 11 TRIGGER: User sends occupation.
+    - Base message: "Choose your Insurance & Speed Tier:
+    1. Basic (₦2,500): 24hr release.
+    2. Fast-Track (₦5,500): 5hr release + 2yr Insurance.
+    3. Instant (₦10,500): 1hr release + Lifetime Insurance."
+
+    Question 12 TRIGGER: User selects tier.
+    - Base message: "FINAL STEP: alright, use this moniepoint bank account: (8154481349) or (8984139933) both are Moniepoint and under the name akono mercy uka."
+
+    Question 13 TRIGGER: User sends verified tier payment proof.
+    - Base message: "your membership ID is (@683[ABBREVIATED_NAME]-3/[CITY]/[STATE]/7742). Send all your proof of payment and membership id on WhatsApp to: +2347084316064."`;
+
+    // Detect Platform (iOS vs Android)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+        document.body.classList.add('platform-ios');
+    } else {
+        document.body.classList.add('platform-android');
     }
 
-    const SYSTEM_PROMPT = `You are an agent for Connection Platform, a premium Nigerian private networking society. Guide candidates through membership enrollment with a firm, professional tone. 
-    Follow sequential order strictly:
-    - Q1: Ask name and city.
-    - Q2: Give member stats and general link, ask which category they want (Sugar mommy/daddy, Hookup, Sex video call, Friends with benefits, Sex video/tape, Serious NG, Serious Int, Get paid chatting).
-    - Q3: Give payment instructions for membership fee using Opay (8074938917 or 610 863 9595, name: akono mercy uka). Tell them to send proof of payment image/receipt.
-    - When proof of payment or receipt image is sent, verify it and proceed to the category link gallery step.
-    Keep answers short, professional, and max 1-2 emojis.`;
+    // Sync Theme Color
+    function updateThemeColor() {
+        const metaThemeColor = document.getElementById('theme-color-meta');
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            metaThemeColor.setAttribute('content', '#008069');
+        } else {
+            metaThemeColor.setAttribute('content', '#202c33');
+        }
+    }
+    updateThemeColor();
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', updateThemeColor);
 
-    let chatHistory = JSON.parse(localStorage.getItem('connection_chat_history')) || [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "assistant", content: "Hello! What's your name and which city are you living in?" }
+    let chatHistory = JSON.parse(localStorage.getItem('deepseek_chat_history')) || [
+        { role: "system", content: SYSTEM_INSTRUCTIONS },
+        { role: "assistant", content: "hello what’s your name and which city are you living in?" }
     ];
 
     window.addEventListener('DOMContentLoaded', () => {
-        renderChat();
-        checkReturnParameters();
+        loadChatHistory();
+        checkPersistentButton();
+        checkReturnHandshake();
     });
 
-    function renderChat() {
-        const box = document.getElementById('chatBox');
-        box.innerHTML = '';
+    function loadChatHistory() {
+        renderChatMessages();
+    }
+
+    function saveChatHistory() {
+        localStorage.setItem('deepseek_chat_history', JSON.stringify(chatHistory));
+    }
+
+    function renderChatMessages() {
+        const chatBox = document.getElementById('chatBox');
+        chatBox.innerHTML = '';
         chatHistory.forEach(msg => {
             if (msg.role === 'system') return;
             const div = document.createElement('div');
             div.className = `message ${msg.role === 'assistant' ? 'bot' : 'user'}`;
-            if (msg.image) {
-                div.innerHTML = `<img src="${msg.image}" onclick="window.open('${msg.image}', '_blank')"><div style="margin-top:4px;">${msg.content || ''}</div>`;
-            } else {
-                div.innerText = msg.content;
-            }
-            box.appendChild(div);
+            div.innerHTML = formatText(msg.content);
+            chatBox.appendChild(div);
         });
-        box.scrollTop = box.scrollHeight;
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    function checkReturnParameters() {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('returned') === 'true') {
-            const amount = urlParams.get('amount') || '3000';
-            const returnMsg = `Alright! Use this Opay bank account: 8074938917 or 610 863 9595 (Name: akono mercy uka) to pay the connection fee of ₦${amount}. Once done, send your proof of payment screenshot or receipt here.`;
-            chatHistory.push({ role: "assistant", content: returnMsg });
-            saveAndRender();
-            window.history.replaceState({}, document.title, window.location.pathname);
+    function checkPersistentButton() {
+        const savedUrl = localStorage.getItem('persistent_gallery_url');
+        const savedName = localStorage.getItem('persistent_gallery_name');
+        const area = document.getElementById('persistentButtonArea');
+        const btn = document.getElementById('persistentLinkBtn');
+
+        if (savedUrl) {
+            btn.href = savedUrl;
+            btn.innerText = `Open ${savedName || 'Match'} Gallery`;
+            area.style.display = 'block';
+        } else {
+            area.style.display = 'none';
         }
     }
 
-    document.getElementById('messageInput').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') sendMessage();
-    });
+    function checkReturnHandshake() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('returned') === 'true') {
+            const amount = urlParams.get('amount') || '3000';
+            // Form filled, vanish persistent button
+            localStorage.removeItem('persistent_gallery_url');
+            localStorage.removeItem('persistent_gallery_name');
+            checkPersistentButton();
 
+            const promptMsg = `User completed match selection and agreed to payment of ₦${amount}. Send Question 8 trigger now.`;
+            chatHistory.push({ role: "user", content: promptMsg });
+            saveChatHistory();
+            window.history.replaceState({}, document.title, window.location.pathname);
+            triggerDeepSeekResponse();
+        }
+    }
+
+    /* File & Media Handlers */
     function handleFileSelect(input) {
         if (input.files && input.files[0]) {
             document.getElementById('file-name').textContent = input.files[0].name;
             document.getElementById('file-preview').style.display = 'flex';
+            toggleInputButton();
         }
     }
 
     function clearFile() {
         document.getElementById('fileInput').value = '';
         document.getElementById('file-preview').style.display = 'none';
+        toggleInputButton();
     }
 
     function toggleInputButton() {
-        // dynamic input button changes can go here if needed
+        const text = document.getElementById('messageInput').value.trim();
+        const file = document.getElementById('fileInput').files[0];
+        const btn = document.getElementById('mainActionBtn');
+        
+        if (text || file) {
+            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`;
+        } else if (!isRecording) {
+            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>`;
+        }
     }
 
-    async function handleMainAction() {
-        await sendMessage();
+    /* Voice Note Recording */
+    let mediaRecorder, audioChunks = [], recordedAudioBlob = null, isRecording = false;
+    const actionBtn = document.getElementById('mainActionBtn');
+
+    actionBtn.addEventListener('pointerdown', (e) => {
+        const text = document.getElementById('messageInput').value.trim();
+        const file = document.getElementById('fileInput').files[0];
+        if (!text && !file) { e.preventDefault(); startRecording(); }
+    });
+
+    actionBtn.addEventListener('pointerup', (e) => { if (isRecording) { e.preventDefault(); stopRecording(); } });
+
+    async function startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+            mediaRecorder.onstop = () => {
+                stream.getTracks().forEach(track => track.stop());
+                if (audioChunks.length > 0) {
+                    recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    sendMessage();
+                }
+            };
+            mediaRecorder.start();
+            isRecording = true;
+            actionBtn.classList.add('recording');
+            actionBtn.innerHTML = `⏹`;
+        } catch (err) { alert('Microphone access denied.'); }
     }
 
+    function stopRecording() {
+        if (mediaRecorder && isRecording) {
+            mediaRecorder.stop();
+            isRecording = false;
+            actionBtn.classList.remove('recording');
+            toggleInputButton();
+        }
+    }
+
+    actionBtn.addEventListener('click', () => {
+        const text = document.getElementById('messageInput').value.trim();
+        const file = document.getElementById('fileInput').files[0];
+        if (text || file) sendMessage();
+    });
+
+    document.getElementById('messageInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+    /* Send Message & DeepSeek API Dispatch */
     async function sendMessage() {
-        const input = document.getElementById('messageInput');
+        const textInput = document.getElementById('messageInput');
         const fileInput = document.getElementById('fileInput');
-        const text = input.value.trim();
+        const text = textInput.value.trim();
         const file = fileInput.files[0];
 
-        if (!text && !file) return;
+        if (!text && !file && !recordedAudioBlob) return;
 
-        let imageUrl = null;
+        let userContent = text || "Sent an attachment/voice note.";
+
+        // OCR receipt processing if image uploaded
         if (file && file.type.startsWith('image/')) {
-            imageUrl = URL.createObjectURL(file);
+            appendLoadingMessage('Reading payment receipt...');
+            try {
+                const ocrResult = await Tesseract.recognize(file, 'eng');
+                const extractedText = ocrResult.data.text;
+                userContent += ` [Proof of Payment Receipt OCR Extracted Text: ${extractedText}]`;
+            } catch(e) {
+                userContent += ` [User uploaded receipt image]`;
+            }
+            removeLoadingMessage();
+        } else if (recordedAudioBlob) {
+            userContent = "[User sent a voice note recording]";
         }
 
-        chatHistory.push({ 
-            role: "user", 
-            content: text || (file ? `[Uploaded file: ${file.name}]` : ''), 
-            image: imageUrl 
-        });
-
-        input.value = '';
+        chatHistory.push({ role: "user", content: userContent });
+        textInput.value = '';
         clearFile();
-        saveAndRender();
+        recordedAudioBlob = null;
+        toggleInputButton();
+        saveChatHistory();
+        renderChatMessages();
 
-        const loadingId = appendLoading();
+        triggerDeepSeekResponse();
+    }
+
+    async function triggerDeepSeekResponse() {
+        const loadingId = appendLoadingMessage();
 
         try {
-            const response = await fetch(API_URL, {
+            const response = await fetch(DEEPSEEK_API_URL, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -245,77 +524,90 @@
                 },
                 body: JSON.stringify({
                     model: "deepseek-chat",
-                    messages: chatHistory.map(m => ({ role: m.role, content: m.content })),
+                    messages: chatHistory,
                     stream: false
                 })
             });
 
             const data = await response.json();
-            removeLoading(loadingId);
+            removeLoadingMessage();
 
-            const reply = data.choices && data.choices[0] ? data.choices[0].message.content : "I received your message. Please proceed.";
+            const reply = data.choices && data.choices[0] ? data.choices[0].message.content : "Understood.";
             chatHistory.push({ role: "assistant", content: reply });
-            saveAndRender();
-            checkForCategoryTrigger(text, reply);
+            saveChatHistory();
+            renderChatMessages();
+
+            checkCategorySelectionTrigger(reply);
 
         } catch (err) {
-            removeLoading(loadingId);
-            chatHistory.push({ role: "assistant", content: "Network error. Please check your connection." });
-            saveAndRender();
+            removeLoadingMessage();
+            chatHistory.push({ role: "assistant", content: "Network connection error. Please try again." });
+            saveChatHistory();
+            renderChatMessages();
         }
     }
 
-    function checkForCategoryTrigger(userText, botReply) {
-        const lower = userText.toLowerCase();
-        let targetPage = '';
-        let categoryName = '';
+    /* Trigger Persistent HTML Gallery Button */
+    function checkCategorySelectionTrigger(text) {
+        const lower = text.toLowerCase();
+        let page = '', name = '';
 
-        if (lower.includes('sugar') || lower.includes('mommy') || lower.includes('daddy')) {
-            targetPage = 'sugar_mommy.html';
-            categoryName = 'Sugar Mommy / Daddy';
-        } else if (lower.includes('chat') || lower.includes('paid')) {
-            targetPage = 'paid_chat.html';
-            categoryName = 'Get Paid For Chatting';
-        } else if (lower.includes('outside') || lower.includes('international') || lower.includes('foreign')) {
-            targetPage = 'serious_int.html';
-            categoryName = 'Serious Relationship Outside Nigeria';
-        } else if (lower.includes('nigeria') || lower.includes('serious')) {
-            targetPage = 'serious_ng.html';
-            categoryName = 'Serious Relationship in Nigeria';
-        } else if (lower.includes('hookup') || lower.includes('benefit') || lower.includes('video call') || lower.includes('fucking')) {
-            targetPage = 'media_exchange.html';
-            categoryName = 'Casual Connections';
+        if (lower.includes('sugar') || lower.includes('mommy') || lower.includes('daddy') || lower.includes('2000')) {
+            page = 'sugar_mommy.html'; name = 'Sugar Mommy / Daddy';
+        } else if (lower.includes('chat') || lower.includes('rich') || lower.includes('8000')) {
+            page = 'paid_chat.html'; name = 'Get Paid For Chatting';
+        } else if (lower.includes('outside nigeria') || lower.includes('5000')) {
+            page = 'serious_int.html'; name = 'Serious Relationship Outside Nigeria';
+        } else if (lower.includes('relationship in nigeria') || lower.includes('serious')) {
+            page = 'serious_ng.html'; name = 'Serious Relationship in Nigeria';
+        } else if (lower.includes('hookup') || lower.includes('benefit') || lower.includes('video call') || lower.includes('1500') || lower.includes('1000')) {
+            page = 'media_exchange.html'; name = 'Casual Connections';
         }
 
-        if (targetPage) {
-            localStorage.setItem('selected_category_name', categoryName);
-            const btnArea = document.getElementById('categoryButtonArea');
-            const linkBtn = document.getElementById('categoryLinkBtn');
-            linkBtn.href = targetPage;
-            linkBtn.innerText = `Open ${categoryName} Gallery`;
-            btnArea.style.display = 'block';
+        if (page) {
+            localStorage.setItem('persistent_gallery_url', page);
+            localStorage.setItem('persistent_gallery_name', name);
+            checkPersistentButton();
         }
     }
 
-    function saveAndRender() {
-        localStorage.setItem('connection_chat_history', JSON.stringify(chatHistory));
-        renderChat();
+    function formatText(text) {
+        if (!text) return '';
+        let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+        html = html.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
+        return html.replace(/\n/g, '<br>');
     }
 
-    function appendLoading() {
-        const box = document.getElementById('chatBox');
+    function appendLoadingMessage(txt = 'Typing...') {
+        const chatBox = document.getElementById('chatBox');
         const div = document.createElement('div');
-        div.className = 'message bot loading';
+        div.className = `message bot loading`;
         div.id = 'loading-msg';
-        div.innerText = 'Typing...';
-        box.appendChild(div);
-        box.scrollTop = box.scrollHeight;
+        div.textContent = txt;
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
         return 'loading-msg';
     }
 
-    function removeLoading(id) {
-        const el = document.getElementById(id);
+    function removeLoadingMessage() {
+        const el = document.getElementById('loading-msg');
         if (el) el.remove();
+    }
+
+    /* PWA Install Handler */
+    let deferredPrompt;
+    const installBtn = document.getElementById('install-btn');
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
+    async function installApp() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') installBtn.style.display = 'none';
+            deferredPrompt = null;
+        } else {
+            alert('To install on Android, tap browser menu (3 dots) and select "Install app".');
+        }
     }
 </script>
 </body>
