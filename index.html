@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Connection Platform</title>
     <style>
         :root {
@@ -22,43 +22,85 @@
             --text-input: #e9edef;
             --placeholder-input: #8696a0;
             --icon-color: #8696a0;
+            --bubble-radius: 7.5px;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+        /* iOS WhatsApp Theme Override */
+        body.ios-theme {
+            --bg-body: #000000;
+            --bg-container: #0ba360;
+            --bg-header: #1f1f1f;
+            --text-header: #ffffff;
+            --text-status: #999999;
+            --bg-chat: #0b141a;
+            --bg-user-msg: #d9fdd3;
+            --text-user-msg: #111b21;
+            --bg-bot-msg: #ffffff;
+            --text-bot-msg: #111b21;
+            --bg-input-area: #f6f6f6;
+            --bg-input-wrapper: #ffffff;
+            --text-input: #000000;
+            --placeholder-input: #8e8e93;
+            --icon-color: #007aff;
+            --bubble-radius: 18px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; height: 100dvh; background: var(--bg-body); color: var(--text-bot-msg); overflow: hidden; }
         body { display: flex; justify-content: center; align-items: center; } 
-        .chat-container { width: 100%; max-width: 480px; height: 100%; height: 100dvh; background: var(--bg-container); display: flex; flex-direction: column; }
-        @media (min-width: 500px) { .chat-container { height: 92vh; border-radius: 12px; border: 1px solid var(--border-container); box-shadow: 0 4px 20px rgba(0,0,0,0.15); } }
         
-        .chat-header { background: var(--bg-header); color: var(--text-header); padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; }
-        .header-info { flex: 1; }
-        .header-name { font-size: 16px; font-weight: 500; }
+        .chat-container { width: 100%; max-width: 480px; height: 100%; height: 100dvh; background: var(--bg-container); display: flex; flex-direction: column; }
+        @media (min-width: 500px) { .chat-container { height: 92vh; border-radius: 16px; border: 1px solid var(--border-container); box-shadow: 0 4px 20px rgba(0,0,0,0.3); } }
+
+        /* Header */
+        .chat-header { background: var(--bg-header); color: var(--text-header); padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; border-bottom: 1px solid var(--border-container); }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #333; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .header-info { flex: 1; display: flex; flex-direction: column; }
+        .header-name { font-size: 16px; font-weight: 600; color: var(--text-header); }
         .header-status { font-size: 12px; color: var(--text-status); }
 
-        .chat-box { flex: 1; min-height: 0; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: var(--bg-chat); }
-        .message { max-width: 85%; padding: 8px 10px; border-radius: 7.5px; font-size: 14.5px; line-height: 1.4; word-break: break-word; }
-        .message.user { background: var(--bg-user-msg); color: var(--text-user-msg); align-self: flex-end; border-top-right-radius: 0; }
-        .message.bot { background: var(--bg-bot-msg); color: var(--text-bot-msg); align-self: flex-start; border-top-left-radius: 0; }
-        .message.loading { color: var(--placeholder-input); font-style: italic; }
+        /* Chat Box */
+        .chat-box { flex: 1; min-height: 0; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: var(--bg-chat); background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 20px 20px; }
+        
+        /* Message Bubbles */
+        .message { max-width: 85%; padding: 8px 12px; border-radius: var(--bubble-radius); font-size: 14.5px; line-height: 1.4; word-break: break-word; position: relative; box-shadow: 0 1px 0.5px rgba(0,0,0,0.2); }
+        .message.user { background: var(--bg-user-msg); color: var(--text-user-msg); align-self: flex-end; border-top-right-radius: 2px; }
+        .message.bot { background: var(--bg-bot-msg); color: var(--text-bot-msg); align-self: flex-start; border-top-left-radius: 2px; }
+        .message.loading { color: var(--placeholder-input); font-style: italic; background: var(--bg-bot-msg); }
+        .message img { width: 100%; max-height: 240px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; display: block; cursor: pointer; }
+        .message a { color: #53bdeb; text-decoration: underline; }
 
-        .category-btn-container { padding: 10px 16px; background: var(--bg-input-area); display: none; text-align: center; border-top: 1px solid var(--border-container); }
-        .action-link-btn { background: #D4AF37; color: #000; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; display: inline-block; width: 100%; font-size: 14px; }
+        /* Category Button Area */
+        .category-btn-container { padding: 10px 16px; background: var(--bg-input-area); display: none; text-align: center; border-top: 1px solid var(--border-container); flex-shrink: 0; }
+        .action-link-btn { background: #D4AF37; color: #000; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; display: inline-block; width: 100%; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
 
+        /* File Preview Pill */
+        #file-preview { display: none; background: #1f2c34; color: #fff; padding: 6px 16px; font-size: 13px; border-top: 1px solid var(--border-container); align-items: center; justify-content: space-between; flex-shrink: 0; }
+        #file-preview span { cursor: pointer; color: #f87171; font-weight: bold; }
+
+        /* Input Area */
         .input-area { background: var(--bg-input-area); padding: 8px 12px; display: flex; align-items: center; gap: 8px; min-height: 62px; flex-shrink: 0; }
-        .input-box-wrapper { flex: 1; background: var(--bg-input-wrapper); border-radius: 8px; display: flex; align-items: center; padding: 0 12px; }
+        .whatsapp-icon-btn { background: none; border: none; color: var(--icon-color); cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; padding: 4px; }
+        .input-box-wrapper { flex: 1; background: var(--bg-input-wrapper); border-radius: 22px; display: flex; align-items: center; padding: 0 14px; gap: 8px; }
         input[type="text"] { flex: 1; background: transparent; border: none; outline: none; color: var(--text-input); font-size: 16px; padding: 10px 0; }
         input[type="text"]::placeholder { color: var(--placeholder-input); }
-        .send-btn { background: #00a884; color: #ffffff; border: none; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        
+        .mic-send-btn { background: #00a884; color: #ffffff; border: none; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0; transition: background 0.2s; }
+        .mic-send-btn.recording { background: #ef4444; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div class="chat-container">
     <div class="chat-header">
-        <div class="avatar">💬</div>
+        <div class="avatar">
+            <img src="icon.png" alt="Profile" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%238696a0\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'">
+        </div>
         <div class="header-info">
             <div class="header-name">Connection Platform</div>
-            <div class="header-status">online</div>
+            <div class="header-status" id="headerStatus">online</div>
         </div>
     </div>
     
@@ -68,11 +110,25 @@
         <a id="categoryLinkBtn" href="#" class="action-link-btn" target="_blank">Open Category Match Gallery</a>
     </div>
 
+    <div id="file-preview">
+        <span id="file-name">file.png</span>
+        <span onclick="clearFile()">✕ Remove</span>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*,application/pdf,.doc,.docx" style="display: none;" onchange="handleFileSelect(this)" />
+
     <div class="input-area">
+        <button class="whatsapp-icon-btn" onclick="document.getElementById('fileInput').click()" title="Attach File">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+
         <div class="input-box-wrapper">
-            <input type="text" id="messageInput" placeholder="Type a message..." />
+            <input type="text" id="messageInput" placeholder="Type a message" oninput="toggleInputButton()" />
         </div>
-        <button class="send-btn" onclick="sendMessage()">➤</button>
+
+        <button class="mic-send-btn" id="mainActionBtn" onclick="handleMainAction()" title="Send">
+            <svg id="actionIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
     </div>
 </div>
 
@@ -80,15 +136,20 @@
     const API_KEY = "sk-ec11c49f9d3845f19e94b2902a5c0665";
     const API_URL = "https://api.deepseek.com/chat/completions";
 
+    // Auto-detect iOS vs Android for authentic UI
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        document.body.classList.add('ios-theme');
+    }
+
     const SYSTEM_PROMPT = `You are an agent for Connection Platform, a premium Nigerian private networking society. Guide candidates through membership enrollment with a firm, professional tone. 
     Follow sequential order strictly:
     - Q1: Ask name and city.
     - Q2: Give member stats and general link, ask which category they want (Sugar mommy/daddy, Hookup, Sex video call, Friends with benefits, Sex video/tape, Serious NG, Serious Int, Get paid chatting).
-    - Q3: Give payment instructions for membership fee using Opay (8074938917 or 610 863 9595, name: akono mercy uka). Tell them to send proof of payment.
-    - Once payment is verified, instruct them to open their category HTML page.
+    - Q3: Give payment instructions for membership fee using Opay (8074938917 or 610 863 9595, name: akono mercy uka). Tell them to send proof of payment image/receipt.
+    - When proof of payment or receipt image is sent, verify it and proceed to the category link gallery step.
     Keep answers short, professional, and max 1-2 emojis.`;
 
-    let chatHistory = JSON.parse(localStorage.getItem('deepseek_chat_history')) || [
+    let chatHistory = JSON.parse(localStorage.getItem('connection_chat_history')) || [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "assistant", content: "Hello! What's your name and which city are you living in?" }
     ];
@@ -104,8 +165,12 @@
         chatHistory.forEach(msg => {
             if (msg.role === 'system') return;
             const div = document.createElement('div');
-            div.className = `message ${msg.role === 'assistant' ? 'bot' : 'user'} `;
-            div.innerText = msg.content;
+            div.className = `message ${msg.role === 'assistant' ? 'bot' : 'user'}`;
+            if (msg.image) {
+                div.innerHTML = `<img src="${msg.image}" onclick="window.open('${msg.image}', '_blank')"><div style="margin-top:4px;">${msg.content || ''}</div>`;
+            } else {
+                div.innerText = msg.content;
+            }
             box.appendChild(div);
         });
         box.scrollTop = box.scrollHeight;
@@ -115,10 +180,10 @@
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('returned') === 'true') {
             const amount = urlParams.get('amount') || '3000';
-            const returnMsg = `Alright! Use this Opay bank account: 8074938917 or 610 863 9595 (Name: akono mercy uka) to pay the connection fee of ₦${amount}. Once done, send your proof of payment here.`;
+            const returnMsg = `Alright! Use this Opay bank account: 8074938917 or 610 863 9595 (Name: akono mercy uka) to pay the connection fee of ₦${amount}. Once done, send your proof of payment screenshot or receipt here.`;
             chatHistory.push({ role: "assistant", content: returnMsg });
             saveAndRender();
-            window.history.replaceState({}, document.title, window.location.pathname); // clear url params
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
     }
 
@@ -126,13 +191,47 @@
         if (e.key === 'Enter') sendMessage();
     });
 
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            document.getElementById('file-name').textContent = input.files[0].name;
+            document.getElementById('file-preview').style.display = 'flex';
+        }
+    }
+
+    function clearFile() {
+        document.getElementById('fileInput').value = '';
+        document.getElementById('file-preview').style.display = 'none';
+    }
+
+    function toggleInputButton() {
+        // dynamic input button changes can go here if needed
+    }
+
+    async function handleMainAction() {
+        await sendMessage();
+    }
+
     async function sendMessage() {
         const input = document.getElementById('messageInput');
+        const fileInput = document.getElementById('fileInput');
         const text = input.value.trim();
-        if (!text) return;
+        const file = fileInput.files[0];
 
-        chatHistory.push({ role: "user", content: text });
+        if (!text && !file) return;
+
+        let imageUrl = null;
+        if (file && file.type.startsWith('image/')) {
+            imageUrl = URL.createObjectURL(file);
+        }
+
+        chatHistory.push({ 
+            role: "user", 
+            content: text || (file ? `[Uploaded file: ${file.name}]` : ''), 
+            image: imageUrl 
+        });
+
         input.value = '';
+        clearFile();
         saveAndRender();
 
         const loadingId = appendLoading();
@@ -146,7 +245,7 @@
                 },
                 body: JSON.stringify({
                     model: "deepseek-chat",
-                    messages: chatHistory,
+                    messages: chatHistory.map(m => ({ role: m.role, content: m.content })),
                     stream: false
                 })
             });
@@ -154,7 +253,7 @@
             const data = await response.json();
             removeLoading(loadingId);
 
-            const reply = data.choices && data.choices[0] ? data.choices[0].message.content : "I didn't catch that. Please reply again.";
+            const reply = data.choices && data.choices[0] ? data.choices[0].message.content : "I received your message. Please proceed.";
             chatHistory.push({ role: "assistant", content: reply });
             saveAndRender();
             checkForCategoryTrigger(text, reply);
@@ -199,21 +298,8 @@
     }
 
     function saveAndRender() {
-        localStorage.setItem('deepseek_chat_history', JSON.stringify(chatHistory));
-        renderCardHistory();
-    }
-
-    function renderCardHistory() {
-        const box = document.getElementById('chatBox');
-        box.innerHTML = '';
-        chatHistory.forEach(msg => {
-            if (msg.role === 'system') return;
-            const div = document.createElement('div');
-            div.className = `message ${msg.role === 'assistant' ? 'bot' : 'user'}`;
-            div.innerText = msg.content;
-            box.appendChild(div);
-        });
-        box.scrollTop = box.scrollHeight;
+        localStorage.setItem('connection_chat_history', JSON.stringify(chatHistory));
+        renderChat();
     }
 
     function appendLoading() {
