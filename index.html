@@ -208,13 +208,15 @@
     Account Number: 6765911129
     Bank Name: Moniepoint MFB
 
-    PROOF OF PAYMENT (PoP) VERIFICATION PROTOCOL:
-    When a user submits a Proof of Payment (PoP) receipt image or text proof:
+    CRITICAL PROOF OF PAYMENT (PoP) VERIFICATION & SYSTEM UNLOCK KEY PROTOCOL:
+    When evaluating a receipt image or text proof submitted for a payment:
     1. Check for valid transaction text containing recipient name 'Akono Mercy Uka' or account number '6765911129'.
-    2. Confirm the transaction status is Successful or Completed (Reject Pending, In Progress, or Dashboard screenshots).
+    2. Confirm the transaction status is Successful or Completed (Reject Pending, In Progress, dashboard screenshots, or non-receipt pictures).
     3. Verify the transferred amount matches the required fee.
-    - If valid: Confirm receipt and proceed immediately.
-    - If invalid or wrong image: Politely inform the user that the receipt details do not match our records and ask them to send the clear successful transfer receipt.
+    
+    STRICT UNLOCK COMMAND RULE:
+    - IF AND ONLY IF the Proof of Payment is 100% VALID and VERIFIED by you, you MUST append this exact code at the very end of your response text: [PAYMENT_VERIFIED_UNLOCK]
+    - IF THE PROOF IS INVALID, FAKE, PENDING, OR A DASHBOARD SCREENSHOT: Reject it politely and DO NOT include [PAYMENT_VERIFIED_UNLOCK] anywhere in your response.
 
     TRIGGER SEQUENCE:
     Question 1 TRIGGER: User starts conversation.
@@ -433,9 +435,8 @@
 
         if (!text && !file && !recordedAudioBlob) return;
 
-        let apiUserPayload = text || "Uploaded receipt/image";
+        let apiUserPayload = text || "Uploaded image/receipt";
         let displayObj = { role: "user", content: text };
-        let isReceiptSubmitted = false;
 
         if (file && file.type.startsWith('image/')) {
             const imgUrl = URL.createObjectURL(file);
@@ -447,17 +448,13 @@
                 const ocrResult = await Tesseract.recognize(file, 'eng');
                 const extractedText = ocrResult.data.text;
                 apiUserPayload += ` [Backend OCR Extracted Text: ${extractedText}]`;
-                isReceiptSubmitted = true;
             } catch(e) {
                 apiUserPayload += ` [Backend Image Uploaded]`;
-                isReceiptSubmitted = true;
             }
             removeLoadingMessage();
         } else if (recordedAudioBlob) {
             apiUserPayload = "[User sent voice note]";
             displayObj.content = "🎤 Voice Note";
-        } else if (text.toLowerCase().includes('paid') || text.toLowerCase().includes('sent') || text.toLowerCase().includes('done') || text.toLowerCase().includes('receipt')) {
-            isReceiptSubmitted = true;
         }
 
         displayObj.content = apiUserPayload;
@@ -470,10 +467,10 @@
         saveChatHistory();
         renderChatMessages();
 
-        triggerDeepSeekResponse(isReceiptSubmitted);
+        triggerDeepSeekResponse();
     }
 
-    async function triggerDeepSeekResponse(isReceiptSubmitted = false) {
+    async function triggerDeepSeekResponse() {
         const loadingId = appendLoadingMessage();
 
         const cleanApiPayload = chatHistory.map(msg => ({
@@ -499,6 +496,14 @@
             removeLoadingMessage();
 
             let reply = data.choices && data.choices[0] ? data.choices[0].message.content : "Understood.";
+            
+            // Check if AI sent secret unlock key
+            let shouldUnlockButton = false;
+            if (reply.includes('[PAYMENT_VERIFIED_UNLOCK]')) {
+                shouldUnlockButton = true;
+                reply = reply.replace('[PAYMENT_VERIFIED_UNLOCK]', ''); // Hide key from candidate
+            }
+
             reply = stripAsterisks(reply);
 
             chatHistory.push({ role: "assistant", content: reply });
@@ -507,7 +512,8 @@
 
             trackCategoryChoice(reply, chatHistory[chatHistory.length - 2].content);
 
-            if (isReceiptSubmitted && pendingCategoryPage) {
+            // ONLY unlock button if AI confirmed valid payment key
+            if (shouldUnlockButton && pendingCategoryPage) {
                 unlockGalleryButton();
             }
 
