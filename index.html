@@ -72,10 +72,6 @@
                 --placeholder-input: #667781;
                 --icon-color: #54656f;
                 --icon-hover: #111b21;
-                --btn-install: #008069;
-                --btn-install-text: #ffffff;
-                --ios-banner-bg: #fff3cd;
-                --ios-banner-text: #856404;
                 --doc-bg: rgba(0, 0, 0, 0.05);
                 --file-preview-bg: #e9edef;
                 --vn-bar-bg: rgba(0, 0, 0, 0.2);
@@ -158,47 +154,29 @@
         .message.bot { background: var(--bg-bot-msg); color: var(--text-bot-msg); align-self: flex-start; border-top-left-radius: 0; }
         .message.loading { color: var(--text-loading); font-style: italic; background: var(--bg-bot-msg); }
 
-        /* Gallery Button Container */
+        /* Persistent Button Area */
         .persistent-btn-area {
             display: none;
-            padding: 10px 16px;
+            padding: 12px 16px;
             background: var(--bg-input-area);
-            border-top: 1px solid var(--border-container);
+            border-top: 1.5px solid #D4AF37;
             text-align: center;
         }
         .match-gallery-btn {
             background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
             color: #000000;
-            padding: 12px;
+            padding: 14px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 800;
             display: block;
             width: 100%;
-            font-size: 14px;
-            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+            font-size: 15px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.4);
         }
 
         .message a { color: #53bdeb !important; text-decoration: underline !important; pointer-events: auto !important; cursor: pointer !important; word-break: break-all; }
-        .message img { width: 100%; max-height: 260px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; display: block; }
-        .media-doc { background: var(--doc-bg); padding: 8px; border-radius: 6px; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; color: inherit; }
-        .doc-icon { background: #ea4335; color: white; padding: 6px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .doc-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; color: inherit; }
-
-        /* Voice Note Player */
-        .vn-container { display: flex; align-items: center; gap: 10px; width: 250px; padding: 2px 0; }
-        .vn-avatar-wrapper { position: relative; width: 44px; height: 44px; flex-shrink: 0; }
-        .vn-avatar-wrapper img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-        .vn-mic-badge { position: absolute; bottom: -2px; right: -2px; background: transparent; color: var(--vn-bar-active); display: flex; align-items: center; justify-content: center; }
-        .vn-controls { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-        .vn-main-row { display: flex; align-items: center; gap: 8px; }
-        .vn-play-btn { background: none; border: none; color: var(--text-user-msg); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
-        .vn-track-wrapper { position: relative; flex: 1; height: 24px; display: flex; align-items: center; cursor: pointer; }
-        .vn-waveform { display: flex; align-items: center; gap: 2px; width: 100%; height: 100%; }
-        .vn-bar { width: 3px; border-radius: 2px; background-color: var(--vn-bar-bg); transition: background-color 0.1s; }
-        .vn-bar.played { background-color: var(--vn-bar-active); }
-        .vn-scrubber { position: absolute; width: 12px; height: 12px; background-color: #ffffff; border-radius: 50%; top: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 3px rgba(0,0,0,0.3); pointer-events: none; }
-        .vn-meta-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--vn-subtext); padding-left: 26px; }
 
         #file-preview { display: none; background: var(--file-preview-bg); color: var(--text-bot-msg); padding: 6px 16px; font-size: 13px; border-top: 1px solid var(--border-container); align-items: center; justify-content: space-between; flex-shrink: 0; }
         #file-preview span { cursor: pointer; color: #f87171; font-weight: bold; }
@@ -216,6 +194,12 @@
         }
         .mic-send-btn.recording { background: #ef4444; color: white; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* Disabled Chat Input Lock */
+        .input-area.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -241,7 +225,7 @@
     <div id="chatBox" class="chat-box"></div>
     
     <div id="persistentButtonArea" class="persistent-btn-area">
-        <a id="persistentLinkBtn" href="#" class="match-gallery-btn">Open Match Gallery</a>
+        <a id="persistentLinkBtn" href="#" class="match-gallery-btn">Click Here to Open Match Gallery</a>
     </div>
 
     <div id="file-preview">
@@ -251,7 +235,7 @@
 
     <input type="file" id="fileInput" accept="image/*,application/pdf,.doc,.docx" style="display: none;" onchange="handleFileSelect(this)" />
 
-    <div class="input-area">
+    <div class="input-area" id="inputAreaBox">
         <button class="whatsapp-icon-btn" onclick="document.getElementById('fileInput').click()" title="Attach File">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </button>
@@ -340,9 +324,12 @@
         { role: "assistant", content: "hello what’s your name and which city are you living in?" }
     ];
 
+    let pendingCategoryPage = localStorage.getItem('pending_category_page') || '';
+    let pendingCategoryName = localStorage.getItem('pending_category_name') || '';
+
     window.addEventListener('DOMContentLoaded', () => {
         loadChatHistory();
-        checkPersistentButton();
+        checkPersistentButtonState();
         checkReturnHandshake();
     });
 
@@ -367,18 +354,23 @@
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    function checkPersistentButton() {
-        const savedUrl = localStorage.getItem('persistent_gallery_url');
-        const savedName = localStorage.getItem('persistent_gallery_name');
+    function checkPersistentButtonState() {
+        const isPaid = localStorage.getItem('membership_fee_paid') === 'true';
+        const savedUrl = localStorage.getItem('unlocked_gallery_url');
+        const savedName = localStorage.getItem('unlocked_gallery_name');
+        
         const area = document.getElementById('persistentButtonArea');
         const btn = document.getElementById('persistentLinkBtn');
+        const inputAreaBox = document.getElementById('inputAreaBox');
 
-        if (savedUrl) {
+        if (isPaid && savedUrl) {
             btn.href = savedUrl;
-            btn.innerText = `Open ${savedName || 'Match'} Gallery`;
+            btn.innerText = `Click Here to Open ${savedName || 'Match'} Gallery`;
             area.style.display = 'block';
+            inputAreaBox.classList.add('disabled'); // Stop user from chatting further until button is clicked
         } else {
             area.style.display = 'none';
+            inputAreaBox.classList.remove('disabled'); // Chat active
         }
     }
 
@@ -386,12 +378,14 @@
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('returned') === 'true') {
             const amount = urlParams.get('amount') || '3000';
-            // Form filled, vanish persistent button
-            localStorage.removeItem('persistent_gallery_url');
-            localStorage.removeItem('persistent_gallery_name');
-            checkPersistentButton();
+            
+            // User finished gallery form, remove button lock and reactivate chat
+            localStorage.removeItem('membership_fee_paid');
+            localStorage.removeItem('unlocked_gallery_url');
+            localStorage.removeItem('unlocked_gallery_name');
+            checkPersistentButtonState();
 
-            const promptMsg = `User completed match selection and agreed to payment of ₦${amount}. Send Question 8 trigger now.`;
+            const promptMsg = `User completed match selection form and agreed to payment of ₦${amount}. Send Question 8 trigger now with bank details.`;
             chatHistory.push({ role: "user", content: promptMsg });
             saveChatHistory();
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -485,6 +479,7 @@
         if (!text && !file && !recordedAudioBlob) return;
 
         let userContent = text || "Sent an attachment/voice note.";
+        let isReceiptSubmitted = false;
 
         // OCR receipt processing if image uploaded
         if (file && file.type.startsWith('image/')) {
@@ -493,12 +488,16 @@
                 const ocrResult = await Tesseract.recognize(file, 'eng');
                 const extractedText = ocrResult.data.text;
                 userContent += ` [Proof of Payment Receipt OCR Extracted Text: ${extractedText}]`;
+                isReceiptSubmitted = true;
             } catch(e) {
                 userContent += ` [User uploaded receipt image]`;
+                isReceiptSubmitted = true;
             }
             removeLoadingMessage();
         } else if (recordedAudioBlob) {
             userContent = "[User sent a voice note recording]";
+        } else if (text.toLowerCase().includes('paid') || text.toLowerCase().includes('sent') || text.toLowerCase().includes('done') || text.toLowerCase().includes('receipt')) {
+            isReceiptSubmitted = true;
         }
 
         chatHistory.push({ role: "user", content: userContent });
@@ -509,10 +508,10 @@
         saveChatHistory();
         renderChatMessages();
 
-        triggerDeepSeekResponse();
+        triggerDeepSeekResponse(isReceiptSubmitted);
     }
 
-    async function triggerDeepSeekResponse() {
+    async function triggerDeepSeekResponse(isReceiptSubmitted = false) {
         const loadingId = appendLoadingMessage();
 
         try {
@@ -537,7 +536,13 @@
             saveChatHistory();
             renderChatMessages();
 
-            checkCategorySelectionTrigger(reply);
+            // Track category preference at Question 2
+            trackCategoryChoice(reply, chatHistory[chatHistory.length - 2].content);
+
+            // Unlock button ONLY IF receipt was submitted & verified for membership fee
+            if (isReceiptSubmitted && pendingCategoryPage) {
+                unlockGalleryButton();
+            }
 
         } catch (err) {
             removeLoadingMessage();
@@ -547,28 +552,35 @@
         }
     }
 
-    /* Trigger Persistent HTML Gallery Button */
-    function checkCategorySelectionTrigger(text) {
-        const lower = text.toLowerCase();
-        let page = '', name = '';
+    /* Track Chosen Category at Question 2 */
+    function trackCategoryChoice(botReply, userMsg) {
+        const combined = (botReply + " " + userMsg).toLowerCase();
 
-        if (lower.includes('sugar') || lower.includes('mommy') || lower.includes('daddy') || lower.includes('2000')) {
-            page = 'sugar_mommy.html'; name = 'Sugar Mommy / Daddy';
-        } else if (lower.includes('chat') || lower.includes('rich') || lower.includes('8000')) {
-            page = 'paid_chat.html'; name = 'Get Paid For Chatting';
-        } else if (lower.includes('outside nigeria') || lower.includes('5000')) {
-            page = 'serious_int.html'; name = 'Serious Relationship Outside Nigeria';
-        } else if (lower.includes('relationship in nigeria') || lower.includes('serious')) {
-            page = 'serious_ng.html'; name = 'Serious Relationship in Nigeria';
-        } else if (lower.includes('hookup') || lower.includes('benefit') || lower.includes('video call') || lower.includes('1500') || lower.includes('1000')) {
-            page = 'media_exchange.html'; name = 'Casual Connections';
+        if (combined.includes('sugar') || combined.includes('mommy') || combined.includes('daddy') || combined.includes('2000')) {
+            pendingCategoryPage = 'sugar_mommy.html'; pendingCategoryName = 'Sugar Mommy / Daddy';
+        } else if (combined.includes('chat') || combined.includes('rich') || combined.includes('8000')) {
+            pendingCategoryPage = 'paid_chat.html'; pendingCategoryName = 'Get Paid For Chatting';
+        } else if (combined.includes('outside nigeria') || combined.includes('5000')) {
+            pendingCategoryPage = 'serious_int.html'; pendingCategoryName = 'Serious Relationship Outside Nigeria';
+        } else if (combined.includes('relationship in nigeria') || combined.includes('serious') || combined.includes('1000')) {
+            pendingCategoryPage = 'serious_ng.html'; pendingCategoryName = 'Serious Relationship in Nigeria';
+        } else if (combined.includes('hookup') || combined.includes('benefit') || combined.includes('video call') || combined.includes('1500')) {
+            pendingCategoryPage = 'media_exchange.html'; pendingCategoryName = 'Casual Connections';
         }
 
-        if (page) {
-            localStorage.setItem('persistent_gallery_url', page);
-            localStorage.setItem('persistent_gallery_name', name);
-            checkPersistentButton();
+        if (pendingCategoryPage) {
+            localStorage.setItem('pending_category_page', pendingCategoryPage);
+            localStorage.setItem('pending_category_name', pendingCategoryName);
         }
+    }
+
+    /* Unlock Button & Lock Chat Input */
+    function unlockGalleryButton() {
+        if (!pendingCategoryPage) return;
+        localStorage.setItem('membership_fee_paid', 'true');
+        localStorage.setItem('unlocked_gallery_url', pendingCategoryPage);
+        localStorage.setItem('unlocked_gallery_name', pendingCategoryName);
+        checkPersistentButtonState();
     }
 
     function formatText(text) {
