@@ -112,7 +112,20 @@
         .header-name { font-size: 16px; font-weight: 500; color: var(--text-header); }
         .header-status { font-size: 12px; color: var(--text-status); }
         .header-actions { display: flex; gap: 12px; align-items: center; }
-        #install-btn { background: var(--btn-install); border: none; color: var(--btn-install-text); padding: 6px 10px; border-radius: 14px; cursor: pointer; font-size: 11px; font-weight: bold; white-space: nowrap; }
+        
+        /* Default to hidden; revealed on Android only when installable */
+        #install-btn { 
+            display: none; 
+            background: var(--btn-install); 
+            border: none; 
+            color: var(--btn-install-text); 
+            padding: 6px 10px; 
+            border-radius: 14px; 
+            cursor: pointer; 
+            font-size: 11px; 
+            font-weight: bold; 
+            white-space: nowrap; 
+        }
 
         .install-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: flex-end; justify-content: center; z-index: 1000; }
         .install-overlay.show { display: flex; }
@@ -619,6 +632,7 @@
         if (el) el.remove();
     }
 
+    // --- PWA Installation Logic ---
     let deferredPrompt;
     const installBtn = document.getElementById('install-btn');
     const ua = navigator.userAgent;
@@ -631,10 +645,27 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
     }
-    if (isStandalone()) installBtn.style.display = 'none';
 
-    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
-    window.addEventListener('appinstalled', () => { installBtn.style.display = 'none'; deferredPrompt = null; closeInstallGuide(); });
+    // Immediately hide the button if opened inside standalone/installed mode
+    if (isStandalone()) {
+        installBtn.style.display = 'none';
+    }
+
+    // Chromium fires this ONLY when the site is NOT installed yet
+    window.addEventListener('beforeinstallprompt', (e) => { 
+        e.preventDefault(); 
+        deferredPrompt = e; 
+        if (!isIOSDevice && !isStandalone()) {
+            installBtn.style.display = 'inline-block';
+        }
+    });
+
+    // Fired automatically as soon as installation completes on Android
+    window.addEventListener('appinstalled', () => { 
+        installBtn.style.display = 'none'; 
+        deferredPrompt = null; 
+        closeInstallGuide(); 
+    });
 
     const shareIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2" style="vertical-align:-3px"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 12v8h14v-8"/></svg>';
 
@@ -657,11 +688,13 @@
     async function installApp() {
         if (isStandalone()) return;
 
-        // Android Chrome / Edge / Samsung Internet: native one-tap install
+        // Native one-tap install for Android Chrome / Edge
         if (deferredPrompt) {
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') installBtn.style.display = 'none';
+            if (outcome === 'accepted') {
+                installBtn.style.display = 'none';
+            }
             deferredPrompt = null;
             return;
         }
