@@ -613,18 +613,15 @@
     const isIOSDevice = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const isAndroid = /Android/i.test(ua);
     const isInAppBrowser = /FBAN|FBAV|FB_IAB|Instagram|Line\/|Snapchat|TikTok|musical_ly|Twitter|MicroMessenger|GSA\//i.test(ua) || (isAndroid && /; wv\)/.test(ua));
-    const isIOSSafari = isIOSDevice && /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua) && !isInAppBrowser;
     const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
     }
-    if (isStandalone()) installBtn.style.display = 'none';
+    if (isIOSDevice || isStandalone()) installBtn.style.display = 'none';
 
     window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
     window.addEventListener('appinstalled', () => { installBtn.style.display = 'none'; deferredPrompt = null; closeInstallGuide(); });
-
-    const shareIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2" style="vertical-align:-3px"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 12v8h14v-8"/></svg>';
 
     function showInstallGuide(html) {
         document.getElementById('install-guide-body').innerHTML = html;
@@ -634,7 +631,7 @@
         document.getElementById('install-overlay').classList.remove('show');
     }
     function copyPageLink() {
-        const done = () => alert('Link copied. Paste it in ' + (isIOSDevice ? 'Safari' : 'Chrome') + ' to install the app.');
+        const done = () => alert('Link copied. Paste it in Chrome to install the app.');
         if (navigator.clipboard) navigator.clipboard.writeText(location.href).then(done, () => prompt('Copy this link:', location.href));
         else prompt('Copy this link:', location.href);
     }
@@ -643,7 +640,7 @@
     }
 
     async function installApp() {
-        if (isStandalone()) return;
+        if (isIOSDevice || isStandalone()) return;
 
         // Android Chrome / Edge / Samsung Internet: native one-tap install
         if (deferredPrompt) {
@@ -651,28 +648,6 @@
             const { outcome } = await deferredPrompt.userChoice;
             if (outcome === 'accepted') installBtn.style.display = 'none';
             deferredPrompt = null;
-            return;
-        }
-
-        if (isIOSDevice) {
-            if (!isIOSSafari) {
-                showInstallGuide(`
-                    <p>To add this app to your Home Screen, open this page in <b>Safari</b>.</p>
-                    <ol>
-                        <li>Tap <b>Copy Link</b> below.</li>
-                        <li>Open <b>Safari</b> and paste the link.</li>
-                        <li>Tap the <b>Share</b> button ${shareIcon}, then <b>"Add to Home Screen"</b>.</li>
-                    </ol>
-                    <button class="primary" onclick="copyPageLink()">Copy Link</button>`);
-                return;
-            }
-            showInstallGuide(`
-                <ol>
-                    <li>Tap the <b>Share</b> button ${shareIcon} in the Safari toolbar.</li>
-                    <li>Scroll down and tap <b>"Add to Home Screen"</b> ➕.</li>
-                    <li>Tap <b>"Add"</b> in the top-right corner.</li>
-                </ol>
-                <p class="note">iPhone doesn't allow websites to install themselves, so this takes these 3 quick taps.</p>`);
             return;
         }
 
