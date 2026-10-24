@@ -24,6 +24,21 @@
         }
     </script>
 
+    <!-- Auto-Refresh Page when User Returns After Long Absence -->
+    <script>
+        let lastActiveTime = Date.now();
+        document.addEventListener("visibilitychange", function() {
+            if (document.visibilityState === "visible") {
+                // If away for more than 15 minutes (900,000 ms), auto-refresh page
+                if (Date.now() - lastActiveTime > 15 * 60 * 1000) {
+                    window.location.reload();
+                }
+            } else {
+                lastActiveTime = Date.now();
+            }
+        });
+    </script>
+
     <style>
         /* WhatsApp Dark Theme Palette (Default) */
         :root {
@@ -96,6 +111,19 @@
         /* Hide Install Button on iOS Devices */
         html.platform-ios #install-btn {
             display: none !important;
+        }
+
+        /* Hide Netlify Badges and Drawer Overlay Completely */
+        iframe[src*="netlify"],
+        [data-netlify-deploy-id],
+        #netlify-modal-root,
+        .netlify-identity-widget,
+        #netlify-drawer-root,
+        iframe#netlify-drawer {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
