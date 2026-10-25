@@ -331,7 +331,7 @@
     - IF THE PROOF IS INVALID, FAKE, PENDING, OR A DASHBOARD SCREENSHOT: Reject it politely and DO NOT include [PAYMENT_VERIFIED_UNLOCK] anywhere in your response.
 
     CHANGE MATCH PROTOCOL:
-    - If a user who has already paid or already selected a match says they want to change their match, change the person they chose, or pick someone else, acknowledge it warmly and append this exact code at the very end of your response: [SHOW_CHANGE_MATCH_BUTTON]
+    - If a user who has already paid says they want to change their match, change the person they chose, or pick someone else, acknowledge it warmly and append this exact code at the very end of your response: [SHOW_CHANGE_MATCH_BUTTON]
 
     TRIGGER SEQUENCE:
     Question 1 TRIGGER: User starts conversation.
@@ -652,6 +652,19 @@
         const lastBotMsg = chatHistory.length >= 2 ? chatHistory[chatHistory.length - 2].content.toLowerCase() : '';
         const isPersonalPhotoSubmission = attachedFile && (lastBotMsg.includes('picture of yourself') || lastBotMsg.includes('photo of yourself'));
 
+        // Client-side fallback check for Change Match requests by paid users
+        const isPaidUser = localStorage.getItem('membership_fee_paid') === 'true';
+        const lowerText = text.toLowerCase();
+        if (isPaidUser && (lowerText.includes('change') || lowerText.includes('another person') || lowerText.includes('different person') || lowerText.includes('pick someone'))) {
+            isSending = false;
+            const changePrompt = "Alright Frank, noted. Click the button below to reopen the gallery and choose a different person.";
+            chatHistory.push({ role: "assistant", content: changePrompt });
+            saveChatHistory();
+            renderChatMessages();
+            showChangeMatchButton();
+            return;
+        }
+
         if (attachedFile && attachedFile.type.startsWith('image/')) {
             appendLoadingMessage('Typing...');
             try {
@@ -752,7 +765,13 @@
 
             trackCategoryChoice(reply, chatHistory[chatHistory.length - 2].content);
 
-            if (shouldUnlockButton && pendingCategoryPage) {
+            // BULLETPROOF CLIENT-SIDE FALLBACK: If AI confirms payment verification in text, force unlock button immediately!
+            const lowerReply = reply.toLowerCase();
+            const isPaymentConfirmation = lowerReply.includes('verified') || lowerReply.includes('confirmed') || lowerReply.includes('successful') || lowerReply.includes('thank you');
+            const lastUserMsg = chatHistory.length >= 3 ? (chatHistory[chatHistory.length - 3].content || '').toLowerCase() : '';
+            const isReceiptResponse = lastUserMsg.includes('receipt') || lastUserMsg.includes('payment') || lastUserMsg.includes('transfer') || lastUserMsg.includes('image');
+
+            if ((shouldUnlockButton || (isPaymentConfirmation && isReceiptResponse)) && pendingCategoryPage) {
                 unlockGalleryButton();
             }
 
@@ -773,16 +792,17 @@
     function trackCategoryChoice(botReply, userMsg) {
         const combined = (botReply + " " + userMsg).toLowerCase();
 
+        // Mapped to exact GitHub folder names: sugar_mommy, paid_cat, serious_int, serious_ng, media_exchange
         if (combined.includes('sugar') || combined.includes('mommy') || combined.includes('daddy')) {
-            pendingCategoryPage = 'sugar_mommy.html'; pendingCategoryName = 'Sugar Mommy / Daddy';
+            pendingCategoryPage = 'sugar_mommy/index.html'; pendingCategoryName = 'Sugar Mommy / Daddy';
         } else if (combined.includes('chat') || combined.includes('rich people abroad') || combined.includes('8000')) {
-            pendingCategoryPage = 'paid_cat.html'; pendingCategoryName = 'Get Paid For Chatting';
+            pendingCategoryPage = 'paid_cat/index.html'; pendingCategoryName = 'Get Paid For Chatting';
         } else if (combined.includes('outside nigeria') || combined.includes('5000')) {
-            pendingCategoryPage = 'serious_int.html'; pendingCategoryName = 'Serious Relationship Outside Nigeria';
+            pendingCategoryPage = 'serious_int/index.html'; pendingCategoryName = 'Serious Relationship Outside Nigeria';
         } else if (combined.includes('hookup') || combined.includes('benefit') || combined.includes('video call') || combined.includes('tape') || combined.includes('1500')) {
-            pendingCategoryPage = 'media_exchange.html'; pendingCategoryName = 'Casual Connections';
+            pendingCategoryPage = 'media_exchange/index.html'; pendingCategoryName = 'Casual Connections';
         } else if (combined.includes('relationship in nigeria') || combined.includes('serious relationship in nigeria')) {
-            pendingCategoryPage = 'serious_ng.html'; pendingCategoryName = 'Serious Relationship in Nigeria';
+            pendingCategoryPage = 'serious_ng/index.html'; pendingCategoryName = 'Serious Relationship in Nigeria';
         }
 
         if (pendingCategoryPage) {
