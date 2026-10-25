@@ -509,7 +509,7 @@
                 localStorage.removeItem('pending_match_images');
             }
 
-            const backendPrompt = `[System Backend Event]: Candidate submitted ${photoCount} profile photo(s) from the match gallery. Continue from Question 5 now. Ask them to send a picture of yourself so you can submit it to their match. DO NOT ask for payment or connection fee here.`;
+            const backendPrompt = `[System Backend Event]: Candidate submitted ${photoCount} profile photo(s) from the match gallery. Continue from Question 5 now. Ask them to send a picture of yourself so you can submit it to your match. DO NOT ask for payment or connection fee here.`;
             chatHistory.push({ role: "system", content: backendPrompt });
             saveChatHistory();
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -652,19 +652,6 @@
         const lastBotMsg = chatHistory.length >= 2 ? chatHistory[chatHistory.length - 2].content.toLowerCase() : '';
         const isPersonalPhotoSubmission = attachedFile && (lastBotMsg.includes('picture of yourself') || lastBotMsg.includes('photo of yourself'));
 
-        // Client-side fallback check for Change Match requests by paid users
-        const isPaidUser = localStorage.getItem('membership_fee_paid') === 'true';
-        const lowerText = text.toLowerCase();
-        if (isPaidUser && (lowerText.includes('change') || lowerText.includes('another person') || lowerText.includes('different person') || lowerText.includes('pick someone'))) {
-            isSending = false;
-            const changePrompt = "Alright Frank, noted. Click the button below to reopen the gallery and choose a different person.";
-            chatHistory.push({ role: "assistant", content: changePrompt });
-            saveChatHistory();
-            renderChatMessages();
-            showChangeMatchButton();
-            return;
-        }
-
         if (attachedFile && attachedFile.type.startsWith('image/')) {
             appendLoadingMessage('Typing...');
             try {
@@ -765,13 +752,7 @@
 
             trackCategoryChoice(reply, chatHistory[chatHistory.length - 2].content);
 
-            // BULLETPROOF CLIENT-SIDE FALLBACK: If AI confirms payment verification in text, force unlock button immediately!
-            const lowerReply = reply.toLowerCase();
-            const isPaymentConfirmation = lowerReply.includes('verified') || lowerReply.includes('confirmed') || lowerReply.includes('successful') || lowerReply.includes('thank you');
-            const lastUserMsg = chatHistory.length >= 3 ? (chatHistory[chatHistory.length - 3].content || '').toLowerCase() : '';
-            const isReceiptResponse = lastUserMsg.includes('receipt') || lastUserMsg.includes('payment') || lastUserMsg.includes('transfer') || lastUserMsg.includes('image');
-
-            if ((shouldUnlockButton || (isPaymentConfirmation && isReceiptResponse)) && pendingCategoryPage) {
+            if (shouldUnlockButton && pendingCategoryPage) {
                 unlockGalleryButton();
             }
 
@@ -792,17 +773,16 @@
     function trackCategoryChoice(botReply, userMsg) {
         const combined = (botReply + " " + userMsg).toLowerCase();
 
-        // Mapped to exact GitHub folder names: sugar_mommy, paid_cat, serious_int, serious_ng, media_exchange
-        if (combined.includes('sugar') || combined.includes('mommy') || combined.includes('daddy')) {
-            pendingCategoryPage = 'sugar_mommy/index.html'; pendingCategoryName = 'Sugar Mommy / Daddy';
+        if (combined.includes('sugar') || combined.includes('mommy') || combined.includes('daddy') || combined.includes('2000')) {
+            pendingCategoryPage = 'sugar_mommy.html'; pendingCategoryName = 'Sugar Mommy / Daddy';
         } else if (combined.includes('chat') || combined.includes('rich people abroad') || combined.includes('8000')) {
-            pendingCategoryPage = 'paid_cat/index.html'; pendingCategoryName = 'Get Paid For Chatting';
+            pendingCategoryPage = 'paid_cat.html'; pendingCategoryName = 'Get Paid For Chatting';
         } else if (combined.includes('outside nigeria') || combined.includes('5000')) {
-            pendingCategoryPage = 'serious_int/index.html'; pendingCategoryName = 'Serious Relationship Outside Nigeria';
-        } else if (combined.includes('hookup') || combined.includes('benefit') || combined.includes('video call') || combined.includes('tape') || combined.includes('1500')) {
-            pendingCategoryPage = 'media_exchange/index.html'; pendingCategoryName = 'Casual Connections';
+            pendingCategoryPage = 'serious_int.html'; pendingCategoryName = 'Serious Relationship Outside Nigeria';
+        } else if (combined.includes('hookup') || combined.includes('benefit') || combined.includes('video call') || combined.includes('tape') || combined.includes('1500') || combined.includes('1000')) {
+            pendingCategoryPage = 'media_exchange.html'; pendingCategoryName = 'Casual Connections';
         } else if (combined.includes('relationship in nigeria') || combined.includes('serious relationship in nigeria')) {
-            pendingCategoryPage = 'serious_ng/index.html'; pendingCategoryName = 'Serious Relationship in Nigeria';
+            pendingCategoryPage = 'serious_ng.html'; pendingCategoryName = 'Serious Relationship in Nigeria';
         }
 
         if (pendingCategoryPage) {
@@ -816,7 +796,17 @@
         localStorage.setItem('membership_fee_paid', 'true');
         localStorage.setItem('unlocked_gallery_url', pendingCategoryPage);
         localStorage.setItem('unlocked_gallery_name', pendingCategoryName);
-        checkPersistentButtonState();
+        
+        // Immediately trigger gallery button display upon verified payment
+        const area = document.getElementById('persistentButtonArea');
+        const btn = document.getElementById('persistentLinkBtn');
+        const inputAreaBox = document.getElementById('inputAreaBox');
+
+        btn.href = pendingCategoryPage;
+        btn.innerText = `Click Here to Open ${pendingCategoryName} Gallery`;
+        area.style.display = 'block';
+        area.dataset.userRequestedChange = 'true';
+        inputAreaBox.classList.add('disabled');
     }
 
     function showChangeMatchButton() {
