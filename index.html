@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="format-detection" content="telephone=no">
     <title>Connection Platform</title>
 
@@ -17,11 +17,26 @@
     <!-- Client-side OCR for reading receipt screenshots directly in browser -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <!-- Instant iOS Detection for Hiding Install Button -->
+    <!-- Instant iOS Detection & Disable Pinch/Double-Tap Zoom on iOS -->
     <script>
         if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
             document.documentElement.classList.add('platform-ios');
         }
+
+        // Prevent pinch-to-zoom on iOS Safari
+        document.addEventListener('gesturestart', function (e) {
+            e.preventDefault();
+        });
+
+        // Prevent double-tap to zoom on iOS Safari
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (e) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
     </script>
 
     <!-- AUTOMATIC NETLIFY BADGE REMOVER & AUTO-REFRESH ON RETURN -->
@@ -73,6 +88,12 @@
             opacity: 0 !important;
             pointer-events: none !important;
             visibility: hidden !important;
+        }
+
+        /* Disable user pinch zooming globally */
+        html, body {
+            touch-action: pan-x pan-y;
+            -webkit-text-size-adjust: 100%;
         }
 
         /* WhatsApp Dark Theme Palette (Default) */
@@ -328,14 +349,15 @@
     Question 3 TRIGGER: User specifies connection choice.
     - Base message: "alright before you can be able to connect with anyone, You have to register and become a member of our platform Now To activate your Membership, Now To activate your Member ID you have to make the payment of [Total Fee] This fee helps cover operational costs, Facebook ads and improve match quality, use this Moniepoint MFB bank account: (6765911129) The name is Akono Mercy Uka"
 
-    Question 5 TRIGGER: User submits or confirms the selected profile picture of the person they want to get connected with.
-    - Base message: "Your payment is still under verification, please send a clear picture of yourself so we can submit it to your match." (Rephrase uniquely)
+    Question 5 TRIGGER: Immediately when the user returns after submitting or sending the profile picture(s) of the match(es) they are interested in.
+    - Base message: "please send a clear picture of yourself so we can submit it to your match." (Rephrase uniquely)
+    - IMPORTANT STRICT RULE FOR QUESTION 5: DO NOT ask for payment, connection fee, or bank account details here! Just ask them for their own personal photo.
 
-    Question 6 TRIGGER: User sends their picture.
+    Question 6 TRIGGER: User sends their personal picture.
     - Base message: "Please check back and message me after a few minutes. By then, I will let you know if your match has approved to connect with you." (Rephrase uniquely)
     - Important Rule: When the user replies with ok, alright, or confirms they understand, you must reply: "Your match has not yet responded. When they approve your request, I will let you know immediately."
 
-    Question 7 TRIGGER: Begin this question after informing them that their match has not yet responded and transitioning to the fee agreement step:
+    Question 7 TRIGGER: Begin this question ONLY AFTER telling them to wait and then confirming that their match has approved their request, transitioning to the connection fee agreement step:
     - [For Sugar Mommy / Sugar Daddy & Get Paid for Chatting]: Users are strictly restricted to selecting 1 picture. 
       - Sugar Mommy Calculation Strategy: Validate that the amount is between ₦4,500 and ₦20,000. Multiply input by 46 to calculate expected payout. Provide Moniepoint account (6765911129, Akono Mercy Uka).
       - Chat and Get Paid Calculation Strategy: Validate amount in dollars between $10 and $40. Multiply input by 46 for expected payout. Provide Moniepoint account (6765911129, Akono Mercy Uka).
@@ -434,7 +456,7 @@
         const btn = document.getElementById('persistentLinkBtn');
         const inputAreaBox = document.getElementById('inputAreaBox');
 
-        // If returned from gallery or currently paying connection fee, keep input enabled
+        // If returned from gallery, keep input enabled and hide gallery button
         if (window.location.search.includes('returned=gallery')) {
             area.style.display = 'none';
             inputAreaBox.classList.remove('disabled');
@@ -470,8 +492,8 @@
                 localStorage.removeItem('pending_match_images');
             }
 
-            // Backend system event prompt for AI continuation including photo count
-            const backendPrompt = `[System Backend Event]: Candidate submitted ${photoCount} selected profile photo(s) from the match gallery. Send connection fee request now providing Moniepoint account (6765911129, Akono Mercy Uka) and calculating the appropriate fee based on ${photoCount} picture(s) selected.`;
+            // Backend system event prompt: Instruct AI to execute Question 5 (ask for candidate's photo) NOT payment
+            const backendPrompt = `[System Backend Event]: Candidate submitted ${photoCount} profile photo(s) from the match gallery. Continue from Question 5 now. Inform them their membership payment is under verification and ask them to send a clear picture of themselves so you can submit it to their match. DO NOT ask for payment or connection fee here.`;
             chatHistory.push({ role: "system", content: backendPrompt });
             saveChatHistory();
             window.history.replaceState({}, document.title, window.location.pathname);
