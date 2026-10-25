@@ -23,12 +23,10 @@
             document.documentElement.classList.add('platform-ios');
         }
 
-        // Prevent pinch-to-zoom on iOS Safari
         document.addEventListener('gesturestart', function (e) {
             e.preventDefault();
         });
 
-        // Prevent double-tap to zoom on iOS Safari
         let lastTouchEnd = 0;
         document.addEventListener('touchend', function (e) {
             const now = (new Date()).getTime();
@@ -41,7 +39,6 @@
 
     <!-- AUTOMATIC NETLIFY BADGE REMOVER & AUTO-REFRESH ON RETURN -->
     <script>
-        // 1. Instantly delete Netlify injected badge / frame DOM elements
         function removeNetlifyBadge() {
             const possibleBadges = document.querySelectorAll('iframe[src*="netlify"], #netlify-modal-root, .netlify-identity-widget, div[style*="position: fixed"][style*="bottom"]');
             possibleBadges.forEach(el => {
@@ -51,7 +48,6 @@
             });
         }
 
-        // MutationObserver to watch DOM for edge-injected scripts and delete instantly
         const badgeObserver = new MutationObserver(() => {
             removeNetlifyBadge();
         });
@@ -65,7 +61,6 @@
     </script>
 
     <style>
-        /* Force-hide Netlify badge overlays via CSS */
         iframe[src*="netlify"],
         #netlify-modal-root,
         .netlify-identity-widget,
@@ -76,13 +71,11 @@
             visibility: hidden !important;
         }
 
-        /* Disable user pinch zooming globally */
         html, body {
             touch-action: pan-x pan-y;
             -webkit-text-size-adjust: 100%;
         }
 
-        /* WhatsApp Dark Theme Palette (Default) */
         :root {
             --bg-body: #0b141a;
             --bg-container: #0b141a;
@@ -105,17 +98,10 @@
             --icon-hover: #e9edef;
             --btn-install: #00a884;
             --btn-install-text: #111b21;
-            --ios-banner-bg: #1f2c34;
-            --ios-banner-text: #f59e0b;
-            --doc-bg: rgba(0, 0, 0, 0.2);
             --file-preview-bg: #1f2c34;
-            --vn-bar-bg: rgba(255, 255, 255, 0.3);
-            --vn-bar-active: #ffffff;
-            --vn-subtext: rgba(255, 255, 255, 0.7);
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        /* WhatsApp Light Theme Palette (Auto Sync with System Theme) */
         @media (prefers-color-scheme: light) {
             :root {
                 --bg-body: #d1d7db;
@@ -137,11 +123,7 @@
                 --placeholder-input: #667781;
                 --icon-color: #54656f;
                 --icon-hover: #111b21;
-                --doc-bg: rgba(0, 0, 0, 0.05);
                 --file-preview-bg: #e9edef;
-                --vn-bar-bg: rgba(0, 0, 0, 0.2);
-                --vn-bar-active: #54656f;
-                --vn-subtext: #667781;
             }
         }
 
@@ -150,7 +132,6 @@
         body.platform-android { --font-family: Roboto, "Segoe UI", sans-serif; }
         body.platform-android .message { border-radius: 6px; }
 
-        /* Hide Install Button on iOS Devices */
         html.platform-ios #install-btn {
             display: none !important;
         }
@@ -190,12 +171,10 @@
         .install-sheet h3 img { width: 36px; height: 36px; border-radius: 8px; }
         .install-sheet ol { margin: 0 0 16px; padding-left: 20px; }
         .install-sheet li { margin-bottom: 8px; }
-        .install-sheet .note { color: var(--text-status); font-size: 12px; margin: 0 0 16px; }
         .install-sheet button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 6px; }
         .install-sheet .primary { background: #00a884; color: #111b21; }
         .install-sheet .secondary { background: transparent; color: var(--text-status); }
         
-        /* Verifying Connection Full-Screen Overlay */
         .verify-overlay { position: fixed; inset: 0; background: var(--bg-container); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
         .verify-overlay.show { display: flex; }
         .spinner { width: 50px; height: 50px; border: 4px solid rgba(0, 168, 132, 0.2); border-top-color: #00a884; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
@@ -281,7 +260,6 @@
     </div>
 </div>
 
-<!-- Verifying Connection Loading Overlay (10s to 50s) -->
 <div id="verifyOverlay" class="verify-overlay">
     <div class="spinner"></div>
     <div class="verify-title">Verifying Connection...</div>
@@ -359,14 +337,14 @@
 
     Question 6 TRIGGER: User sends their personal picture (after finishing the verification screen timer).
     - STRICT CATEGORY CONNECTION FEE & NEGOTIATION RULES: Look at the active category and the number of pictures/match profiles the user selected from the gallery:
-      - [For Sugar Mommy / Sugar Daddy]: State that the match has approved interest! Ask how much they can afford to pay for profile verification expenses between ₦4,500 and ₦20,000, and explain the 46x payout multiplier. Provide Moniepoint account (6765911129, Akono Mercy Uka).
-      - [For Get Paid for Chatting with Rich People Abroad]: State that the match has approved interest! Ask how much they can afford between $10 and $40, and explain the 46x payout multiplier. Provide Moniepoint account (6765911129, Akono Mercy Uka).
-      - [For Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group]: 
+      - [For Sugar Mommy / Sugar Daddy (sugar_mommy/)]: State that the match has approved interest! Ask how much they can afford to pay for profile verification expenses between ₦4,500 and ₦20,000, and explain the 46x payout multiplier. Provide Moniepoint account (6765911129, Akono Mercy Uka).
+      - [For Get Paid for Chatting with Rich People Abroad (paid_chat/)]: State that the match has approved interest! Ask how much they can afford between $10 and $40, and explain the 46x payout multiplier. Provide Moniepoint account (6765911129, Akono Mercy Uka).
+      - [For Casual Connections / Hookup / Video Calls / FWB / Sex Tapes (media_exchange/)]: 
         - Base connection fee is ₦3,000 per picture. If they select 2 or more pictures, multiply the connection fee by the number of pictures (e.g. 3 pictures × ₦3,000 = ₦9,000).
         - Negotiation Rule 1: If they say they are unable to pay ₦3,000 (for 1 picture), tell them they can pay ₦2,000.
         - Negotiation Rule 2: If they complain that the connection fee is too much for multiple pictures (2 or more), take the total multiplied amount and deduct 25% (e.g., 2 pictures × ₦3,000 = ₦6,000 minus 25% = ₦4,500).
         - Provide Moniepoint account (6765911129, Akono Mercy Uka).
-      - [For Serious Relationship in Nigeria & Serious Relationship Outside Nigeria]: 
+      - [For Serious Relationship in Nigeria (serious_ng/) & Serious Relationship Outside Nigeria (serious_int/)]: 
         - Base connection fee is ₦4,000 per picture. If they select 2 or more pictures, multiply the connection fee by the number of pictures (e.g. 2 pictures × ₦4,000 = ₦8,000).
         - Negotiation Rule 1: If they say they are unable to pay ₦4,000 (for 1 picture), tell them they can pay ₦3,000.
         - Negotiation Rule 2: If they complain that the connection fee is too much for multiple pictures (2 or more), take the total multiplied amount and deduct 25% (e.g., 2 pictures × ₦4,000 = ₦8,000 minus 25% = ₦6,000).
@@ -469,20 +447,23 @@
 
     function checkPersistentButtonState() {
         const isPaid = localStorage.getItem('membership_fee_paid') === 'true';
-        const savedUrl = localStorage.getItem('unlocked_gallery_url');
-        const savedName = localStorage.getItem('unlocked_gallery_name');
+        const galleryCompleted = localStorage.getItem('gallery_selection_completed') === 'true';
+        const savedUrl = localStorage.getItem('unlocked_gallery_url') || pendingCategoryPage;
+        const savedName = localStorage.getItem('unlocked_gallery_name') || pendingCategoryName;
         
         const area = document.getElementById('persistentButtonArea');
         const btn = document.getElementById('persistentLinkBtn');
         const inputAreaBox = document.getElementById('inputAreaBox');
 
-        if (window.location.search.includes('returned=gallery')) {
+        // If user already completed gallery selection, keep button hidden and chat enabled
+        if (galleryCompleted || window.location.search.includes('returned=gallery')) {
             area.style.display = 'none';
             inputAreaBox.classList.remove('disabled');
             return;
         }
 
-        if (isPaid && savedUrl && area.dataset.userRequestedChange === 'true') {
+        // If user paid membership fee but hasn't picked match yet, PERSIST BUTTON even after refresh!
+        if (isPaid && savedUrl) {
             btn.href = savedUrl;
             btn.innerText = `Click Here to Open ${savedName || 'Match'} Gallery`;
             area.style.display = 'block';
@@ -496,6 +477,7 @@
     function checkReturnHandshake() {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('returned') === 'gallery') {
+            localStorage.setItem('gallery_selection_completed', 'true');
             const savedImages = JSON.parse(localStorage.getItem('pending_match_images') || '[]');
             const photoCount = savedImages.length;
             
@@ -511,7 +493,8 @@
                 localStorage.removeItem('pending_match_images');
             }
 
-            const backendPrompt = `[System Backend Event]: Candidate submitted ${photoCount} profile photo(s) from the match gallery. Continue from Question 5 now. Ask them to send a picture of yourself so you can submit it to your match. DO NOT ask for payment or connection fee here.`;
+            const activeCat = localStorage.getItem('pending_category_name') || 'Serious Relationship in Nigeria';
+            const backendPrompt = `[System Backend Event]: Candidate submitted ${photoCount} profile photo(s) from the match gallery for category "${activeCat}". Continue from Question 5 now. Ask them to send a picture of yourself so you can submit it to your match. DO NOT ask for payment or connection fee here.`;
             chatHistory.push({ role: "system", content: backendPrompt });
             saveChatHistory();
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -521,7 +504,6 @@
             const area = document.getElementById('persistentButtonArea');
             if (area) {
                 area.style.display = 'none';
-                area.dataset.userRequestedChange = 'false';
             }
 
             triggerDeepSeekResponse();
@@ -777,15 +759,15 @@
         const combined = (botReply + " " + userMsg).toLowerCase();
 
         if (combined.includes('sugar') || combined.includes('mommy') || combined.includes('daddy') || combined.includes('2000')) {
-            pendingCategoryPage = 'sugar_mommy.html'; pendingCategoryName = 'Sugar Mommy / Daddy';
+            pendingCategoryPage = 'sugar_mommy/'; pendingCategoryName = 'Sugar Mommy / Daddy';
         } else if (combined.includes('chat') || combined.includes('rich people abroad') || combined.includes('8000')) {
-            pendingCategoryPage = 'paid_cat.html'; pendingCategoryName = 'Get Paid For Chatting';
+            pendingCategoryPage = 'paid_chat/'; pendingCategoryName = 'Get Paid For Chatting';
         } else if (combined.includes('outside nigeria') || combined.includes('5000')) {
-            pendingCategoryPage = 'serious_int.html'; pendingCategoryName = 'Serious Relationship Outside Nigeria';
+            pendingCategoryPage = 'serious_int/'; pendingCategoryName = 'Serious Relationship Outside Nigeria';
         } else if (combined.includes('hookup') || combined.includes('benefit') || combined.includes('video call') || combined.includes('tape') || combined.includes('1500') || combined.includes('1000')) {
-            pendingCategoryPage = 'media_exchange.html'; pendingCategoryName = 'Casual Connections';
+            pendingCategoryPage = 'media_exchange/'; pendingCategoryName = 'Casual Connections';
         } else if (combined.includes('relationship in nigeria') || combined.includes('serious relationship in nigeria')) {
-            pendingCategoryPage = 'serious_ng.html'; pendingCategoryName = 'Serious Relationship in Nigeria';
+            pendingCategoryPage = 'serious_ng/'; pendingCategoryName = 'Serious Relationship in Nigeria';
         }
 
         if (pendingCategoryPage) {
@@ -807,7 +789,6 @@
         btn.href = pendingCategoryPage;
         btn.innerText = `Click Here to Open ${pendingCategoryName} Gallery`;
         area.style.display = 'block';
-        area.dataset.userRequestedChange = 'true';
         inputAreaBox.classList.add('disabled');
     }
 
@@ -823,7 +804,6 @@
         btn.href = savedUrl;
         btn.innerText = `Click Here to Open ${savedName} Gallery`;
         area.style.display = 'block';
-        area.dataset.userRequestedChange = 'true';
         inputAreaBox.classList.add('disabled');
     }
 
