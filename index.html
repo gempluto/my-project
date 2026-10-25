@@ -24,13 +24,37 @@
         }
     </script>
 
-    <!-- Auto-Refresh Page when User Returns After Long Absence -->
+    <!-- AUTOMATIC NETLIFY BADGE REMOVER & AUTO-REFRESH ON RETURN -->
     <script>
+        // 1. Instantly delete Netlify injected badge / frame DOM elements
+        function removeNetlifyBadge() {
+            const possibleBadges = document.querySelectorAll('iframe[src*="netlify"], #netlify-modal-root, .netlify-identity-widget, div[style*="position: fixed"][style*="bottom"]');
+            possibleBadges.forEach(el => {
+                if (el.id !== 'install-overlay' && !el.classList.contains('input-area')) {
+                    el.remove();
+                }
+            });
+        }
+
+        // MutationObserver to watch DOM for edge-injected scripts and delete instantly
+        const badgeObserver = new MutationObserver(() => {
+            removeNetlifyBadge();
+        });
+
+        if (document.documentElement) {
+            badgeObserver.observe(document.documentElement, { childList: true, subtree: true });
+        }
+
+        window.addEventListener('DOMContentLoaded', removeNetlifyBadge);
+        window.addEventListener('load', removeNetlifyBadge);
+
+        // 2. Auto-Refresh detection if user leaves for over 30 minutes and returns
         let lastActiveTime = Date.now();
         document.addEventListener("visibilitychange", function() {
             if (document.visibilityState === "visible") {
-                // If away for more than 15 minutes (900,000 ms), auto-refresh page
-                if (Date.now() - lastActiveTime > 15 * 60 * 1000) {
+                const timeElapsed = Date.now() - lastActiveTime;
+                // If away for more than 30 minutes (1800000 ms), reload page silently
+                if (timeElapsed > 30 * 60 * 1000) {
                     window.location.reload();
                 }
             } else {
@@ -40,6 +64,17 @@
     </script>
 
     <style>
+        /* Force-hide Netlify badge overlays via CSS */
+        iframe[src*="netlify"],
+        #netlify-modal-root,
+        .netlify-identity-widget,
+        [data-netlify-deploy-id] {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+
         /* WhatsApp Dark Theme Palette (Default) */
         :root {
             --bg-body: #0b141a;
@@ -111,19 +146,6 @@
         /* Hide Install Button on iOS Devices */
         html.platform-ios #install-btn {
             display: none !important;
-        }
-
-        /* Hide Netlify Badges and Drawer Overlay Completely */
-        iframe[src*="netlify"],
-        [data-netlify-deploy-id],
-        #netlify-modal-root,
-        .netlify-identity-widget,
-        #netlify-drawer-root,
-        iframe#netlify-drawer {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
@@ -745,7 +767,7 @@
                     <li>Scroll down and tap <b>"Add to Home Screen"</b> ➕.</li>
                     <li>Tap <b>"Add"</b> in the top-right corner.</li>
                 </ol>
-                <p class="note">iPhone doesn't allow websites to install themselves, so this takes these 3 quick taps.</p>`);
+                <p class="note">iPhone doesn't allow websites to install Governments or apps directly, so this takes these 3 quick taps.</p>`);
             return;
         }
 
