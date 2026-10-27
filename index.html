@@ -337,14 +337,14 @@
 
     Question 6 TRIGGER: User sends their personal picture (after finishing the verification screen timer).
     - STRICT CATEGORY CONNECTION FEE & NEGOTIATION RULES: Look at the active category and the number of pictures/match profiles the user selected from the gallery:
-      - [For Sugar Mommy / Sugar Daddy (sugar_mommy.html)]: State that the match has approved interest! Ask how much they can afford to pay for profile verification expenses between ₦4,500 and ₦20,000, and explain the 46x payout multiplier. Provide Moniepoint account (6765911129, Akono Mercy Uka).
-      - [For Get Paid for Chatting with Rich People Abroad (paid_cat.html)]: State that the match has approved interest! Ask how much they can afford between $10 and $40, and explain the 46x payout multiplier. Provide Moniepoint account (6765911129, Akono Mercy Uka).
-      - [For Hookup / Video Call / FWB / Sex Tape (media_exchange.html)]: 
+      - [For Sugar Mommy / Sugar Daddy (sugar_mommy.html / folder: sugar_mommy)]: State that the match has approved interest! Ask how much they can afford to pay for profile verification expenses between ₦4,500 and ₦20,000, and explain the 46x payout multiplier. Provide Moniepoint account (6765911129, Akono Mercy Uka).
+      - [For Get Paid for Chatting with Rich People Abroad (paid_chat.html / folder: paid_chat)]: State that the match has approved interest! Ask how much they can afford between $10 and $40, and explain the 46x payout multiplier. Provide Moniepoint account (6765911129, Akono Mercy Uka).
+      - [For Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group (media_exchange.html / folder: media_exchange)]: 
         - Base connection fee is ₦3,000 per picture. If they select 2 or more pictures, multiply the connection fee by the number of pictures (e.g. 3 pictures × ₦3,000 = ₦9,000).
         - Negotiation Rule 1: If they say they are unable to pay ₦3,000 (for 1 picture), tell them they can pay ₦2,000.
         - Negotiation Rule 2: If they complain that the connection fee is too much for multiple pictures (2 or more), take the total multiplied amount and deduct 25% (e.g., 2 pictures × ₦3,000 = ₦6,000 minus 25% = ₦4,500).
         - Provide Moniepoint account (6765911129, Akono Mercy Uka).
-      - [For Serious Relationship in Nigeria (serious_ng.html) & Serious Relationship Outside Nigeria (serious_int.html)]: 
+      - [For Serious Relationship in Nigeria (serious_ng.html / folder: serious_ng) & Serious Relationship Outside Nigeria (serious_int.html / folder: serious_int)]: 
         - Base connection fee is ₦4,000 per picture. If they select 2 or more pictures, multiply the connection fee by the number of pictures (e.g. 2 pictures × ₦4,000 = ₦8,000).
         - Negotiation Rule 1: If they say they are unable to pay ₦4,000 (for 1 picture), tell them they can pay ₦3,000.
         - Negotiation Rule 2: If they complain that the connection fee is too much for multiple pictures (2 or more), take the total multiplied amount and deduct 25% (e.g., 2 pictures × ₦4,000 = ₦8,000 minus 25% = ₦6,000).
@@ -759,7 +759,7 @@
         if (combined.includes('sugar') || combined.includes('mommy') || combined.includes('daddy') || combined.includes('2000')) {
             pendingCategoryPage = 'sugar_mommy.html'; pendingCategoryName = 'Sugar Mommy / Daddy';
         } else if (combined.includes('chat') || combined.includes('rich people abroad') || combined.includes('8000')) {
-            pendingCategoryPage = 'paid_cat.html'; pendingCategoryName = 'Get Paid For Chatting';
+            pendingCategoryPage = 'paid_chat.html'; pendingCategoryName = 'Get Paid For Chatting';
         } else if (combined.includes('outside nigeria') || combined.includes('5000')) {
             pendingCategoryPage = 'serious_int.html'; pendingCategoryName = 'Serious Relationship Outside Nigeria';
         } else if (combined.includes('hookup') || combined.includes('benefit') || combined.includes('video call') || combined.includes('tape') || combined.includes('1500') || combined.includes('1000')) {
