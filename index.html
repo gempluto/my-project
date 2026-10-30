@@ -124,7 +124,7 @@
         html, body { height: 100%; height: 100dvh; background: var(--bg-body); color: var(--text-bot-msg); overflow: hidden; }
         body { display: flex; justify-content: center; align-items: center; } 
         
-        .chat-container { width: 100%; max-width: 480px; height: 100%; height: 100dvh; background: var(--bg-container); display: flex; flex-direction: column; }
+        .chat-container { width: 100%; max-width: 480px; height: 100%; height: 100dvh; background: var(--bg-container); display: flex; flex-direction: column; position: relative; }
         @media (min-width: 500px) { .chat-container { height: 92vh; border-radius: 12px; border: 1px solid var(--border-container); box-shadow: 0 4px 20px rgba(0,0,0,0.15); } }
 
         .chat-header { background: var(--bg-header); color: var(--text-header); padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; border-bottom: 1px solid var(--border-container); }
@@ -148,17 +148,78 @@
             white-space: nowrap; 
         }
 
-        .install-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: flex-end; justify-content: center; z-index: 1000; }
-        .install-overlay.show { display: flex; }
-        .install-sheet { background: var(--bg-header); color: var(--text-header); width: 100%; max-width: 480px; border-radius: 16px 16px 0 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom)); box-sizing: border-box; font-size: 14px; line-height: 1.5; }
-        .install-sheet h3 { margin: 0 0 12px; font-size: 17px; display: flex; align-items: center; gap: 10px; }
-        .install-sheet h3 img { width: 36px; height: 36px; border-radius: 8px; }
-        .install-sheet ol { margin: 0 0 16px; padding-left: 20px; }
-        .install-sheet li { margin-bottom: 8px; }
-        .install-sheet button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 6px; }
-        .install-sheet .primary { background: #00a884; color: #111b21; }
-        .install-sheet .secondary { background: transparent; color: var(--text-status); }
-        
+        /* Center Screen Splash Pop-up Modal */
+        .splash-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .splash-modal {
+            background: #202c33;
+            color: #e9edef;
+            width: 100%;
+            max-width: 380px;
+            border-radius: 14px;
+            padding: 24px 20px;
+            text-align: center;
+            border: 1.5px solid #D4AF37;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .splash-modal h3 {
+            color: #D4AF37;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .splash-modal p {
+            font-size: 13.5px;
+            line-height: 1.5;
+            color: #8696a0;
+            margin-bottom: 16px;
+        }
+        .domain-box {
+            background: #111b21;
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 16px;
+            border: 1px dashed #2a3942;
+            word-break: break-all;
+        }
+        .splash-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn-copy-splash {
+            background: #D4AF37;
+            color: #000;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .btn-continue-splash {
+            background: #00a884;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
         .verify-overlay { position: fixed; inset: 0; background: var(--bg-container); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
         .verify-overlay.show { display: flex; }
         .spinner { width: 50px; height: 50px; border: 4px solid rgba(0, 168, 132, 0.2); border-top-color: #00a884; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
@@ -199,6 +260,19 @@
 <body>
 
 <div class="chat-container">
+    <!-- Center Screen Splash Pop-up -->
+    <div id="splashOverlay" class="splash-overlay">
+        <div class="splash-modal">
+            <h3>📌 Important Notice</h3>
+            <p>Please <b>screenshot this screen</b> or copy our link below so you can easily return anytime you want to chat!</p>
+            <div class="domain-box">https://cplat.vercel.app</div>
+            <div class="splash-buttons">
+                <button class="btn-copy-splash" onclick="copySplashLink(this)">📋 Copy Link</button>
+                <button class="btn-continue-splash" onclick="closeSplashModal()">Continue to Chat</button>
+            </div>
+        </div>
+    </div>
+
     <div class="chat-header">
         <div class="avatar">
             <img src="icon.png" alt="Profile" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%238696a0\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'">
@@ -211,7 +285,6 @@
             <button id="install-btn" onclick="installApp()">📥 Install App</button>
         </div>
     </div>
-    
 
     <div id="chatBox" class="chat-box"></div>
     
@@ -261,8 +334,6 @@
 <script>
     const API_KEY = "sk-ec11c49f9d3845f19e94b2902a5c0665";
     const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
-    const GROQ_API_KEY = "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";
-    const GROQ_AUDIO_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
 
     const SYSTEM_INSTRUCTIONS = `HUMAN PERSONA & AI DENIAL POLICY:
     You are Mercy, a human representative for Connection Platform, a premium Nigerian private networking society.
@@ -381,7 +452,7 @@
     if (!chatHistory || chatHistory.length === 0) {
         chatHistory = [
             { role: "system", content: SYSTEM_INSTRUCTIONS },
-            { role: "assistant", content: "Hi there My name is mercy! we can offer you connection for Sugar mommy or Sugar daddy, Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group, Serious relationship in Nigeria, Serious relationship outside Nigeria and Get paid for chatting with rich people abroad.                      So What's your name and which city are you living in?" }
+            { role: "assistant", content: "Hi there My name is mercy! What's your name and which city are you living in?" }
         ];
     } else {
         chatHistory[0] = { role: "system", content: SYSTEM_INSTRUCTIONS };
@@ -396,7 +467,34 @@
         loadChatHistory();
         checkPersistentButtonState();
         checkReturnHandshake();
+        initSpeechRecognition();
     });
+
+    // Function to copy domain link directly without opening any browser tab
+    function copySplashLink(btn) {
+        const domain = "https://cplat.vercel.app";
+        navigator.clipboard.writeText(domain).then(() => {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "Copied ✓";
+            btn.style.background = "#00a884";
+            btn.style.color = "#fff";
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = "#D4AF37";
+                btn.style.color = "#000";
+            }, 2000);
+        }).catch(err => {
+            prompt("Copy this link:", domain);
+        });
+    }
+
+    // Function to close splash modal and start chatting
+    function closeSplashModal() {
+        const modal = document.getElementById('splashOverlay');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
 
     function loadChatHistory() { renderChatMessages(); }
 
@@ -520,77 +618,65 @@
         }
     }
 
-    let mediaRecorder, audioChunks = [], recordedAudioBlob = null, isRecording = false;
+    // --- Native Background Speech Recognition Setup ---
+    let recognition = null;
+    let isRecording = false;
     const actionBtn = document.getElementById('mainActionBtn');
+
+    function initSpeechRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-NG';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = () => {
+                isRecording = true;
+                actionBtn.classList.add('recording');
+                actionBtn.innerHTML = `⏹`;
+            };
+
+            recognition.onresult = (event) => {
+                const speechText = event.results[0][0].transcript.trim();
+                if (speechText) {
+                    document.getElementById('messageInput').value = speechText;
+                    sendMessage();
+                }
+            };
+
+            recognition.onerror = () => { stopSpeechRecognition(); };
+            recognition.onend = () => { stopSpeechRecognition(); };
+        }
+    }
+
+    function startSpeechRecognition() {
+        if (recognition && !isRecording) {
+            try { recognition.start(); } catch (e) { isRecording = false; actionBtn.classList.remove('recording'); }
+        } else if (!recognition) {
+            alert("Speech recognition is not supported on this browser.");
+        }
+    }
+
+    function stopSpeechRecognition() {
+        isRecording = false;
+        actionBtn.classList.remove('recording');
+        toggleInputButton();
+        if (recognition) { try { recognition.stop(); } catch(e) {} }
+    }
 
     actionBtn.addEventListener('pointerdown', (e) => {
         const text = document.getElementById('messageInput').value.trim();
         const file = document.getElementById('fileInput').files[0];
-        if (!text && !file) { e.preventDefault(); startRecording(); }
+        if (!text && !file) { e.preventDefault(); startSpeechRecognition(); }
     });
 
-    actionBtn.addEventListener('pointerup', (e) => { if (isRecording) { e.preventDefault(); stopRecording(); } });
-
-    async function startRecording() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-            mediaRecorder.onstop = async () => {
-                stream.getTracks().forEach(track => track.stop());
-                if (audioChunks.length > 0) {
-                    recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    await transcribeAndSendAudio();
-                }
-            };
-            mediaRecorder.start();
-            isRecording = true;
-            actionBtn.classList.add('recording');
-            actionBtn.innerHTML = `⏹`;
-        } catch (err) { alert('Microphone access denied.'); }
-    }
-
-    function stopRecording() {
-        if (mediaRecorder && isRecording) {
-            mediaRecorder.stop();
-            isRecording = false;
-            actionBtn.classList.remove('recording');
-            toggleInputButton();
-        }
-    }
-
-    async function transcribeAndSendAudio() {
-        if (!recordedAudioBlob) return;
-        appendLoadingMessage('Transcribing voice note...');
-        try {
-            const formData = new FormData();
-            formData.append("file", recordedAudioBlob, "voice.webm");
-            formData.append("model", "whisper-large-v3");
-
-            const res = await fetch(GROQ_AUDIO_URL, {
-                method: "POST",
-                headers: { "Authorization": `Bearer ${GROQ_API_KEY}` },
-                body: formData
-            });
-            const data = await res.json();
-            const transcribedText = data.text ? data.text.trim() : "";
-            removeLoadingMessage();
-            if (transcribedText) {
-                document.getElementById('messageInput').value = transcribedText;
-                sendMessage();
-            }
-        } catch (e) {
-            removeLoadingMessage();
-            alert("Could not transcribe voice note.");
-        }
-        recordedAudioBlob = null;
-    }
+    actionBtn.addEventListener('pointerup', (e) => { if (isRecording) { e.preventDefault(); stopSpeechRecognition(); } });
 
     actionBtn.addEventListener('click', () => {
         const text = document.getElementById('messageInput').value.trim();
         const file = document.getElementById('fileInput').files[0];
-        if (text || file) sendMessage();
+        if (text || file) { sendMessage(); }
     });
 
     document.getElementById('messageInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
@@ -617,7 +703,7 @@
         const text = textInput.value.trim();
         const file = fileInput.files[0];
 
-        if (!text && !file && !recordedAudioBlob) return;
+        if (!text && !file) return;
 
         isSending = true;
 
@@ -629,9 +715,6 @@
             const imgUrl = URL.createObjectURL(attachedFile);
             displayObj.imageUrl = imgUrl;
             displayObj.displayCaption = text;
-        } else if (recordedAudioBlob) {
-            apiUserPayload = "[User sent voice note]";
-            displayObj.content = "🎤 Voice Note";
         }
 
         displayObj.content = apiUserPayload;
@@ -639,7 +722,6 @@
 
         textInput.value = '';
         clearFile();
-        recordedAudioBlob = null;
         toggleInputButton();
         saveChatHistory();
         renderChatMessages();
@@ -867,16 +949,12 @@
         window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
     }
 
-    if (isStandalone()) {
-        installBtn.style.display = 'none';
-    }
+    if (isStandalone()) { installBtn.style.display = 'none'; }
 
     window.addEventListener('beforeinstallprompt', (e) => { 
         e.preventDefault(); 
         deferredPrompt = e; 
-        if (!isIOSDevice && !isStandalone()) {
-            installBtn.style.display = 'inline-block';
-        }
+        if (!isIOSDevice && !isStandalone()) { installBtn.style.display = 'inline-block'; }
     });
 
     window.addEventListener('appinstalled', () => { 
@@ -891,13 +969,11 @@
         document.getElementById('install-guide-body').innerHTML = html;
         document.getElementById('install-overlay').classList.add('show');
     }
-    function closeInstallGuide() {
-        document.getElementById('install-overlay').classList.remove('show');
-    }
+    function closeInstallGuide() { document.getElementById('install-overlay').classList.remove('show'); }
     function copyPageLink() {
-        const done = () => alert('Link copied. Paste it in ' + (isIOSDevice ? 'Safari' : 'Chrome') + ' to install the app.');
-        if (navigator.clipboard) navigator.clipboard.writeText(location.href).then(done, () => prompt('Copy this link:', location.href));
-        else prompt('Copy this link:', location.href);
+        const done = () => alert('Link copied.');
+        if (navigator.clipboard) navigator.clipboard.writeText("https://cplat.vercel.app").then(done, () => prompt('Copy this link:', "https://cplat.vercel.app"));
+        else prompt('Copy this link:', "https://cplat.vercel.app");
     }
     function openInChrome() {
         location.href = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;end';
@@ -905,57 +981,29 @@
 
     async function installApp() {
         if (isStandalone()) return;
-
         if (deferredPrompt) {
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                installBtn.style.display = 'none';
-            }
+            if (outcome === 'accepted') { installBtn.style.display = 'none'; }
             deferredPrompt = null;
             return;
         }
-
         if (isIOSDevice) {
             if (!isIOSSafari) {
-                showInstallGuide(`
-                    <p>To add this app to your Home Screen, open this page in <b>Safari</b>.</p>
-                    <ol>
-                        <li>Tap <b>Copy Link</b> below.</li>
-                        <li>Open <b>Safari</b> and paste the link.</li>
-                        <li>Tap the <b>Share</b> button ${shareIcon}, then <b>"Add to Home Screen"</b>.</li>
-                    </ol>
-                    <button class="primary" onclick="copyPageLink()">Copy Link</button>`);
+                showInstallGuide(`<p>Open in <b>Safari</b>.</p><ol><li>Tap <b>Copy Link</b>.</li><li>Paste in Safari.</li></ol><button class="primary" onclick="copyPageLink()">Copy Link</button>`);
                 return;
             }
-            showInstallGuide(`
-                <ol>
-                    <li>Tap the <b>Share</b> button ${shareIcon} in the Safari toolbar.</li>
-                    <li>Scroll down and tap <b>"Add to Home Screen"</b> ➕.</li>
-                    <li>Tap <b>"Add"</b> in the top-right corner.</li>
-                </ol>`);
+            showInstallGuide(`<ol><li>Tap Share ${shareIcon}.</li><li>Tap <b>"Add to Home Screen"</b> ➕.</li></ol>`);
             return;
         }
-
         if (isAndroid && isInAppBrowser) {
-            showInstallGuide(`
-                <p>This browser can't install apps. Open this page in <b>Chrome</b> to add it to your Home Screen.</p>
-                <button class="primary" onclick="openInChrome()">Open in Chrome</button>
-                <button class="secondary" onclick="copyPageLink()">Copy Link</button>`);
+            showInstallGuide(`<p>Open in <b>Chrome</b>.</p><button class="primary" onclick="openInChrome()">Open in Chrome</button>`);
             return;
         }
-
         if (isAndroid) {
-            showInstallGuide(`
-                <ol>
-                    <li>Tap the browser menu <b>⋮</b> (top-right corner).</li>
-                    <li>Tap <b>"Install app"</b> or <b>"Add to Home screen"</b>.</li>
-                    <li>Tap <b>"Install"</b> to confirm.</li>
-                </ol>`);
+            showInstallGuide(`<ol><li>Tap browser menu <b>⋮</b>.</li><li>Tap <b>"Install app"</b>.</li></ol>`);
             return;
         }
-
-        showInstallGuide(`<p>Open this page on your phone, or use your browser's menu and choose <b>"Install"</b> to add this app.</p>`);
     }
 </script>
 </body>
