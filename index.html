@@ -17,9 +17,8 @@
     <!-- Client-side OCR for reading receipt screenshots directly in browser -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <!-- Automatic Browser Escape & Mobile Config -->
+    <!-- DIRECT AUTO-REDIRECT SCRIPT: Forces browser opening from Facebook/TikTok webviews -->
     <script>
-        // Automatically break out of Facebook/Instagram/TikTok in-app webview into default browser (Chrome/Safari)
         (function() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isSocialInApp = /FBAN|FBAV|FB_IAB|Instagram|TikTok|LinkedInApp|Twitter|WhatsApp/i.test(ua);
@@ -31,17 +30,18 @@
                 const currentUrl = window.location.href;
                 
                 if (/android/i.test(ua)) {
-                    // Android Intent scheme to force external browser
+                    // Forces Android Chrome Intent
                     window.location.href = 'intent://' + currentUrl.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(currentUrl) + ';end';
                 } else if (/iPad|iPhone|iPod/.test(ua)) {
-                    // iOS Safari Handoff scheme
-                    setTimeout(() => {
-                        window.location.href = currentUrl;
-                    }, 500);
+                    // Triggers iOS external browser handoff
+                    window.location.href = currentUrl;
                 }
             }
         })();
+    </script>
 
+    <!-- Mobile Config & Zoom Prevention -->
+    <script>
         if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
             document.documentElement.classList.add('platform-ios');
         }
@@ -419,7 +419,7 @@
     if (!chatHistory || chatHistory.length === 0) {
         chatHistory = [
             { role: "system", content: SYSTEM_INSTRUCTIONS },
-            { role: "assistant", content: "Hi there My name is mercy! What's your name and which city are you living in?" }
+            { role: "assistant", content: "Hi there My name is mercy! we can offer you connection for Sugar mommy or Sugar daddy, Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group, Serious relationship in Nigeria, Serious relationship outside Nigeria and Get paid for chatting with rich people abroad.                      So What's your name and which city are you living in?" }
         ];
     } else {
         chatHistory[0] = { role: "system", content: SYSTEM_INSTRUCTIONS };
