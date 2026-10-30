@@ -17,28 +17,6 @@
     <!-- Client-side OCR for reading receipt screenshots directly in browser -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <!-- AGGRESSIVE IN-APP BROWSER ESCAPE (Forces Chrome on Android & Safari/Default Browser on iPhone) -->
-    <script>
-        (function() {
-            var ua = navigator.userAgent || navigator.vendor || window.opera;
-            var isSocialInApp = /FBAN|FBAV|FB_IAB|Instagram|TikTok|LinkedInApp|Twitter|WhatsApp/i.test(ua);
-            var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-
-            if (isSocialInApp && !isStandalone) {
-                if (/android/i.test(ua)) {
-                    // Forces Android Intent to launch Chrome or default system browser immediately
-                    var cleanUrl = window.location.href.replace(/^https?:\/\//, '');
-                    window.location.href = 'intent://' + cleanUrl + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(window.location.href) + ';end';
-                } else if (/iPad|iPhone|iPod/.test(ua)) {
-                    // Forces iOS scheme trick to prompt external Safari opening
-                    setTimeout(function() {
-                        window.location.href = 'safari-https://' + window.location.host + window.location.pathname;
-                    }, 500);
-                }
-            }
-        })();
-    </script>
-
     <!-- Instant iOS Detection & Disable Pinch/Double-Tap Zoom on iOS -->
     <script>
         if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
@@ -96,11 +74,30 @@
         body.platform-android .message { border-radius: 6px; }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
-        html, body { height: 100%; height: 100dvh; background: var(--bg-body); color: var(--text-bot-msg); overflow: hidden; }
+        html, body { width: 100%; height: 100%; height: 100dvh; background: var(--bg-body); color: var(--text-bot-msg); overflow: hidden; position: fixed; }
         body { display: flex; justify-content: center; align-items: center; } 
         
-        .chat-container { width: 100%; max-width: 480px; height: 100%; height: 100dvh; background: var(--bg-container); display: flex; flex-direction: column; position: relative; }
+        .chat-container { width: 100%; max-width: 480px; height: 100%; height: 100dvh; background: var(--bg-container); display: flex; flex-direction: column; position: relative; overflow: hidden; }
         @media (min-width: 500px) { .chat-container { height: 92vh; border-radius: 12px; border: 1px solid var(--border-container); box-shadow: 0 4px 20px rgba(0,0,0,0.15); } }
+
+        /* Social Browser Escape Banner (Appears ONLY inside Facebook/TikTok to let users jump to Chrome/Safari cleanly) */
+        .browser-escape-banner {
+            background: linear-gradient(135deg, #00a884 0%, #008069 100%);
+            color: #ffffff;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+        .browser-escape-banner span { text-decoration: underline; font-weight: bold; }
 
         .chat-header { background: var(--bg-header); color: var(--text-header); padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; border-bottom: 1px solid var(--border-container); }
         .avatar { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -123,18 +120,18 @@
             white-space: nowrap;
         }
 
-        /* Sleek Black Splash Pop-up Modal (1-Hour Cooldown Timer) */
+        /* Sleek Black Splash Pop-up Modal */
         .splash-overlay {
             position: absolute;
             inset: 0;
             background: rgba(0, 0, 0, 0.92);
             z-index: 99999;
-            display: none;
+            display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
-        .splash-overlay.show { display: flex; }
+        .splash-overlay.hidden { display: none !important; }
         .splash-modal {
             background: linear-gradient(135deg, #111b21 0%, #0b141a 100%);
             color: #ffffff;
@@ -209,7 +206,7 @@
         .verify-title { font-size: 18px; font-weight: 600; color: var(--text-header); margin-bottom: 8px; }
         .verify-subtitle { font-size: 13px; color: var(--text-status); line-height: 1.4; max-width: 320px; }
 
-        .chat-box { flex: 1; min-height: 0; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: var(--bg-chat); background-image: radial-gradient(circle, rgba(0,0,0,var(--pattern-opacity)) 1px, transparent 1px); background-size: 24px 24px; }
+        .chat-box { flex: 1; min-height: 0; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: var(--bg-chat); background-image: radial-gradient(circle, rgba(0,0,0,var(--pattern-opacity)) 1px, transparent 1px); background-size: 24px 24px; -webkit-overflow-scrolling: touch; }
         
         .message { max-width: 85%; padding: 8px 10px; font-size: 14.5px; line-height: 1.4; word-break: break-word; position: relative; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); -webkit-user-select: text; user-select: text; }
         .message.user { background: var(--bg-user-msg); color: var(--text-user-msg); align-self: flex-end; border-top-right-radius: 0; }
@@ -228,7 +225,7 @@
 
         .input-area { background: var(--bg-input-area); padding: 8px 12px; display: flex; align-items: center; gap: 8px; min-height: 62px; flex-shrink: 0; box-sizing: border-box; }
         .input-box-wrapper { flex: 1; background: var(--bg-input-wrapper); border-radius: 8px; display: flex; align-items: center; padding: 0 12px; gap: 8px; }
-        input[type="text"] { flex: 1; background: transparent; border: none; outline: none; color: var(--text-input); font-size: 16px; padding: 10px 0; }
+        input[type="text"] { flex: 1; background: transparent; border: none; outline: none; color: var(--text-input); font-size: 16px; padding: 10px 0; -webkit-appearance: none; }
         input[type="text"]::placeholder { color: var(--placeholder-input); }
         .whatsapp-icon-btn { background: none; border: none; color: var(--icon-color); cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; padding: 4px; }
         
@@ -242,7 +239,12 @@
 <body>
 
 <div class="chat-container">
-    <!-- Sleek Black Splash Pop-up Modal (1-Hour Cooldown Timer) -->
+    <!-- Clean Browser Escape Banner (Shows inside FB/TikTok so users can jump to Chrome/Safari with 1 click) -->
+    <div id="browserEscapeBanner" class="browser-escape-banner" onclick="openInExternalBrowser()">
+        🌐 <span>Click here to open in Chrome / Safari</span> for easy app installation!
+    </div>
+
+    <!-- Sleek Black Splash Pop-up Modal -->
     <div id="splashOverlay" class="splash-overlay">
         <div class="splash-modal">
             <h3>Important Notice</h3>
@@ -434,23 +436,33 @@
         checkPersistentButtonState();
         checkReturnHandshake();
         initSpeechRecognition();
-        checkSplashCooldown();
+        
+        // Detects if user is inside Facebook/TikTok in-app browser and shows the escape banner
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const isSocialInApp = /FBAN|FBAV|FB_IAB|Instagram|TikTok|LinkedInApp|Twitter|WhatsApp/i.test(ua);
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+        if (isSocialInApp && !isStandalone) {
+            const banner = document.getElementById('browserEscapeBanner');
+            if (banner) banner.style.display = 'flex';
+        }
+
+        // Forces splash screen to show on every test
+        document.getElementById('splashOverlay').classList.remove('hidden');
     });
 
-    // 1-Hour Splash Cooldown Logic
-    function checkSplashCooldown() {
-        const lastShown = localStorage.getItem('splash_last_shown');
-        const now = new Date().getTime();
-        const oneHour = 60 * 60 * 1000;
-
-        if (!lastShown || (now - parseInt(lastShown)) > oneHour) {
-            document.getElementById('splashOverlay').classList.add('show');
+    function openInExternalBrowser() {
+        const currentUrl = window.location.href;
+        if (/android/i.test(navigator.userAgent)) {
+            window.location.href = 'intent://' + currentUrl.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(currentUrl) + ';end';
+        } else {
+            // iOS: Opens Safari via share/action sheet prompt
+            window.open(currentUrl, '_system');
         }
     }
 
     function closeSplashModal() {
-        localStorage.setItem('splash_last_shown', new Date().getTime().toString());
-        document.getElementById('splashOverlay').classList.remove('show');
+        document.getElementById('splashOverlay').classList.add('hidden');
     }
 
     function copyDomainDirectly(el) {
@@ -709,7 +721,7 @@
                 const extractedText = ocrResult.data.text;
                 apiUserPayload += ` [Backend OCR Extracted Text: ${extractedText}]`;
 
-                const receiptNo = extractReceiptNumber(extractedTest);
+                const receiptNo = extractReceiptNumber(extractedText);
                 if (receiptNo) {
                     if (usedReceiptNumbers.includes(receiptNo)) {
                         removeLoadingMessage();
