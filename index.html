@@ -79,9 +79,6 @@
             --text-input: #e9edef;
             --placeholder-input: #8696a0;
             --icon-color: #8696a0;
-            --icon-hover: #e9edef;
-            --btn-install: #00a884;
-            --btn-install-text: #111b21;
             --file-preview-bg: #1f2c34;
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
@@ -106,7 +103,6 @@
                 --text-input: #111b21;
                 --placeholder-input: #667781;
                 --icon-color: #54656f;
-                --icon-hover: #111b21;
                 --file-preview-bg: #e9edef;
             }
         }
@@ -115,10 +111,6 @@
         body.platform-ios .message { border-radius: 14px; }
         body.platform-android { --font-family: Roboto, "Segoe UI", sans-serif; }
         body.platform-android .message { border-radius: 6px; }
-
-        html.platform-ios #install-btn {
-            display: none !important;
-        }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
         html, body { height: 100%; height: 100dvh; background: var(--bg-body); color: var(--text-bot-msg); overflow: hidden; }
@@ -133,22 +125,8 @@
         .header-info { flex: 1; display: flex; flex-direction: column; }
         .header-name { font-size: 16px; font-weight: 500; color: var(--text-header); }
         .header-status { font-size: 12px; color: var(--text-status); }
-        .header-actions { display: flex; gap: 12px; align-items: center; }
-        
-        #install-btn { 
-            display: none; 
-            background: var(--btn-install); 
-            border: none; 
-            color: var(--btn-install-text); 
-            padding: 6px 10px; 
-            border-radius: 14px; 
-            cursor: pointer; 
-            font-size: 11px; 
-            font-weight: bold; 
-            white-space: nowrap; 
-        }
 
-        /* Center Screen Splash Pop-up Modal */
+        /* Dark Red Splash Pop-up Modal (High-Contrast Black & White) */
         .splash-overlay {
             position: absolute;
             inset: 0;
@@ -160,64 +138,68 @@
             padding: 20px;
         }
         .splash-modal {
-            background: #202c33;
-            color: #e9edef;
+            background: linear-gradient(135deg, #6b0914 0%, #400308 100%);
+            color: #ffffff;
             width: 100%;
             max-width: 380px;
-            border-radius: 14px;
-            padding: 24px 20px;
+            border-radius: 16px;
+            padding: 26px 22px;
             text-align: center;
-            border: 1.5px solid #D4AF37;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 2px solid #ffffff;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.7);
         }
         .splash-modal h3 {
-            color: #D4AF37;
-            font-size: 18px;
-            margin-bottom: 10px;
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
         }
         .splash-modal p {
-            font-size: 13.5px;
+            font-size: 14px;
             line-height: 1.5;
-            color: #8696a0;
-            margin-bottom: 16px;
+            color: #f1f1f1;
+            margin-bottom: 18px;
         }
         .domain-box {
-            background: #111b21;
-            color: #fff;
-            padding: 10px;
-            border-radius: 8px;
+            background: #000000;
+            color: #ffffff;
+            padding: 14px;
+            border-radius: 10px;
             font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 16px;
-            border: 1px dashed #2a3942;
+            font-size: 15px;
+            margin-bottom: 18px;
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
             word-break: break-all;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .domain-box:active {
+            transform: scale(0.97);
+            background: #1a1a1a;
+            border-color: #ffffff;
         }
         .splash-buttons {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
-        .btn-copy-splash {
-            background: #D4AF37;
-            color: #000;
+        .btn-start-chat {
+            background: #ffffff;
+            color: #000000;
             border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 14px;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 15px;
             cursor: pointer;
             text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: background 0.2s;
         }
-        .btn-continue-splash {
-            background: #00a884;
-            color: #fff;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            text-transform: uppercase;
+        .btn-start-chat:active {
+            background: #d4d4d4;
         }
 
         .verify-overlay { position: fixed; inset: 0; background: var(--bg-container); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
@@ -260,15 +242,14 @@
 <body>
 
 <div class="chat-container">
-    <!-- Center Screen Splash Pop-up -->
+    <!-- Dark Red Splash Pop-up (Click link to copy directly) -->
     <div id="splashOverlay" class="splash-overlay">
         <div class="splash-modal">
-            <h3>📌 Important Notice</h3>
-            <p>Please <b>screenshot this screen</b> or copy our link below so you can easily return anytime you want to chat!</p>
-            <div class="domain-box">https://cplat.vercel.app</div>
+            <h3>Important Notice</h3>
+            <p>Please <b>screenshot this screen</b> or click the link below to copy it so you can easily return anytime you want to chat!</p>
+            <div class="domain-box" id="domainBox" onclick="copyDomainDirectly(this)">https://cplat.vercel.app</div>
             <div class="splash-buttons">
-                <button class="btn-copy-splash" onclick="copySplashLink(this)">📋 Copy Link</button>
-                <button class="btn-continue-splash" onclick="closeSplashModal()">Continue to Chat</button>
+                <button class="btn-start-chat" onclick="closeSplashModal()">Start Chat</button>
             </div>
         </div>
     </div>
@@ -280,9 +261,6 @@
         <div class="header-info">
             <div class="header-name">Connection Platform</div>
             <div class="header-status">online</div>
-        </div>
-        <div class="header-actions">
-            <button id="install-btn" onclick="installApp()">📥 Install App</button>
         </div>
     </div>
 
@@ -321,14 +299,6 @@
     <div class="spinner"></div>
     <div class="verify-title">Verifying Connection...</div>
     <div class="verify-subtitle">Please wait while our system submits your photo and verifies availability with your match.</div>
-</div>
-
-<div id="install-overlay" class="install-overlay" onclick="if (event.target === this) closeInstallGuide()">
-    <div class="install-sheet">
-        <h3><img src="/apple-touch-icon.png" alt="">Add to Home Screen</h3>
-        <div id="install-guide-body"></div>
-        <button class="secondary" onclick="closeInstallGuide()">Close</button>
-    </div>
 </div>
 
 <script>
@@ -452,7 +422,7 @@
     if (!chatHistory || chatHistory.length === 0) {
         chatHistory = [
             { role: "system", content: SYSTEM_INSTRUCTIONS },
-            { role: "assistant", content: "Hi there My name is mercy! What's your name and which city are you living in?" }
+            { role: "assistant", content: "Hi there My name is mercy! we can offer you connection for Sugar mommy or Sugar daddy, Hookup girls group, Sex video call, Friends with benefits, Sex video and sex tape group, Serious relationship in Nigeria, Serious relationship outside Nigeria and Get paid for chatting with rich people abroad.                      So What's your name and which city are you living in?" }
         ];
     } else {
         chatHistory[0] = { role: "system", content: SYSTEM_INSTRUCTIONS };
@@ -470,25 +440,24 @@
         initSpeechRecognition();
     });
 
-    // Function to copy domain link directly without opening any browser tab
-    function copySplashLink(btn) {
+    // Direct Copy Function when user taps the domain box
+    function copyDomainDirectly(el) {
         const domain = "https://cplat.vercel.app";
         navigator.clipboard.writeText(domain).then(() => {
-            const originalText = btn.innerHTML;
-            btn.innerHTML = "Copied ✓";
-            btn.style.background = "#00a884";
-            btn.style.color = "#fff";
+            const originalText = el.innerHTML;
+            el.innerHTML = "Copied ✓ (Tap to Start)";
+            el.style.background = "#00a884";
+            el.style.color = "#ffffff";
             setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.style.background = "#D4AF37";
-                btn.style.color = "#000";
+                el.innerHTML = originalText;
+                el.style.background = "#000000";
+                el.style.color = "#ffffff";
             }, 2000);
         }).catch(err => {
             prompt("Copy this link:", domain);
         });
     }
 
-    // Function to close splash modal and start chatting
     function closeSplashModal() {
         const modal = document.getElementById('splashOverlay');
         if (modal) {
@@ -618,7 +587,6 @@
         }
     }
 
-    // --- Native Background Speech Recognition Setup ---
     let recognition = null;
     let isRecording = false;
     const actionBtn = document.getElementById('mainActionBtn');
@@ -933,77 +901,6 @@
     function removeLoadingMessage() {
         const el = document.getElementById('loading-msg');
         if (el) el.remove();
-    }
-
-    // --- PWA Installation Logic ---
-    let deferredPrompt;
-    const installBtn = document.getElementById('install-btn');
-    const ua = navigator.userAgent;
-    const isIOSDevice = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const isAndroid = /Android/i.test(ua);
-    const isInAppBrowser = /FBAN|FBAV|FB_IAB|Instagram|Line\/|Snapchat|TikTok|musical_ly|Twitter|MicroMessenger|GSA\//i.test(ua) || (isAndroid && /; wv\)/.test(ua));
-    const isIOSSafari = isIOSDevice && /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua) && !isInAppBrowser;
-    const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
-    }
-
-    if (isStandalone()) { installBtn.style.display = 'none'; }
-
-    window.addEventListener('beforeinstallprompt', (e) => { 
-        e.preventDefault(); 
-        deferredPrompt = e; 
-        if (!isIOSDevice && !isStandalone()) { installBtn.style.display = 'inline-block'; }
-    });
-
-    window.addEventListener('appinstalled', () => { 
-        installBtn.style.display = 'none'; 
-        deferredPrompt = null; 
-        closeInstallGuide(); 
-    });
-
-    const shareIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2" style="vertical-align:-3px"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 12v8h14v-8"/></svg>';
-
-    function showInstallGuide(html) {
-        document.getElementById('install-guide-body').innerHTML = html;
-        document.getElementById('install-overlay').classList.add('show');
-    }
-    function closeInstallGuide() { document.getElementById('install-overlay').classList.remove('show'); }
-    function copyPageLink() {
-        const done = () => alert('Link copied.');
-        if (navigator.clipboard) navigator.clipboard.writeText("https://cplat.vercel.app").then(done, () => prompt('Copy this link:', "https://cplat.vercel.app"));
-        else prompt('Copy this link:', "https://cplat.vercel.app");
-    }
-    function openInChrome() {
-        location.href = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;end';
-    }
-
-    async function installApp() {
-        if (isStandalone()) return;
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') { installBtn.style.display = 'none'; }
-            deferredPrompt = null;
-            return;
-        }
-        if (isIOSDevice) {
-            if (!isIOSSafari) {
-                showInstallGuide(`<p>Open in <b>Safari</b>.</p><ol><li>Tap <b>Copy Link</b>.</li><li>Paste in Safari.</li></ol><button class="primary" onclick="copyPageLink()">Copy Link</button>`);
-                return;
-            }
-            showInstallGuide(`<ol><li>Tap Share ${shareIcon}.</li><li>Tap <b>"Add to Home Screen"</b> ➕.</li></ol>`);
-            return;
-        }
-        if (isAndroid && isInAppBrowser) {
-            showInstallGuide(`<p>Open in <b>Chrome</b>.</p><button class="primary" onclick="openInChrome()">Open in Chrome</button>`);
-            return;
-        }
-        if (isAndroid) {
-            showInstallGuide(`<ol><li>Tap browser menu <b>⋮</b>.</li><li>Tap <b>"Install app"</b>.</li></ol>`);
-            return;
-        }
     }
 </script>
 </body>
