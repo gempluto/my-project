@@ -17,23 +17,6 @@
     <!-- Client-side OCR for reading receipt screenshots directly in browser -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <!-- AUTOMATIC IN-APP BROWSER ESCAPE (Forces Chrome / Safari) -->
-    <script>
-        (function() {
-            var ua = navigator.userAgent || navigator.vendor || window.opera;
-            var isFB = /FBAN|FBAV|FB_IAB|Instagram|TikTok|LinkedInApp|Twitter|WhatsApp/i.test(ua);
-            if (isFB) {
-                if (/android/i.test(ua)) {
-                    window.location.href = 'intent://' + window.location.host + window.location.pathname + window.location.search + '#Intent;scheme=https;package=com.android.chrome;end';
-                } else if (/iPad|iPhone|iPod/.test(ua)) {
-                    document.documentElement.addEventListener('click', function() {
-                        window.open(window.location.href, '_system');
-                    }, { once: true });
-                }
-            }
-        })();
-    </script>
-
     <!-- Instant iOS Detection & Disable Pinch/Double-Tap Zoom on iOS -->
     <script>
         if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
@@ -126,12 +109,12 @@
         .header-name { font-size: 16px; font-weight: 500; color: var(--text-header); }
         .header-status { font-size: 12px; color: var(--text-status); }
 
-        /* Dark Red Splash Pop-up Modal (High-Contrast Black & White) */
+        /* Dark Red Splash Pop-up Modal */
         .splash-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 9999;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 99999;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -146,14 +129,13 @@
             padding: 26px 22px;
             text-align: center;
             border: 2px solid #ffffff;
-            box-shadow: 0 12px 35px rgba(0,0,0,0.7);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.8);
         }
         .splash-modal h3 {
             color: #ffffff;
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 12px;
-            letter-spacing: 0.5px;
         }
         .splash-modal p {
             font-size: 14px;
@@ -172,23 +154,12 @@
             border: 1.5px solid rgba(255, 255, 255, 0.3);
             word-break: break-all;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        .domain-box:active {
-            transform: scale(0.97);
-            background: #1a1a1a;
-            border-color: #ffffff;
-        }
-        .splash-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
         }
         .btn-start-chat {
             background: #ffffff;
             color: #000000;
             border: none;
+            width: 100%;
             padding: 14px;
             border-radius: 10px;
             font-weight: 800;
@@ -196,10 +167,6 @@
             cursor: pointer;
             text-transform: uppercase;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transition: background 0.2s;
-        }
-        .btn-start-chat:active {
-            background: #d4d4d4;
         }
 
         .verify-overlay { position: fixed; inset: 0; background: var(--bg-container); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
@@ -242,15 +209,13 @@
 <body>
 
 <div class="chat-container">
-    <!-- Dark Red Splash Pop-up (Click link to copy directly) -->
+    <!-- Dark Red Splash Pop-up Modal -->
     <div id="splashOverlay" class="splash-overlay">
         <div class="splash-modal">
             <h3>Important Notice</h3>
             <p>Please <b>screenshot this screen</b> or click the link below to copy it so you can easily return anytime you want to chat!</p>
             <div class="domain-box" id="domainBox" onclick="copyDomainDirectly(this)">https://cplat.vercel.app</div>
-            <div class="splash-buttons">
-                <button class="btn-start-chat" onclick="closeSplashModal()">Start Chat</button>
-            </div>
+            <button class="btn-start-chat" onclick="closeSplashModal()">Start Chat</button>
         </div>
     </div>
 
@@ -440,12 +405,11 @@
         initSpeechRecognition();
     });
 
-    // Direct Copy Function when user taps the domain box
     function copyDomainDirectly(el) {
         const domain = "https://cplat.vercel.app";
         navigator.clipboard.writeText(domain).then(() => {
             const originalText = el.innerHTML;
-            el.innerHTML = "Copied ✓ (Tap to Start)";
+            el.innerHTML = "Copied ✓ (Tap Start Chat)";
             el.style.background = "#00a884";
             el.style.color = "#ffffff";
             setTimeout(() => {
