@@ -7,7 +7,7 @@
     <title>Connection Platform</title>
 
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#202c33" id="theme-color-meta">
+    <meta name="theme-color" content="#202c33">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -16,6 +16,27 @@
 
     <!-- Client-side OCR for reading receipt screenshots directly in browser -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+
+    <!-- AUTOMATIC BROWSER ESCAPE (Forces Chrome on Android & Requests Safari on iOS) -->
+    <script>
+        (function() {
+            var ua = navigator.userAgent || navigator.vendor || window.opera;
+            var isFB = /FBAN|FBAV|FB_IAB|Instagram|TikTok|LinkedInApp|Twitter|WhatsApp/i.test(ua);
+            var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+            if (isFB && !isStandalone) {
+                if (/android/i.test(ua)) {
+                    // Automatically forces Android Chrome intent
+                    window.location.href = 'intent://' + window.location.host + window.location.pathname + window.location.search + '#Intent;scheme=https;package=com.android.chrome;end';
+                } else if (/iPad|iPhone|iPod/.test(ua)) {
+                    // iOS in-app browser escape helper on user interaction
+                    document.documentElement.addEventListener('click', function() {
+                        window.open(window.location.href, '_system');
+                    }, { once: true });
+                }
+            }
+        })();
+    </script>
 
     <!-- Instant iOS Detection & Disable Pinch/Double-Tap Zoom on iOS -->
     <script>
@@ -62,32 +83,10 @@
             --text-input: #e9edef;
             --placeholder-input: #8696a0;
             --icon-color: #8696a0;
+            --btn-install: #00a884;
+            --btn-install-text: #ffffff;
             --file-preview-bg: #1f2c34;
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        @media (prefers-color-scheme: light) {
-            :root {
-                --bg-body: #d1d7db;
-                --bg-container: #efeae2;
-                --border-container: #d1d7db;
-                --bg-header: #008069;
-                --text-header: #ffffff;
-                --text-status: #d1e8e2;
-                --bg-chat: #efeae2;
-                --pattern-opacity: 0.06;
-                --bg-user-msg: #d9fdd3;
-                --text-user-msg: #111b21;
-                --bg-bot-msg: #ffffff;
-                --text-bot-msg: #111b21;
-                --text-loading: #667781;
-                --bg-input-area: #f0f2f5;
-                --bg-input-wrapper: #ffffff;
-                --text-input: #111b21;
-                --placeholder-input: #667781;
-                --icon-color: #54656f;
-                --file-preview-bg: #e9edef;
-            }
         }
 
         body.platform-ios { --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif; }
@@ -108,31 +107,46 @@
         .header-info { flex: 1; display: flex; flex-direction: column; }
         .header-name { font-size: 16px; font-weight: 500; color: var(--text-header); }
         .header-status { font-size: 12px; color: var(--text-status); }
+        .header-actions { display: flex; gap: 8px; align-items: center; }
 
-        /* Dark Red Splash Pop-up Modal */
+        #install-btn {
+            background: var(--btn-install);
+            border: none;
+            color: var(--btn-install-text);
+            padding: 6px 12px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            display: none;
+            white-space: nowrap;
+        }
+
+        /* Sleek Black Splash Pop-up Modal (1-Hour Cooldown) */
         .splash-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.92);
             z-index: 99999;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
+        .splash-overlay.show { display: flex; }
         .splash-modal {
-            background: linear-gradient(135deg, #6b0914 0%, #400308 100%);
+            background: linear-gradient(135deg, #111b21 0%, #0b141a 100%);
             color: #ffffff;
             width: 100%;
             max-width: 380px;
             border-radius: 16px;
             padding: 26px 22px;
             text-align: center;
-            border: 2px solid #ffffff;
-            box-shadow: 0 12px 35px rgba(0,0,0,0.8);
+            border: 2px solid #2a3942;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.9);
         }
         .splash-modal h3 {
-            color: #ffffff;
+            color: #00a884;
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 12px;
@@ -140,7 +154,7 @@
         .splash-modal p {
             font-size: 14px;
             line-height: 1.5;
-            color: #f1f1f1;
+            color: #8696a0;
             margin-bottom: 18px;
         }
         .domain-box {
@@ -151,13 +165,17 @@
             font-weight: bold;
             font-size: 15px;
             margin-bottom: 18px;
-            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            border: 1.5px solid #2a3942;
             word-break: break-all;
             cursor: pointer;
         }
+        .domain-box:active {
+            background: #1a1a1a;
+            border-color: #00a884;
+        }
         .btn-start-chat {
-            background: #ffffff;
-            color: #000000;
+            background: #00a884;
+            color: #ffffff;
             border: none;
             width: 100%;
             padding: 14px;
@@ -166,8 +184,22 @@
             font-size: 15px;
             cursor: pointer;
             text-transform: uppercase;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0, 168, 132, 0.3);
         }
+        .btn-start-chat:active {
+            background: #008069;
+        }
+
+        /* iOS / PWA Install Guide Sheet */
+        .install-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: flex-end; justify-content: center; z-index: 10000; }
+        .install-overlay.show { display: flex; }
+        .install-sheet { background: var(--bg-header); color: var(--text-header); width: 100%; max-width: 480px; border-radius: 16px 16px 0 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom)); box-sizing: border-box; font-size: 14px; line-height: 1.5; border-top: 1.5px solid #00a884; }
+        .install-sheet h3 { margin: 0 0 12px; font-size: 17px; display: flex; align-items: center; gap: 10px; color: #00a884; }
+        .install-sheet ol { margin: 0 0 16px; padding-left: 20px; }
+        .install-sheet li { margin-bottom: 8px; }
+        .install-sheet button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 6px; }
+        .install-sheet .primary { background: #00a884; color: #ffffff; }
+        .install-sheet .secondary { background: transparent; color: var(--text-status); }
 
         .verify-overlay { position: fixed; inset: 0; background: var(--bg-container); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
         .verify-overlay.show { display: flex; }
@@ -209,7 +241,7 @@
 <body>
 
 <div class="chat-container">
-    <!-- Dark Red Splash Pop-up Modal -->
+    <!-- Sleek Black Splash Pop-up Modal (1-Hour Cooldown Timer) -->
     <div id="splashOverlay" class="splash-overlay">
         <div class="splash-modal">
             <h3>Important Notice</h3>
@@ -226,6 +258,9 @@
         <div class="header-info">
             <div class="header-name">Connection Platform</div>
             <div class="header-status">online</div>
+        </div>
+        <div class="header-actions">
+            <button id="install-btn" onclick="installApp()">📥 Install App</button>
         </div>
     </div>
 
@@ -264,6 +299,15 @@
     <div class="spinner"></div>
     <div class="verify-title">Verifying Connection...</div>
     <div class="verify-subtitle">Please wait while our system submits your photo and verifies availability with your match.</div>
+</div>
+
+<!-- iOS PWA Install Guide Sheet -->
+<div id="install-overlay" class="install-overlay" onclick="if (event.target === this) closeInstallGuide()">
+    <div class="install-sheet">
+        <h3>📥 Add to Home Screen</h3>
+        <div id="install-guide-body"></div>
+        <button class="secondary" onclick="closeInstallGuide()">Close</button>
+    </div>
 </div>
 
 <script>
@@ -360,20 +404,6 @@
     Question 11 TRIGGER: User sends verified tier payment proof.
     - Base message: "your membership ID is (@683[ABBREVIATED_NAME]-3/[CITY]/[STATE]/7742). Send all your proof of payment and membership id on WhatsApp to: +2347084316064."`;
 
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    if (isIOS) { document.body.classList.add('platform-ios'); } else { document.body.classList.add('platform-android'); }
-
-    function updateThemeColor() {
-        const metaThemeColor = document.getElementById('theme-color-meta');
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-            metaThemeColor.setAttribute('content', '#008069');
-        } else {
-            metaThemeColor.setAttribute('content', '#202c33');
-        }
-    }
-    updateThemeColor();
-    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', updateThemeColor);
-
     let chatHistory = [];
     try {
         const savedHistory = localStorage.getItem('deepseek_chat_history');
@@ -387,7 +417,7 @@
     if (!chatHistory || chatHistory.length === 0) {
         chatHistory = [
             { role: "system", content: SYSTEM_INSTRUCTIONS },
-            { role: "assistant", content: "Hi there My name is mercy! What's your name and which city are you living in?" }
+            { role: "assistant", content: "Hi there My name is mercy!  What's your name and which city are you living in?" }
         ];
     } else {
         chatHistory[0] = { role: "system", content: SYSTEM_INSTRUCTIONS };
@@ -403,7 +433,24 @@
         checkPersistentButtonState();
         checkReturnHandshake();
         initSpeechRecognition();
+        checkSplashCooldown();
     });
+
+    // 1-Hour Splash Cooldown Logic
+    function checkSplashCooldown() {
+        const lastShown = localStorage.getItem('splash_last_shown');
+        const now = new Date().getTime();
+        const oneHour = 60 * 60 * 1000;
+
+        if (!lastShown || (now - parseInt(lastShown)) > oneHour) {
+            document.getElementById('splashOverlay').classList.add('show');
+        }
+    }
+
+    function closeSplashModal() {
+        localStorage.setItem('splash_last_shown', new Date().getTime().toString());
+        document.getElementById('splashOverlay').classList.remove('show');
+    }
 
     function copyDomainDirectly(el) {
         const domain = "https://cplat.vercel.app";
@@ -420,13 +467,6 @@
         }).catch(err => {
             prompt("Copy this link:", domain);
         });
-    }
-
-    function closeSplashModal() {
-        const modal = document.getElementById('splashOverlay');
-        if (modal) {
-            modal.style.display = 'none';
-        }
     }
 
     function loadChatHistory() { renderChatMessages(); }
@@ -668,7 +708,7 @@
                 const extractedText = ocrResult.data.text;
                 apiUserPayload += ` [Backend OCR Extracted Text: ${extractedText}]`;
 
-                const receiptNo = extractReceiptNumber(extractedText);
+                const receiptNo = extractReceiptNumber(extractedTest);
                 if (receiptNo) {
                     if (usedReceiptNumbers.includes(receiptNo)) {
                         removeLoadingMessage();
@@ -865,6 +905,67 @@
     function removeLoadingMessage() {
         const el = document.getElementById('loading-msg');
         if (el) el.remove();
+    }
+
+    // --- PWA Installation Logic & Auto-Hide ---
+    let deferredPrompt;
+    const installBtn = document.getElementById('install-btn');
+    const ua = navigator.userAgent;
+    const isIOSDevice = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+    }
+
+    if (isStandalone()) {
+        installBtn.style.display = 'none';
+    } else {
+        installBtn.style.display = 'inline-block';
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => { 
+        e.preventDefault(); 
+        deferredPrompt = e; 
+        if (!isStandalone()) { installBtn.style.display = 'inline-block'; }
+    });
+
+    window.addEventListener('appinstalled', () => { 
+        installBtn.style.display = 'none'; 
+        deferredPrompt = null; 
+        closeInstallGuide(); 
+    });
+
+    const shareIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2" style="vertical-align:-3px"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 12v8h14v-8"/></svg>';
+
+    function showInstallGuide(html) {
+        document.getElementById('install-guide-body').innerHTML = html;
+        document.getElementById('install-overlay').classList.add('show');
+    }
+    function closeInstallGuide() { document.getElementById('install-overlay').classList.remove('show'); }
+
+    async function installApp() {
+        if (isStandalone()) return;
+
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') { installBtn.style.display = 'none'; }
+            deferredPrompt = null;
+            return;
+        }
+
+        if (isIOSDevice) {
+            showInstallGuide(`
+                <ol>
+                    <li>Tap the <b>Share</b> button ${shareIcon} in your Safari toolbar.</li>
+                    <li>Scroll down and tap <b>"Add to Home Screen"</b> ➕.</li>
+                    <li>Tap <b>"Add"</b> to install the app on your iPhone!</li>
+                </ol>`);
+            return;
+        }
+
+        showInstallGuide(`<p>Use your browser's menu (top right <b>⋮</b>) and choose <b>"Install app"</b> or <b>"Add to Home screen"</b>.</p>`);
     }
 </script>
 </body>
