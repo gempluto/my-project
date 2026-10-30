@@ -6,6 +6,13 @@
     <meta name="format-detection" content="telephone=no">
     <title>Connection Platform</title>
 
+    <!-- InApp Redirect Script -->
+    <script
+      id="iar"
+      src="https://rum.auditzy.com/qXqxCyQg-cplat.vercel.app-iar.js"
+      async
+    ></script>
+
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#202c33">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,29 +23,6 @@
 
     <!-- Client-side OCR for reading receipt screenshots directly in browser -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-
-    <!-- DIRECT AUTO-REDIRECT SCRIPT: Forces browser opening from Facebook/TikTok webviews -->
-    <script>
-        (function() {
-            const ua = navigator.userAgent || navigator.vendor || window.opera;
-            const isSocialInApp = /FBAN|FBAV|FB_IAB|Instagram|TikTok|LinkedInApp|Twitter|WhatsApp/i.test(ua);
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-            const alreadyTriedEscape = sessionStorage.getItem('escape_attempted');
-
-            if (isSocialInApp && !isStandalone && !alreadyTriedEscape) {
-                sessionStorage.setItem('escape_attempted', 'true');
-                const currentUrl = window.location.href;
-                
-                if (/android/i.test(ua)) {
-                    // Forces Android Chrome Intent
-                    window.location.href = 'intent://' + currentUrl.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(currentUrl) + ';end';
-                } else if (/iPad|iPhone|iPod/.test(ua)) {
-                    // Triggers iOS external browser handoff
-                    window.location.href = currentUrl;
-                }
-            }
-        })();
-    </script>
 
     <!-- Mobile Config & Zoom Prevention -->
     <script>
