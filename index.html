@@ -17,22 +17,23 @@
     <!-- Client-side OCR for reading receipt screenshots directly in browser -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <!-- AUTOMATIC BROWSER ESCAPE (Forces Chrome on Android & Requests Safari on iOS) -->
+    <!-- AGGRESSIVE IN-APP BROWSER ESCAPE (Forces Chrome on Android & Safari/Default Browser on iPhone) -->
     <script>
         (function() {
             var ua = navigator.userAgent || navigator.vendor || window.opera;
-            var isFB = /FBAN|FBAV|FB_IAB|Instagram|TikTok|LinkedInApp|Twitter|WhatsApp/i.test(ua);
+            var isSocialInApp = /FBAN|FBAV|FB_IAB|Instagram|TikTok|LinkedInApp|Twitter|WhatsApp/i.test(ua);
             var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-            if (isFB && !isStandalone) {
+            if (isSocialInApp && !isStandalone) {
                 if (/android/i.test(ua)) {
-                    // Automatically forces Android Chrome intent
-                    window.location.href = 'intent://' + window.location.host + window.location.pathname + window.location.search + '#Intent;scheme=https;package=com.android.chrome;end';
+                    // Forces Android Intent to launch Chrome or default system browser immediately
+                    var cleanUrl = window.location.href.replace(/^https?:\/\//, '');
+                    window.location.href = 'intent://' + cleanUrl + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(window.location.href) + ';end';
                 } else if (/iPad|iPhone|iPod/.test(ua)) {
-                    // iOS in-app browser escape helper on user interaction
-                    document.documentElement.addEventListener('click', function() {
-                        window.open(window.location.href, '_system');
-                    }, { once: true });
+                    // Forces iOS scheme trick to prompt external Safari opening
+                    setTimeout(function() {
+                        window.location.href = 'safari-https://' + window.location.host + window.location.pathname;
+                    }, 500);
                 }
             }
         })();
@@ -122,7 +123,7 @@
             white-space: nowrap;
         }
 
-        /* Sleek Black Splash Pop-up Modal (1-Hour Cooldown) */
+        /* Sleek Black Splash Pop-up Modal (1-Hour Cooldown Timer) */
         .splash-overlay {
             position: absolute;
             inset: 0;
@@ -417,7 +418,7 @@
     if (!chatHistory || chatHistory.length === 0) {
         chatHistory = [
             { role: "system", content: SYSTEM_INSTRUCTIONS },
-            { role: "assistant", content: "Hi there My name is mercy!  What's your name and which city are you living in?" }
+            { role: "assistant", content: "Hi there My name is mercy! What's your name and which city are you living in?" }
         ];
     } else {
         chatHistory[0] = { role: "system", content: SYSTEM_INSTRUCTIONS };
