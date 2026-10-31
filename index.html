@@ -17,16 +17,14 @@
     <!-- Client-side OCR for reading receipt screenshots directly in browser -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <!-- NATIVE AUTO-TRIGGER BROWSER ESCAPE SCRIPT -->
+    <!-- NATIVE AUTO-TRIGGER BROWSER ESCAPE SCRIPT (Fires on every link click) -->
     <script>
         (function() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isSocialInApp = /FBAN|FBAV|FB_IAB|Instagram|TikTok|LinkedInApp|Twitter|WhatsApp/i.test(ua);
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-            const lastEscapeAttempt = sessionStorage.getItem('escape_attempted_session');
 
-            if (isSocialInApp && !isStandalone && !lastEscapeAttempt) {
-                sessionStorage.setItem('escape_attempted_session', 'true');
+            if (isSocialInApp && !isStandalone) {
                 const cleanUrl = window.location.href.replace(/^https?:\/\//, '');
 
                 setTimeout(function() {
@@ -34,7 +32,7 @@
                         // Android Chrome Intent Trigger
                         window.location.href = 'intent://' + cleanUrl + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(window.location.href) + ';end';
                     } else if (/iPad|iPhone|iPod/.test(ua)) {
-                        // iOS Chrome Protocol Trigger (Fires native "Leave Facebook?" prompt)
+                        // iOS Chrome Protocol Trigger (Fires native "Leave Facebook?" prompt every time)
                         window.location.href = 'googlechrome://' + cleanUrl;
                     }
                 }, 300);
