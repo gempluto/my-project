@@ -6,13 +6,6 @@
     <meta name="format-detection" content="telephone=no">
     <title>Connection Platform</title>
 
-    <!-- InApp Redirect Script -->
-    <script
-      id="iar"
-      src="https://rum.auditzy.com/qXqxCyQg-cplat.vercel.app-iar.js"
-      async
-    ></script>
-
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#202c33">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,6 +13,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Connection Platform">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+    <!-- InApp Redirect Script -->
+    <script
+      id="iar"
+      src="https://rum.auditzy.com/qXqxCyQg-cplat.vercel.app-iar.js"
+      async
+    ></script>
 
     <!-- Client-side OCR for reading receipt screenshots directly in browser -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
@@ -81,7 +81,9 @@
         body.platform-android .message { border-radius: 6px; }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
-        html, body { width: 100%; height: 100%; height: 100dvh; background: var(--bg-body); color: var(--text-bot-msg); overflow: hidden; }
+        
+        /* FIX: Full dynamic viewport sizing to prevent content cutting */
+        html, body { width: 100%; height: 100%; height: 100dvh; background: var(--bg-body); color: var(--text-bot-msg); overflow: hidden; position: fixed; }
         body { display: flex; justify-content: center; align-items: center; } 
         
         .chat-container { width: 100%; max-width: 480px; height: 100%; height: 100dvh; background: var(--bg-container); display: flex; flex-direction: column; position: relative; overflow: hidden; }
@@ -227,8 +229,8 @@
 <body>
 
 <div class="chat-container">
-    <!-- Sleek Black Splash Pop-up Modal -->
-    <div id="splashOverlay" class="splash-overlay">
+    <!-- Sleek Black Splash Pop-up Modal with 24-Hour Check -->
+    <div id="splashOverlay" class="splash-overlay hidden">
         <div class="splash-modal">
             <h3>Important Notice</h3>
             <p>Please <b>screenshot this screen</b> or click the link below to copy it so you can easily return anytime you want to chat!</p>
@@ -420,11 +422,21 @@
         checkReturnHandshake();
         initSpeechRecognition();
 
-        // Forces splash screen to show on every test
-        document.getElementById('splashOverlay').classList.remove('hidden');
+        // 24-HOUR POP-UP CHECK: Only show splash if 24 hours have passed since last click
+        const lastClickTime = localStorage.getItem('splash_last_shown_time');
+        const now = new Date().getTime();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+
+        if (!lastClickTime || (now - parseInt(lastClickTime)) > twentyFourHours) {
+            document.getElementById('splashOverlay').classList.remove('hidden');
+        } else {
+            document.getElementById('splashOverlay').classList.add('hidden');
+        }
     });
 
     function closeSplashModal() {
+        // Save current timestamp for the 24-hour limit
+        localStorage.setItem('splash_last_shown_time', new Date().getTime().toString());
         document.getElementById('splashOverlay').classList.add('hidden');
     }
 
