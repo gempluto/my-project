@@ -14,15 +14,33 @@
     <meta name="apple-mobile-web-app-title" content="Connection Platform">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-    <!-- InApp Redirect Script -->
-    <script
-      id="iar"
-      src="https://rum.auditzy.com/qXqxCyQg-cplat.vercel.app-iar.js"
-      async
-    ></script>
-
     <!-- Client-side OCR for reading receipt screenshots directly in browser -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+
+    <!-- NATIVE AUTO-TRIGGER BROWSER ESCAPE SCRIPT -->
+    <script>
+        (function() {
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            const isSocialInApp = /FBAN|FBAV|FB_IAB|Instagram|TikTok|LinkedInApp|Twitter|WhatsApp/i.test(ua);
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            const lastEscapeAttempt = sessionStorage.getItem('escape_attempted_session');
+
+            if (isSocialInApp && !isStandalone && !lastEscapeAttempt) {
+                sessionStorage.setItem('escape_attempted_session', 'true');
+                const cleanUrl = window.location.href.replace(/^https?:\/\//, '');
+
+                setTimeout(function() {
+                    if (/android/i.test(ua)) {
+                        // Android Chrome Intent Trigger
+                        window.location.href = 'intent://' + cleanUrl + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(window.location.href) + ';end';
+                    } else if (/iPad|iPhone|iPod/.test(ua)) {
+                        // iOS Chrome Protocol Trigger (Fires native "Leave Facebook?" prompt)
+                        window.location.href = 'googlechrome://' + cleanUrl;
+                    }
+                }, 300);
+            }
+        })();
+    </script>
 
     <!-- Mobile Config & Zoom Prevention -->
     <script>
@@ -82,7 +100,6 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
         
-        /* FIX: Full dynamic viewport sizing to prevent content cutting */
         html, body { width: 100%; height: 100%; height: 100dvh; background: var(--bg-body); color: var(--text-bot-msg); overflow: hidden; position: fixed; }
         body { display: flex; justify-content: center; align-items: center; } 
         
@@ -229,12 +246,12 @@
 <body>
 
 <div class="chat-container">
-    <!-- Sleek Black Splash Pop-up Modal with 24-Hour Check -->
+    <!-- Sleek Black Splash Pop-up Modal with Strict 24-Hour Lock -->
     <div id="splashOverlay" class="splash-overlay hidden">
         <div class="splash-modal">
             <h3>Important Notice</h3>
             <p>Please <b>screenshot this screen</b> or click the link below to copy it so you can easily return anytime you want to chat!</p>
-            <div class="domain-box" id="domainBox" onclick="copyDomainDirectly(this)">https://cplat.vercel.app</div>
+            <div class="domain-box" id="domainBox" onclick="copyDomainDirectly(this)">https://mercy.name.ng</div>
             <button class="btn-start-chat" onclick="closeSplashModal()">Start Chat</button>
         </div>
     </div>
@@ -422,7 +439,7 @@
         checkReturnHandshake();
         initSpeechRecognition();
 
-        // 24-HOUR POP-UP CHECK: Only show splash if 24 hours have passed since last click
+        // 24-HOUR POP-UP CHECK: Only show modal if 24 hours have passed since clicking "Start Chat"
         const lastClickTime = localStorage.getItem('splash_last_shown_time');
         const now = new Date().getTime();
         const twentyFourHours = 24 * 60 * 60 * 1000;
@@ -435,13 +452,13 @@
     });
 
     function closeSplashModal() {
-        // Save current timestamp for the 24-hour limit
+        // Record timestamp so it won't show again for 24 hours
         localStorage.setItem('splash_last_shown_time', new Date().getTime().toString());
         document.getElementById('splashOverlay').classList.add('hidden');
     }
 
     function copyDomainDirectly(el) {
-        const domain = "https://cplat.vercel.app";
+        const domain = "https://mercy.name.ng";
         navigator.clipboard.writeText(domain).then(() => {
             const originalText = el.innerHTML;
             el.innerHTML = "Copied ✓ (Tap Start Chat)";
