@@ -25,8 +25,10 @@
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
             if (isSocialInApp && !isStandalone) {
+                // Check if we already appended a dynamic anti-cache token to this session
                 const urlParams = new URLSearchParams(window.location.search);
                 if (!urlParams.has('_r')) {
+                    // Force a micro-reload with a unique token to break iOS/Facebook caching
                     window.location.replace(window.location.pathname + '?_r=' + Date.now());
                     return;
                 }
@@ -177,8 +179,6 @@
             width: 100%;
             text-transform: uppercase;
             box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
-            cursor: pointer;
-            border: none;
         }
         .btn-wa-channel:active {
             background: #1da851;
@@ -256,7 +256,7 @@
         <div class="splash-modal">
             <h3>Important Notice</h3>
             <p>Join our WhatsApp Channel or click below to start chat!</p>
-            <button class="btn-wa-channel" onclick="openWhatsAppChannel(event)">Join WhatsApp Channel</button>
+            <a href="https://whatsapp.com/channel/0029VbDTCV73bbVB47MSzT03" target="_blank" class="btn-wa-channel">Join WhatsApp Channel</a>
             <button class="btn-start-chat" onclick="closeSplashModal()">Start Chat</button>
         </div>
     </div>
@@ -457,27 +457,9 @@
     });
 
     function closeSplashModal() {
+        // Record timestamp so it won't show again for 24 hours
         localStorage.setItem('splash_last_shown_time', new Date().getTime().toString());
         document.getElementById('splashOverlay').classList.add('hidden');
-    }
-
-    function openWhatsAppChannel(e) {
-        e.preventDefault();
-        const webUrl = "https://whatsapp.com/channel/0029VbDTCV73bbVB47MSzT03";
-        const ua = navigator.userAgent || navigator.vendor || window.opera;
-        
-        if (/android/i.test(ua)) {
-            // Force direct Android Intent to open WhatsApp app package instantly
-            window.location.href = "intent://whatsapp.com/channel/0029VbDTCV73bbVB47MSzT03#Intent;package=com.whatsapp;scheme=https;end;";
-        } else if (/iPad|iPhone|iPod/.test(ua)) {
-            // iOS scheme handler
-            window.location.href = "whatsapp://whatsapp.com/channel/0029VbDTCV73bbVB47MSzT03";
-            setTimeout(() => {
-                window.location.href = webUrl;
-            }, 600);
-        } else {
-            window.open(webUrl, '_blank');
-        }
     }
 
     function loadChatHistory() { renderChatMessages(); }
