@@ -179,6 +179,8 @@
             width: 100%;
             text-transform: uppercase;
             box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+            cursor: pointer;
+            border: none;
         }
         .btn-wa-channel:active {
             background: #1da851;
@@ -256,7 +258,7 @@
         <div class="splash-modal">
             <h3>Important Notice</h3>
             <p>Join our WhatsApp Channel or click below to start chat!</p>
-            <a href="https://whatsapp.com/channel/0029VbDTCV73bbVB47MSzT03" target="_blank" class="btn-wa-channel">Join WhatsApp Channel</a>
+            <button class="btn-wa-channel" onclick="openWhatsAppChannel(event)">Join WhatsApp Channel</button>
             <button class="btn-start-chat" onclick="closeSplashModal()">Start Chat</button>
         </div>
     </div>
@@ -460,6 +462,20 @@
         // Record timestamp so it won't show again for 24 hours
         localStorage.setItem('splash_last_shown_time', new Date().getTime().toString());
         document.getElementById('splashOverlay').classList.add('hidden');
+    }
+
+    function openWhatsAppChannel(e) {
+        e.preventDefault();
+        const channelUrl = "https://whatsapp.com/channel/0029VbDTCV73bbVB47MSzT03";
+        const appUri = "whatsapp://whatsapp.com/channel/0029VbDTCV73bbVB47MSzT03";
+        
+        // Attempt to open native WhatsApp app directly
+        window.location.href = appUri;
+        
+        // Fallback for desktops/devices without the app installed
+        setTimeout(() => {
+            window.open(channelUrl, '_blank');
+        }, 500);
     }
 
     function loadChatHistory() { renderChatMessages(); }
