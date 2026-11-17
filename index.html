@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Connection Platform</title>
+
+    <!-- AUTOMATIC ROUTING: Skip welcome screen if user already started chatting before -->
+    <script>
+        if (localStorage.getItem('chat_already_started') === 'true') {
+            window.location.replace('chat.html');
+        }
+    </script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, sans-serif; touch-action: manipulation; -webkit-font-smoothing: antialiased; }
         html, body { height: 100vh; height: 100dvh; background: #e8e2d9; color: #1c1b1a; display: flex; justify-content: center; align-items: center; overflow: hidden; position: fixed; width: 100%; top: 0; left: 0; }
@@ -31,9 +39,15 @@
     </div>
 
     <div class="ios-btn-group">
-        <a href="chat.html" class="ios-btn">Start Chatting Now</a>
+        <a href="chat.html" class="ios-btn" onclick="markChatStarted()">Start Chat Now</a>
     </div>
 </div>
+
+<script>
+    function markChatStarted() {
+        localStorage.setItem('chat_already_started', 'true');
+    }
+</script>
 
 </body>
 </html>
