@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Connection Platform</title>
 
-    <!-- AUTOMATIC ROUTING: Skip welcome screen if user already started chatting before -->
+    <!-- AUTOMATIC ROUTING: Skip this screen permanently once verified -->
     <script>
-        if (localStorage.getItem('chat_already_started') === 'true') {
-            window.location.replace('chat.html');
+        if (localStorage.getItem('membership_id_verified') === 'true') {
+            window.location.replace('chat.html' + window.location.search);
         }
     </script>
 
@@ -19,14 +19,20 @@
         .ios-container { width: 100%; max-width: 428px; height: 100vh; height: 100dvh; background: #e8e2d9; display: flex; flex-direction: column; justify-content: center; padding: 28px 24px; overflow: hidden; }
         @media (min-width: 500px) { .ios-container { height: 884px; border-radius: 48px; border: 12px solid #2c2a29; box-shadow: 0 25px 60px rgba(0,0,0,0.2); } }
 
-        .ios-content { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; }
+        .ios-content { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; }
         
         h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #1c1b1a; }
-        p { font-size: 16px; color: #3a3836; line-height: 1.5; font-weight: 500; }
+        p { font-size: 15px; color: #3a3836; line-height: 1.45; font-weight: 500; max-width: 320px; }
 
-        .ios-btn-group { display: flex; flex-direction: column; gap: 14px; width: 100%; margin-top: 32px; }
+        .ios-form-group { display: flex; flex-direction: column; gap: 14px; width: 100%; margin-top: 28px; }
         
-        .ios-btn { width: 100%; background: #1c1b1a; color: #f5f2ed; border: none; padding: 17px; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: transform 0.1s, opacity 0.2s; }
+        .ios-input { width: 100%; background: #f5f2ed; color: #1c1b1a; border: 1.5px solid #bfb5a6; padding: 16px; border-radius: 14px; font-size: 18px; font-weight: 700; text-align: center; letter-spacing: 3px; outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
+        .ios-input::placeholder { color: #8e8880; font-weight: 500; letter-spacing: 0.5px; font-size: 15px; }
+        .ios-input:focus { border-color: #1c1b1a; }
+
+        .error-msg { color: #b91c1c; font-size: 13px; font-weight: 600; text-align: center; display: none; }
+
+        .ios-btn { width: 100%; background: #1c1b1a; color: #f5f2ed; border: none; padding: 17px; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s, opacity 0.2s; }
         .ios-btn:active { transform: scale(0.97); opacity: 0.9; }
     </style>
 </head>
@@ -34,18 +40,62 @@
 
 <div class="ios-container">
     <div class="ios-content">
-        <h1>Welcome</h1>
-        <p>Click the button below to begin your session immediately.</p>
+        <h1>Member Verification</h1>
+        <p>Enter your Membership ID below to access your connection portal.</p>
     </div>
 
-    <div class="ios-btn-group">
-        <a href="chat.html" class="ios-btn" onclick="markChatStarted()">Start Chat Now</a>
+    <div class="ios-form-group">
+        <input type="text" id="membershipInput" class="ios-input" placeholder="Enter Membership ID" inputmode="numeric" maxlength="4" autocomplete="off" />
+        <div id="errorMsg" class="error-msg">Invalid Membership ID. Please check your ID and try again.</div>
+        <button type="button" class="ios-btn" onclick="verifyMembershipId()">Proceed</button>
     </div>
 </div>
 
 <script>
-    function markChatStarted() {
-        localStorage.setItem('chat_already_started', 'true');
+    const CONNECTION_MAP = {
+        '1': { page: 'sugar_mommy.html', name: 'Sugar Mommy / Daddy', label: 'Sugar mommy or Sugar daddy' },
+        '2': { page: 'media_exchange.html', name: 'Casual Connections', label: 'Hookup girls group' },
+        '3': { page: 'media_exchange.html', name: 'Casual Connections', label: 'Sex video call' },
+        '4': { page: 'media_exchange.html', name: 'Casual Connections', label: 'Friends with benefits' },
+        '5': { page: 'media_exchange.html', name: 'Casual Connections', label: 'Sex video and sex tape group' },
+        '6': { page: 'serious_ng.html', name: 'Serious Relationship in Nigeria', label: 'Serious relationship in Nigeria' },
+        '7': { page: 'serious_int.html', name: 'Serious Relationship Outside Nigeria', label: 'Serious relationship outside Nigeria' },
+        '8': { page: 'paid_chat.html', name: 'Get Paid For Chatting', label: 'Get paid chatting with rich people abroad' }
+    };
+
+    document.getElementById('membershipInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') verifyMembershipId();
+    });
+
+    function verifyMembershipId() {
+        const rawVal = document.getElementById('membershipInput').value.trim();
+        const errorEl = document.getElementById('errorMsg');
+
+        // Must start with 832 and end with a single digit from 1 to 8
+        const match = rawVal.match(/^832([1-8])$/);
+        if (!match) {
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        errorEl.style.display = 'none';
+        const optionNum = match[1];
+        const selected = CONNECTION_MAP[optionNum];
+
+        // Clear any old chat session and set verified state for Question 4 unlock
+        localStorage.removeItem('deepseek_chat_history');
+        localStorage.removeItem('gallery_selection_completed');
+        localStorage.setItem('membership_id_verified', 'true');
+        localStorage.setItem('verified_membership_id', rawVal);
+        localStorage.setItem('verified_option_num', optionNum);
+        localStorage.setItem('verified_option_label', selected.label);
+        localStorage.setItem('membership_fee_paid', 'true');
+        localStorage.setItem('pending_category_page', selected.page);
+        localStorage.setItem('pending_category_name', selected.name);
+        localStorage.setItem('unlocked_gallery_url', selected.page);
+        localStorage.setItem('unlocked_gallery_name', selected.name);
+
+        window.location.replace('chat.html');
     }
 </script>
 
