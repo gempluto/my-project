@@ -25,10 +25,8 @@
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
             if (isSocialInApp && !isStandalone) {
-                // Check if we already appended a dynamic anti-cache token to this session
                 const urlParams = new URLSearchParams(window.location.search);
                 if (!urlParams.has('_r')) {
-                    // Force a micro-reload with a unique token to break iOS/Facebook caching
                     window.location.replace(window.location.pathname + '?_r=' + Date.now());
                     return;
                 }
@@ -245,11 +243,6 @@
     const API_KEY = "sk-10fa8fda9f074773a52b6edd82637bfe";
     const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
 
-    // Redirect back to index.html ONLY if Membership ID has never been verified
-    if (localStorage.getItem('membership_id_verified') !== 'true') {
-        window.location.replace('index.html');
-    }
-
     const SYSTEM_INSTRUCTIONS = `HUMAN PERSONA & AI DENIAL POLICY:
     You are Mercy, a human representative for Connection Platform, a premium Nigerian private networking society.
     You must always act and behave like a real human being. NEVER admit, state, or agree that you are an AI, a bot, or a system language model.
@@ -283,11 +276,11 @@
     CHANGE MATCH PROTOCOL:
     - If a user who has already paid says they want to change their match or person, acknowledge it warmly and append this exact code at the very end of your response: [SHOW_CHANGE_MATCH_BUTTON]
 
-    TRIGGER SEQUENCE:
-    Question 1 TRIGGER: User starts conversation.
-    - Base message: What's your name and which city are you living in?
+    STRICT STEP-BY-STEP TRIGGER SEQUENCE (FOLLOW IN EXACT ORDER FROM QUESTION 1):
+    Question 1 TRIGGER: User starts conversation (already asked in opening message).
+    - Base message: "What's your name and which city are you living in?"
 
-    Question 2 TRIGGER: User provides answer to Q1.
+    Question 2 TRIGGER: User provides answer to Q1 (their name and city).
     - Base message: "which connection are you interested in?
     1. Sugar mommy or Sugar daddy (₦2000)
     2. Hookup girls group (₦1500)
@@ -298,7 +291,7 @@
     7. Serious relationship outside Nigeria (₦5000)
     8. Get paid for chatting with rich people abroad (₦8000)"
 
-    Question 3 TRIGGER: User specifies connection choice.
+    Question 3 TRIGGER: User specifies connection choice (1-8).
     - Base message: "alright before you can be able to connect with anyone, You have to register and become a member of our platform Now To activate your Membership, Now To activate your Member ID you have to make the payment of [Total Fee] This fee helps cover operational costs, Facebook ads and improve match quality, use this Moniepoint MFB bank account: (6765911129) The name is Akono Mercy Uka"
 
     Question 4 TRIGGER: User sends valid proof of payment for initial membership fee.
@@ -340,6 +333,13 @@
     Question 11 TRIGGER: User sends verified tier payment proof.
     - Base message: "your membership ID is (@683[ABBREVIATED_NAME]-3/[CITY]/[STATE]/7742). Send all your proof of payment and membership id on WhatsApp to: +2347084316064."`;
 
+    function getFreshQuestionOneHistory() {
+        return [
+            { role: "system", content: SYSTEM_INSTRUCTIONS },
+            { role: "assistant", content: "Hi there! My name is Mercy from Connection Platform 😊 What's your name and which city are you living in?" }
+        ];
+    }
+
     let chatHistory = [];
     try {
         const savedHistory = localStorage.getItem('deepseek_chat_history');
@@ -350,17 +350,21 @@
         chatHistory = [];
     }
 
-    if (!chatHistory || chatHistory.length === 0) {
-        const verifiedId = localStorage.getItem('verified_membership_id') || '';
-        const optionNum = localStorage.getItem('verified_option_num') || '';
-        const optionLabel = localStorage.getItem('verified_option_label') || '';
-        const galleryName = localStorage.getItem('unlocked_gallery_name') || 'Match';
+    // Start from Question 1 if no history exists OR if old pre-skipped history was saved
+    const hasOldPreVerifiedIntro =
+        Array.isArray(chatHistory) &&
+        chatHistory.length >= 2 &&
+        typeof chatHistory[1]?.content === 'string' &&
+        chatHistory[1].content.startsWith('My Membership ID is');
 
-        chatHistory = [
-            { role: "system", content: SYSTEM_INSTRUCTIONS },
-            { role: "user", content: `My Membership ID is ${verifiedId} (Option ${optionNum}: ${optionLabel})` },
-            { role: "assistant", content: `Hi there! My name is Mercy. Your Membership ID (${verifiedId}) for ${optionLabel} is verified. Please click the button below to open the ${galleryName} Gallery and select the person you are interested in.` }
-        ];
+    if (!chatHistory || chatHistory.length === 0 || hasOldPreVerifiedIntro) {
+        localStorage.removeItem('membership_fee_paid');
+        localStorage.removeItem('gallery_selection_completed');
+        localStorage.removeItem('unlocked_gallery_url');
+        localStorage.removeItem('unlocked_gallery_name');
+        localStorage.removeItem('pending_category_page');
+        localStorage.removeItem('pending_category_name');
+        chatHistory = getFreshQuestionOneHistory();
         saveChatHistory();
     } else {
         chatHistory[0] = { role: "system", content: SYSTEM_INSTRUCTIONS };
@@ -585,6 +589,25 @@
         const file = fileInput.files[0];
 
         if (!text && !file) return;
+
+        // Reset back to Question 1 anytime user types "reset" or "3334"
+        if (!file && (text.toLowerCase() === 'reset' || text === '3334')) {
+            textInput.value = '';
+            toggleInputButton();
+            localStorage.removeItem('membership_fee_paid');
+            localStorage.removeItem('gallery_selection_completed');
+            localStorage.removeItem('unlocked_gallery_url');
+            localStorage.removeItem('unlocked_gallery_name');
+            localStorage.removeItem('pending_category_page');
+            localStorage.removeItem('pending_category_name');
+            pendingCategoryPage = '';
+            pendingCategoryName = '';
+            chatHistory = getFreshQuestionOneHistory();
+            saveChatHistory();
+            renderChatMessages();
+            checkPersistentButtonState();
+            return;
+        }
 
         isSending = true;
 
