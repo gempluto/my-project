@@ -240,7 +240,9 @@
 </div>
 
 <script>
-    const WORKER_API_URL = "/api/chat";
+    const API_KEY = "";
+    const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
+    const BACKEND_CHAT_URL = "/api/chat";
 
     function getFreshQuestionOneHistory() {
         return [
@@ -258,6 +260,7 @@
         chatHistory = [];
     }
 
+    // Start from Question 1 if no history exists OR if old pre-skipped history was saved
     const hasOldPreVerifiedIntro =
         Array.isArray(chatHistory) &&
         chatHistory.length >= 1 &&
@@ -373,7 +376,9 @@
             const inputAreaBox = document.getElementById('inputAreaBox');
             if (inputAreaBox) inputAreaBox.classList.remove('disabled');
             const area = document.getElementById('persistentButtonArea');
-            if (area) area.style.display = 'none';
+            if (area) {
+                area.style.display = 'none';
+            }
 
             triggerDeepSeekResponse({
                 eventType: "gallery_return",
@@ -495,6 +500,7 @@
 
         if (!text && !file) return;
 
+        // Reset back to Question 1 anytime user types "reset" or "3334"
         if (!file && (text.toLowerCase() === 'reset' || text === '3334')) {
             textInput.value = '';
             toggleInputButton();
@@ -542,7 +548,7 @@
             try {
                 const ocrResult = await Tesseract.recognize(attachedFile, 'eng');
                 const extractedText = ocrResult.data.text;
-                apiUserPayload += ` [OCR Extracted Text: ${extractedText}]`;
+                apiUserPayload += ` [Backend OCR Extracted Text: ${extractedText}]`;
 
                 const receiptNo = extractReceiptNumber(extractedText);
                 if (receiptNo) {
@@ -560,7 +566,7 @@
                     }
                 }
             } catch(e) {
-                apiUserPayload += ` [Image Uploaded]`;
+                apiUserPayload += ` [Backend Image Uploaded]`;
             }
             chatHistory[chatHistory.length - 1].content = apiUserPayload;
             saveChatHistory();
@@ -602,15 +608,30 @@
             }));
 
         try {
-            const response = await fetch(WORKER_API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
+            const useDirectApi = Boolean(API_KEY && API_KEY.trim() !== "");
+            const endpoint = useDirectApi ? DEEPSEEK_API_URL : BACKEND_CHAT_URL;
+            const headers = { "Content-Type": "application/json" };
+            if (useDirectApi) {
+                headers["Authorization"] = `Bearer ${API_KEY}`;
+            }
+
+            const payload = useDirectApi
+                ? {
+                    model: "deepseek-chat",
+                    messages: cleanApiPayload,
+                    stream: false
+                }
+                : {
                     messages: cleanApiPayload,
                     eventType: meta.eventType || "chat",
                     activeCategory: meta.activeCategory || "",
                     photoCount: meta.photoCount || 0
-                })
+                };
+
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers,
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
@@ -743,6 +764,7 @@
         if (el) el.remove();
     }
 
+    // --- PWA Installation Logic & Auto-Hide ---
     let deferredPrompt;
     const installBtn = document.getElementById('install-btn');
     const ua = navigator.userAgent;
