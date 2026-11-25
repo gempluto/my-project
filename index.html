@@ -129,7 +129,6 @@
             white-space: nowrap;
         }
 
-        /* iOS / PWA Install Guide Sheet */
         .install-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: flex-end; justify-content: center; z-index: 10000; }
         .install-overlay.show { display: flex; }
         .install-sheet { background: var(--bg-header); color: var(--text-header); width: 100%; max-width: 480px; border-radius: 16px 16px 0 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom)); box-sizing: border-box; font-size: 14px; line-height: 1.5; border-top: 1.5px solid #00a884; }
@@ -244,9 +243,16 @@
     const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
     const BACKEND_CHAT_URL = "/api/chat";
 
+    const SUPABASE_URL = "https://eupaqmrilobhvmbpvpuw.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_PjtLrDn-bHNoz9hm5FM_yQ_LI8NUxrU";
+
+    function formatClockTime(dateObj = new Date()) {
+        return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
     function getFreshQuestionOneHistory() {
         return [
-            { role: "assistant", content: "Hi there! My name is Mercy from Connection Platform 😊 What's your name and which city are you living in?" }
+            { role: "assistant", content: "Hi there! My name is Mercy from Connection Platform 😊 What's your name and which city are you living in?", time: formatClockTime() }
         ];
     }
 
@@ -260,7 +266,6 @@
         chatHistory = [];
     }
 
-    // Start from Question 1 if no history exists OR if old pre-skipped history was saved
     const hasOldPreVerifiedIntro =
         Array.isArray(chatHistory) &&
         chatHistory.length >= 1 &&
@@ -282,6 +287,65 @@
     let pendingCategoryName = localStorage.getItem('pending_category_name') || '';
     let usedReceiptNumbers = JSON.parse(localStorage.getItem('used_receipt_numbers')) || [];
     let isSending = false;
+
+    async function syncConversationToSupabase(firstUserText = "") {
+        try {
+            let visitorId = localStorage.getItem('cp_visitor_id');
+            let visitorName = localStorage.getItem('cp_visitor_name');
+
+            if (!visitorId) {
+                visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+                localStorage.setItem('cp_visitor_id', visitorId);
+            }
+
+            if (!visitorName) {
+                const suffix = visitorId.slice(-4).toUpperCase();
+                visitorName = 'Visitor #' + suffix;
+                localStorage.setItem('cp_visitor_name', visitorName);
+            }
+
+            const nowIso = new Date().toISOString();
+            const nowClock = formatClockTime();
+            const mappedMessages = chatHistory
+                .filter(m => m.role === 'user' || m.role === 'assistant')
+                .map(m => ({
+                    role: m.role,
+                    content: stripAsterisks(m.displayCaption || m.content || ''),
+                    time: m.time || nowClock
+                }));
+
+            const latestMsg = mappedMessages[mappedMessages.length - 1];
+            const firstUserMsgObj = mappedMessages.find(m => m.role === 'user');
+            const firstMsgText = firstUserText || (firstUserMsgObj ? firstUserMsgObj.content : 'Started a conversation');
+            const lastMsgText = latestMsg ? latestMsg.content : firstMsgText;
+
+            const rowPayload = {
+                id: visitorId,
+                name: visitorName,
+                started_at: nowClock,
+                last_time: nowClock,
+                last_message_at: nowIso,
+                first_message: firstMsgText.slice(0, 200),
+                last_message: lastMsgText.slice(0, 200),
+                unread_count: latestMsg && latestMsg.role === 'user' ? 1 : 0,
+                is_new: true,
+                messages: mappedMessages
+            };
+
+            await fetch(`${SUPABASE_URL}/rest/v1/cp_conversations?on_conflict=id`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": `Bearer ${SUPABASE_KEY}`,
+                    "Prefer": "resolution=merge-duplicates,return=minimal"
+                },
+                body: JSON.stringify(rowPayload)
+            });
+        } catch (err) {
+            console.error("Supabase sync error:", err);
+        }
+    }
 
     window.addEventListener('DOMContentLoaded', () => {
         loadChatHistory();
@@ -363,7 +427,8 @@
                         role: "user",
                         content: "Here is the picture of the person I am interested in.",
                         imageUrl: imgUrl,
-                        displayCaption: "Here is the picture of the person I am interested in."
+                        displayCaption: "Here is the picture of the person I am interested in.",
+                        time: formatClockTime()
                     });
                 });
                 localStorage.removeItem('pending_match_images');
@@ -371,6 +436,7 @@
 
             const activeCat = localStorage.getItem('pending_category_name') || 'Serious Relationship in Nigeria';
             saveChatHistory();
+            syncConversationToSupabase("Selected match from gallery");
             window.history.replaceState({}, document.title, window.location.pathname);
             
             const inputAreaBox = document.getElementById('inputAreaBox');
@@ -500,10 +566,11 @@
 
         if (!text && !file) return;
 
-        // Reset back to Question 1 anytime user types "reset" or "3334"
         if (!file && (text.toLowerCase() === 'reset' || text === '3334')) {
             textInput.value = '';
             toggleInputButton();
+            localStorage.removeItem('cp_visitor_id');
+            localStorage.removeItem('cp_visitor_name');
             localStorage.removeItem('membership_fee_paid');
             localStorage.removeItem('gallery_selection_completed');
             localStorage.removeItem('unlocked_gallery_url');
@@ -522,13 +589,13 @@
         isSending = true;
 
         let apiUserPayload = text || "Uploaded image/receipt";
-        let displayObj = { role: "user", content: text };
+        let displayObj = { role: "user", content: text, time: formatClockTime() };
         const attachedFile = file;
 
         if (attachedFile && attachedFile.type.startsWith('image/')) {
             const imgUrl = URL.createObjectURL(attachedFile);
             displayObj.imageUrl = imgUrl;
-            displayObj.displayCaption = text;
+            displayObj.displayCaption = text || "Sent a photo";
         }
 
         displayObj.content = apiUserPayload;
@@ -538,6 +605,7 @@
         clearFile();
         toggleInputButton();
         saveChatHistory();
+        await syncConversationToSupabase(text || "Uploaded image/receipt");
         renderChatMessages();
 
         const lastBotMsg = chatHistory.length >= 2 ? chatHistory[chatHistory.length - 2].content.toLowerCase() : '';
@@ -555,8 +623,9 @@
                     if (usedReceiptNumbers.includes(receiptNo)) {
                         removeLoadingMessage();
                         const duplicateMsg = "This receipt has already been used by a different user. Please make your payment and send a valid receipt.";
-                        chatHistory.push({ role: "assistant", content: duplicateMsg });
+                        chatHistory.push({ role: "assistant", content: duplicateMsg, time: formatClockTime() });
                         saveChatHistory();
+                        await syncConversationToSupabase();
                         renderChatMessages();
                         isSending = false;
                         return;
@@ -653,8 +722,9 @@
 
             reply = stripAsterisks(reply);
 
-            chatHistory.push({ role: "assistant", content: reply });
+            chatHistory.push({ role: "assistant", content: reply, time: formatClockTime() });
             saveChatHistory();
+            await syncConversationToSupabase();
             renderChatMessages();
 
             trackCategoryChoice(reply, chatHistory[chatHistory.length - 2]?.content || '');
@@ -669,8 +739,9 @@
 
         } catch (err) {
             removeLoadingMessage();
-            chatHistory.push({ role: "assistant", content: "Network connection error. Please try again." });
+            chatHistory.push({ role: "assistant", content: "Network connection error. Please try again.", time: formatClockTime() });
             saveChatHistory();
+            await syncConversationToSupabase();
             renderChatMessages();
         } finally {
             isSending = false;
@@ -678,23 +749,26 @@
     }
 
     function trackCategoryChoice(botReply, userMsg) {
-        const combined = (botReply + " " + userMsg).toLowerCase();
+        const raw = (botReply + " " + userMsg).toLowerCase();
+        const routes = [
+            { match: ["sugar", "mommy", "daddy", "2000"], page: "sugar_mommy.html", title: "VIP Lounge" },
+            { match: ["chat", "rich people abroad", "8000"], page: "paid_chat.html", title: "Global Chat" },
+            { match: ["outside nigeria", "5000"], page: "serious_int.html", title: "Intl Matches" },
+            { match: ["hookup", "benefit", "video call", "tape", "1500", "1000"], page: "media_exchange.html", title: "Private Room" },
+            { match: ["relationship in nigeria", "serious relationship in nigeria"], page: "serious_ng.html", title: "Local Matches" }
+        ];
 
-        if (combined.includes('sugar') || combined.includes('mommy') || combined.includes('daddy') || combined.includes('2000')) {
-            pendingCategoryPage = 'sugar_mommy.html'; pendingCategoryName = 'Sugar Mommy / Daddy';
-        } else if (combined.includes('chat') || combined.includes('rich people abroad') || combined.includes('8000')) {
-            pendingCategoryPage = 'paid_chat.html'; pendingCategoryName = 'Get Paid For Chatting';
-        } else if (combined.includes('outside nigeria') || combined.includes('5000')) {
-            pendingCategoryPage = 'serious_int.html'; pendingCategoryName = 'Serious Relationship Outside Nigeria';
-        } else if (combined.includes('hookup') || combined.includes('benefit') || combined.includes('video call') || combined.includes('tape') || combined.includes('1500') || combined.includes('1000')) {
-            pendingCategoryPage = 'media_exchange.html'; pendingCategoryName = 'Casual Connections';
-        } else if (combined.includes('relationship in nigeria') || combined.includes('serious relationship in nigeria')) {
-            pendingCategoryPage = 'serious_ng.html'; pendingCategoryName = 'Serious Relationship in Nigeria';
+        for (const item of routes) {
+            if (item.match.some(term => raw.includes(term))) {
+                pendingCategoryPage = item.page;
+                pendingCategoryName = item.title;
+                break;
+            }
         }
 
         if (pendingCategoryPage) {
-            localStorage.setItem('pending_category_page', pendingCategoryPage);
-            localStorage.setItem('pending_category_name', pendingCategoryName);
+            localStorage.setItem("pending_category_page", pendingCategoryPage);
+            localStorage.setItem("pending_category_name", pendingCategoryName);
         }
     }
 
@@ -764,7 +838,6 @@
         if (el) el.remove();
     }
 
-    // --- PWA Installation Logic & Auto-Hide ---
     let deferredPrompt;
     const installBtn = document.getElementById('install-btn');
     const ua = navigator.userAgent;
