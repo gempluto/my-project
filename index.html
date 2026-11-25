@@ -17,33 +17,6 @@
     <!-- Client-side OCR for reading receipt screenshots directly in browser -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <!-- ANTI-CACHE EVERY-CLICK AUTO-TRIGGER SCRIPT -->
-    <script>
-        (function() {
-            const ua = navigator.userAgent || navigator.vendor || window.opera;
-            const isSocialInApp = /FBAN|FBAV|FB_IAB|Instagram|TikTok|LinkedInApp|Twitter|WhatsApp/i.test(ua);
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-
-            if (isSocialInApp && !isStandalone) {
-                const urlParams = new URLSearchParams(window.location.search);
-                if (!urlParams.has('_r')) {
-                    window.location.replace(window.location.pathname + '?_r=' + Date.now());
-                    return;
-                }
-
-                const cleanUrl = window.location.host;
-
-                setTimeout(function() {
-                    if (/android/i.test(ua)) {
-                        window.location.href = 'intent://' + cleanUrl + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(window.location.href) + ';end';
-                    } else if (/iPad|iPhone|iPod/.test(ua)) {
-                        window.location.href = 'googlechrome://' + cleanUrl;
-                    }
-                }, 150);
-            }
-        })();
-    </script>
-
     <!-- Mobile Config & Zoom Prevention -->
     <script>
         if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
