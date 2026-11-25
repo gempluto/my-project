@@ -706,7 +706,13 @@
             const data = await response.json();
             removeLoadingMessage();
 
-            let reply = data.choices && data.choices[0] ? data.choices[0].message.content : "Understood.";
+            if (!response.ok || data.error) {
+                throw new Error(data.error || `Server error (${response.status})`);
+            }
+
+            let reply = data.choices && data.choices[0] && data.choices[0].message
+                ? data.choices[0].message.content
+                : "No reply received from server.";
             
             let shouldUnlockButton = false;
             if (reply.includes('[PAYMENT_VERIFIED_UNLOCK]')) {
@@ -739,7 +745,8 @@
 
         } catch (err) {
             removeLoadingMessage();
-            chatHistory.push({ role: "assistant", content: "Network connection error. Please try again.", time: formatClockTime() });
+            const errText = err && err.message ? err.message : "Network connection error. Please try again.";
+            chatHistory.push({ role: "assistant", content: `Error: ${errText}`, time: formatClockTime() });
             saveChatHistory();
             await syncConversationToSupabase();
             renderChatMessages();
