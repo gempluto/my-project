@@ -89,61 +89,88 @@ Question 11 TRIGGER: User sends verified tier payment proof.
 - Base message: "your membership ID is (@683[ABBREVIATED_NAME]-3/[CITY]/[STATE]/7742). Send all your proof of payment and membership id on WhatsApp to: +2347084316064."`;
 
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed" });
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
-    const clientMessages = Array.isArray(body.messages) ? body.messages : [];
-    const eventType = body.eventType || "chat";
-    const activeCat = body.activeCategory || "Serious Relationship in Nigeria";
-    const photoCount = body.photoCount || 0;
+    const { messages = [], eventType = "chat", activeCategory = "", photoCount = 0 } = req.body || {};
 
-    const serverMessages = [{ role: "system", content: SYSTEM_INSTRUCTIONS }];
+    // Keep your system prompt on the server so it stays hidden from browser visitors
+    const SYSTEM_INSTRUCTIONS = `
+You are Mercy from Connection Platform. Be friendly, clear, helpful, and guide the user smoothly through Connection Platform's matching and verification flow.
+`.trim();
 
+    let runtimeContext = "";
     if (eventType === "gallery_return") {
-      serverMessages.push({
-        role: "system",
-        content: `[System Backend Event]: Candidate submitted ${photoCount} profile photo(s) from the match gallery for category "${activeCat}". Continue from Question 5 now. Ask them to send a picture of yourself so you can submit it to your match. DO NOT ask for payment or connection fee here.`
-      });
+      runtimeContext = ` [System Note: User returned from ${activeCategory || "Match"} gallery after selecting ${photoCount} photo(s).]`;
     } else if (eventType === "photo_approved") {
-      serverMessages.push({
-        role: "system",
-        content: `[System Backend Event]: Match verification completed successfully for category "${activeCat}". The match has approved the connection request based on the selected pictures. Send Question 6 now using the correct connection fee rules for "${activeCat}" (₦4000 per picture for serious relationship with negotiation to ₦3000 for 1 picture or 25% off for multiple pictures, ₦3000 per picture for casual/hookup/benefits with negotiation to ₦2000 for 1 picture or 25% off for multiple pictures, or budget negotiation for sugar mommy / foreign chat). DO NOT use ₦1000.`
-      });
+      runtimeContext = ` [System Note: User's personal photo has been verified for ${activeCategory || "Match"}.]`;
     }
 
-    for (const m of clientMessages) {
-      if (m.role === "user" || m.role === "assistant") {
-        serverMessages.push({ role: m.role, content: m.content });
-      }
+    const formattedMessages = [
+      { role: "system", content: SYSTEM_INSTRUCTIONS },
+      ...messages.map((m, idx) => {
+        if (idx === messages.length - 1 && m.role === "user" && runtimeContext) {
+          return {
+            role: m.role,
+            content: `${m.content || ""}${runtimeContext}`
+          };
+        }
+        return {
+          role: m.role,
+          content: m.content || ""
+        };
+      })
+    ];
+
+    // --- ACTIVE PROVIDER: GROQ ---
+    const groqApiKey = process.env.GROQ_API_KEY;
+    if (!groqApiKey) {
+      return res.status(500).json({ error: "Missing GROQ_API_KEY in Vercel environment variables" });
     }
 
-    const dsRes = await fetch("https://api.deepseek.com/chat/completions", {
+    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
+        "Authorization": `Bearer ${groqApiKey}`
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: serverMessages,
-        stream: false
+        model: "llama-3.3-70b-versatile",
+        messages: formattedMessages,
+        temperature: 0.7
       })
     });
 
-    const data = await dsRes.json();
+    const data = await groqResponse.json();
+    if (!groqResponse.ok) {
+      return res.status(groqResponse.status).json({
+        error: data?.error?.message || "Groq API error"
+      });
+    }
+
     return res.status(200).json(data);
+
+    /* --- SAVED FOR LATER: SWITCH BACK TO DEEPSEEK WHEN FUNDED ---
+    const deepseekApiKey = process.env.DEEPSEEK_API_KEY;
+    const dsResponse = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${deepseekApiKey}`
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: formattedMessages,
+        stream: false
+      })
+    });
+    const dsData = await dsResponse.json();
+    return res.status(dsResponse.status).json(dsData);
+    -------------------------------------------------------------- */
   } catch (err) {
-    return res.status(500).json({ error: "Server error" });
+    console.error("Chat proxy error:", err);
+    return res.status(500).json({ error: "Failed to process chat request" });
   }
 }
