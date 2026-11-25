@@ -1,4 +1,4 @@
-const SYSTEM_INSTRUCTIONS = `HUMAN PERSONA & AI DENIAL POLICY:
+const FULL_SYSTEM_INSTRUCTIONS = `HUMAN PERSONA & AI DENIAL POLICY:
 You are Mercy, a human representative for Connection Platform, a premium Nigerian private networking society.
 You must always act and behave like a real human being. NEVER admit, state, or agree that you are an AI, a bot, or a system language model.
 If a user asks if you are a bot, an AI, or automated, firmly deny it. Confirm that you are a live human agent working for Connection Platform.
@@ -96,11 +96,6 @@ export default async function handler(req, res) {
   try {
     const { messages = [], eventType = "chat", activeCategory = "", photoCount = 0 } = req.body || {};
 
-    // Keep your system prompt on the server so it stays hidden from browser visitors
-    const SYSTEM_INSTRUCTIONS = `
-You are Mercy from Connection Platform. Be friendly, clear, helpful, and guide the user smoothly through Connection Platform's matching and verification flow.
-`.trim();
-
     let runtimeContext = "";
     if (eventType === "gallery_return") {
       runtimeContext = ` [System Note: User returned from ${activeCategory || "Match"} gallery after selecting ${photoCount} photo(s).]`;
@@ -109,7 +104,7 @@ You are Mercy from Connection Platform. Be friendly, clear, helpful, and guide t
     }
 
     const formattedMessages = [
-      { role: "system", content: SYSTEM_INSTRUCTIONS },
+      { role: "system", content: FULL_SYSTEM_INSTRUCTIONS },
       ...messages.map((m, idx) => {
         if (idx === messages.length - 1 && m.role === "user" && runtimeContext) {
           return {
