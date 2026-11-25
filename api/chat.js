@@ -88,12 +88,6 @@ Question 10 TRIGGER: User selects tier.
 Question 11 TRIGGER: User sends verified tier payment proof.
 - Base message: "your membership ID is (@683[ABBREVIATED_NAME]-3/[CITY]/[STATE]/7742). Send all your proof of payment and membership id on WhatsApp to: +2347084316064."`;
 
-const GROQ_CANDIDATE_MODELS = [
-  "llama-3.1-8b-instant",
-  "meta-llama/llama-4-scout-17b-16e-instruct",
-  "llama-3.3-70b-versatile"
-];
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -131,46 +125,37 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Missing GROQ_API_KEY in Vercel environment variables" });
     }
 
-    const modelsToTry = process.env.GROQ_MODEL
-      ? [process.env.GROQ_MODEL, ...GROQ_CANDIDATE_MODELS]
-      : GROQ_CANDIDATE_MODELS;
+    const activeModel = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
 
-    let lastStatus = 500;
-    let lastErrorMessage = "Groq API error";
+    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${groqApiKey}`
+      },
+      body: JSON.stringify({
+        model: activeModel,
+        messages: formattedMessages,
+        temperature: 0.7,
+        max_tokens: 400
+      })
+    });
 
-    for (const modelName of modelsToTry) {
-      const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${groqApiKey}`
-        },
-        body: JSON.stringify({
-          model: modelName,
-          messages: formattedMessages,
-          temperature: 0.7
-        })
+    const data = await groqResponse.json();
+    if (!groqResponse.ok) {
+      return res.status(groqResponse.status).json({
+        error: data?.error?.message || "Groq API error"
       });
-
-      const data = await groqResponse.json();
-      if (groqResponse.ok && data?.choices?.[0]?.message?.content) {
-        return res.status(200).json(data);
-      }
-
-      lastStatus = groqResponse.status || 500;
-      lastErrorMessage = data?.error?.message || "Groq API error";
-
-      const isModelIssue =
-        lastErrorMessage.toLowerCase().includes("model") ||
-        lastErrorMessage.toLowerCase().includes("decommissioned") ||
-        lastErrorMessage.toLowerCase().includes("does not exist");
-
-      if (!isModelIssue) {
-        return res.status(lastStatus).json({ error: lastErrorMessage });
-      }
     }
 
-    return res.status(lastStatus).json({ error: lastErrorMessage });
+    const aiText = data?.choices?.[0]?.message?.content;
+    if (!aiText) {
+      return res.status(502).json({
+        error: "Groq returned no message content"
+      });
+    }
+
+    return res.status(200).json(data);
 
     /* --- SAVED FOR LATER: SWITCH BACK TO DEEPSEEK WHEN FUNDED ---
     const deepseekApiKey = process.env.DEEPSEEK_API_KEY;
