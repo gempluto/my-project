@@ -121,8 +121,8 @@
 
         .chat-box { flex: 1; min-height: 0; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: var(--bg-chat); background-image: radial-gradient(circle, rgba(0,0,0,var(--pattern-opacity)) 1px, transparent 1px); background-size: 24px 24px; -webkit-overflow-scrolling: touch; }
         
-        .message { max-width: 85%; padding: 8px 10px; font-size: 14.5px; line-height: 1.4; word-break: break-word; position: relative; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); -webkit-user-select: text; user-select: text; animation: msgPopIn 0.22s ease-out; }
-        @keyframes msgPopIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .message { max-width: 85%; padding: 8px 10px; font-size: 14.5px; line-height: 1.4; word-break: break-word; position: relative; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); -webkit-user-select: text; user-select: text; animation: msgPop 0.22s ease-out; }
+        @keyframes msgPop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .message.user { background: var(--bg-user-msg); color: var(--text-user-msg); align-self: flex-end; border-top-right-radius: 0; }
         .message.bot { background: var(--bg-bot-msg); color: var(--text-bot-msg); align-self: flex-start; border-top-left-radius: 0; }
         .message.loading { color: var(--text-loading); font-style: italic; background: var(--bg-bot-msg); }
@@ -220,26 +220,26 @@
     const SUPABASE_URL = "https://eupaqmrilobhvmbpvpuw.supabase.co";
     const SUPABASE_KEY = "sb_publishable_PjtLrDn-bHNoz9hm5FM_yQ_LI8NUxrU";
 
-    const WELCOME_MESSAGE = `hello there are all the connections we can offer you
-We can connect you with
+    const WELCOME_MSG_1 = `We can connect you with 
 1. Sugar mommy or Sugar daddy
 2. Hookup girls group
 3. Sex video call
-4. Friends with benefits
-5. Sex video and sex tape group
-6. Serious relationship in Nigeria
+4. Friends with benefits 
+5. Sex video and sex tape group 
+6. Serious relationship in Nigeria 
 7. Serious relationship outside Nigeria
-8. Get paid chatting with rich people abroad
+8. Get paid chatting with rich people abroad`;
 
-So What's your name and which city are you living in?`;
+    const WELCOME_MSG_2 = "So What's your name and which city are you living in?";
+
+    let welcomeTimer1 = null;
+    let welcomeTimer2 = null;
 
     function formatClockTime(dateObj = new Date()) {
         return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
     let chatHistory = [];
-    let isFreshVisitorSession = false;
-
     try {
         const savedHistory = localStorage.getItem('deepseek_chat_history');
         if (savedHistory) {
@@ -249,16 +249,13 @@ So What's your name and which city are you living in?`;
         chatHistory = [];
     }
 
-    const hasOldIntro =
+    const hasOldPreVerifiedIntro =
         Array.isArray(chatHistory) &&
         chatHistory.length >= 1 &&
         typeof chatHistory[0]?.content === 'string' &&
-        (
-            chatHistory[0].content.startsWith('My Membership ID is') ||
-            chatHistory[0].content.startsWith("Hi there! My name is Mercy")
-        );
+        chatHistory[0].content.startsWith('My Membership ID is');
 
-    if (!chatHistory || chatHistory.length === 0 || hasOldIntro) {
+    if (hasOldPreVerifiedIntro) {
         localStorage.removeItem('membership_fee_paid');
         localStorage.removeItem('gallery_selection_completed');
         localStorage.removeItem('unlocked_gallery_url');
@@ -266,7 +263,6 @@ So What's your name and which city are you living in?`;
         localStorage.removeItem('pending_category_page');
         localStorage.removeItem('pending_category_name');
         chatHistory = [];
-        isFreshVisitorSession = true;
         saveChatHistory();
     }
 
@@ -274,28 +270,6 @@ So What's your name and which city are you living in?`;
     let pendingCategoryName = localStorage.getItem('pending_category_name') || '';
     let usedReceiptNumbers = JSON.parse(localStorage.getItem('used_receipt_numbers')) || [];
     let isSending = false;
-
-    function triggerAutoWelcomeMessage() {
-        const headerStatus = document.getElementById('headerStatus');
-        if (headerStatus) headerStatus.textContent = 'typing...';
-        appendLoadingMessage('Typing...');
-
-        setTimeout(async () => {
-            removeLoadingMessage();
-            if (headerStatus) headerStatus.textContent = 'online';
-
-            if (chatHistory.length === 0) {
-                chatHistory.push({
-                    role: "assistant",
-                    content: WELCOME_MESSAGE,
-                    time: formatClockTime()
-                });
-                saveChatHistory();
-                renderChatMessages();
-                await syncConversationToSupabase("Opened website");
-            }
-        }, 850);
-    }
 
     async function syncConversationToSupabase(firstUserText = "") {
         try {
@@ -356,14 +330,75 @@ So What's your name and which city are you living in?`;
         }
     }
 
+    function startAutoWelcomeSequence() {
+        if (welcomeTimer1) clearTimeout(welcomeTimer1);
+        if (welcomeTimer2) clearTimeout(welcomeTimer2);
+
+        const headerStatus = document.getElementById('headerStatus');
+        if (headerStatus) headerStatus.textContent = 'typing...';
+        appendLoadingMessage('Typing...');
+
+        welcomeTimer1 = setTimeout(async () => {
+            removeLoadingMessage();
+            if (headerStatus) headerStatus.textContent = 'online';
+
+            if (chatHistory.length === 0) {
+                chatHistory.push({
+                    role: "assistant",
+                    content: WELCOME_MSG_1,
+                    time: formatClockTime()
+                });
+                saveChatHistory();
+                renderChatMessages();
+                await syncConversationToSupabase("Opened website");
+            }
+
+            welcomeTimer2 = setTimeout(async () => {
+                const hasSecondMsg = chatHistory.some(m => m.content === WELCOME_MSG_2);
+                if (!hasSecondMsg) {
+                    if (headerStatus) headerStatus.textContent = 'typing...';
+                    appendLoadingMessage('Typing...');
+
+                    setTimeout(async () => {
+                        removeLoadingMessage();
+                        if (headerStatus) headerStatus.textContent = 'online';
+
+                        chatHistory.push({
+                            role: "assistant",
+                            content: WELCOME_MSG_2,
+                            time: formatClockTime()
+                        });
+                        saveChatHistory();
+                        renderChatMessages();
+                        await syncConversationToSupabase();
+                    }, 600);
+                }
+            }, 5000);
+        }, 600);
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
         loadChatHistory();
         checkPersistentButtonState();
         checkReturnHandshake();
         initSpeechRecognition();
 
-        if (isFreshVisitorSession && chatHistory.length === 0) {
-            triggerAutoWelcomeMessage();
+        if (chatHistory.length === 0) {
+            startAutoWelcomeSequence();
+        } else if (chatHistory.length === 1 && chatHistory[0].content === WELCOME_MSG_1) {
+            welcomeTimer2 = setTimeout(async () => {
+                const hasSecondMsg = chatHistory.some(m => m.content === WELCOME_MSG_2);
+                if (!hasSecondMsg) {
+                    chatHistory.push({
+                        role: "assistant",
+                        content: WELCOME_MSG_2,
+                        time: formatClockTime()
+                    });
+                    saveChatHistory();
+                    renderChatMessages();
+                    await syncConversationToSupabase();
+                }
+            }, 5000);
         }
     });
 
@@ -579,6 +614,10 @@ So What's your name and which city are you living in?`;
 
         if (!text && !file) return;
 
+        if (welcomeTimer1) clearTimeout(welcomeTimer1);
+        if (welcomeTimer2) clearTimeout(welcomeTimer2);
+        removeLoadingMessage();
+
         if (!file && (text.toLowerCase() === 'reset' || text === '3334')) {
             textInput.value = '';
             toggleInputButton();
@@ -596,7 +635,7 @@ So What's your name and which city are you living in?`;
             saveChatHistory();
             renderChatMessages();
             checkPersistentButtonState();
-            triggerAutoWelcomeMessage();
+            startAutoWelcomeSequence();
             return;
         }
 
