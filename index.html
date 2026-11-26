@@ -121,7 +121,8 @@
 
         .chat-box { flex: 1; min-height: 0; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: var(--bg-chat); background-image: radial-gradient(circle, rgba(0,0,0,var(--pattern-opacity)) 1px, transparent 1px); background-size: 24px 24px; -webkit-overflow-scrolling: touch; }
         
-        .message { max-width: 85%; padding: 8px 10px; font-size: 14.5px; line-height: 1.4; word-break: break-word; position: relative; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); -webkit-user-select: text; user-select: text; }
+        .message { max-width: 85%; padding: 8px 10px; font-size: 14.5px; line-height: 1.4; word-break: break-word; position: relative; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); -webkit-user-select: text; user-select: text; animation: msgPopIn 0.22s ease-out; }
+        @keyframes msgPopIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .message.user { background: var(--bg-user-msg); color: var(--text-user-msg); align-self: flex-end; border-top-right-radius: 0; }
         .message.bot { background: var(--bg-bot-msg); color: var(--text-bot-msg); align-self: flex-start; border-top-left-radius: 0; }
         .message.loading { color: var(--text-loading); font-style: italic; background: var(--bg-bot-msg); }
@@ -158,7 +159,7 @@
         </div>
         <div class="header-info">
             <div class="header-name">Connection Platform</div>
-            <div class="header-status">online</div>
+            <div class="header-status" id="headerStatus">online</div>
         </div>
         <div class="header-actions">
             <button id="install-btn" onclick="installApp()">📥 Install App</button>
@@ -219,17 +220,26 @@
     const SUPABASE_URL = "https://eupaqmrilobhvmbpvpuw.supabase.co";
     const SUPABASE_KEY = "sb_publishable_PjtLrDn-bHNoz9hm5FM_yQ_LI8NUxrU";
 
+    const WELCOME_MESSAGE = `hello there are all the connections we can offer you
+We can connect you with
+1. Sugar mommy or Sugar daddy
+2. Hookup girls group
+3. Sex video call
+4. Friends with benefits
+5. Sex video and sex tape group
+6. Serious relationship in Nigeria
+7. Serious relationship outside Nigeria
+8. Get paid chatting with rich people abroad
+
+So What's your name and which city are you living in?`;
+
     function formatClockTime(dateObj = new Date()) {
         return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    function getFreshQuestionOneHistory() {
-        return [
-            { role: "assistant", content: "Hi there! My name is Mercy from Connection Platform 😊 What's your name and which city are you living in?", time: formatClockTime() }
-        ];
-    }
-
     let chatHistory = [];
+    let isFreshVisitorSession = false;
+
     try {
         const savedHistory = localStorage.getItem('deepseek_chat_history');
         if (savedHistory) {
@@ -239,20 +249,24 @@
         chatHistory = [];
     }
 
-    const hasOldPreVerifiedIntro =
+    const hasOldIntro =
         Array.isArray(chatHistory) &&
         chatHistory.length >= 1 &&
         typeof chatHistory[0]?.content === 'string' &&
-        chatHistory[0].content.startsWith('My Membership ID is');
+        (
+            chatHistory[0].content.startsWith('My Membership ID is') ||
+            chatHistory[0].content.startsWith("Hi there! My name is Mercy")
+        );
 
-    if (!chatHistory || chatHistory.length === 0 || hasOldPreVerifiedIntro) {
+    if (!chatHistory || chatHistory.length === 0 || hasOldIntro) {
         localStorage.removeItem('membership_fee_paid');
         localStorage.removeItem('gallery_selection_completed');
         localStorage.removeItem('unlocked_gallery_url');
         localStorage.removeItem('unlocked_gallery_name');
         localStorage.removeItem('pending_category_page');
         localStorage.removeItem('pending_category_name');
-        chatHistory = getFreshQuestionOneHistory();
+        chatHistory = [];
+        isFreshVisitorSession = true;
         saveChatHistory();
     }
 
@@ -260,6 +274,28 @@
     let pendingCategoryName = localStorage.getItem('pending_category_name') || '';
     let usedReceiptNumbers = JSON.parse(localStorage.getItem('used_receipt_numbers')) || [];
     let isSending = false;
+
+    function triggerAutoWelcomeMessage() {
+        const headerStatus = document.getElementById('headerStatus');
+        if (headerStatus) headerStatus.textContent = 'typing...';
+        appendLoadingMessage('Typing...');
+
+        setTimeout(async () => {
+            removeLoadingMessage();
+            if (headerStatus) headerStatus.textContent = 'online';
+
+            if (chatHistory.length === 0) {
+                chatHistory.push({
+                    role: "assistant",
+                    content: WELCOME_MESSAGE,
+                    time: formatClockTime()
+                });
+                saveChatHistory();
+                renderChatMessages();
+                await syncConversationToSupabase("Opened website");
+            }
+        }, 850);
+    }
 
     async function syncConversationToSupabase(firstUserText = "") {
         try {
@@ -289,7 +325,7 @@
 
             const latestMsg = mappedMessages[mappedMessages.length - 1];
             const firstUserMsgObj = mappedMessages.find(m => m.role === 'user');
-            const firstMsgText = firstUserText || (firstUserMsgObj ? firstUserMsgObj.content : 'Started a conversation');
+            const firstMsgText = firstUserText || (firstUserMsgObj ? firstUserMsgObj.content : 'Opened website');
             const lastMsgText = latestMsg ? latestMsg.content : firstMsgText;
 
             const rowPayload = {
@@ -325,6 +361,10 @@
         checkPersistentButtonState();
         checkReturnHandshake();
         initSpeechRecognition();
+
+        if (isFreshVisitorSession && chatHistory.length === 0) {
+            triggerAutoWelcomeMessage();
+        }
     });
 
     function loadChatHistory() { renderChatMessages(); }
@@ -552,10 +592,11 @@
             localStorage.removeItem('pending_category_name');
             pendingCategoryPage = '';
             pendingCategoryName = '';
-            chatHistory = getFreshQuestionOneHistory();
+            chatHistory = [];
             saveChatHistory();
             renderChatMessages();
             checkPersistentButtonState();
+            triggerAutoWelcomeMessage();
             return;
         }
 
