@@ -92,6 +92,7 @@
             display: flex;
             flex-direction: column;
             position: relative;
+            overflow: hidden;
         }
 
         @media (min-width: 500px) {
@@ -101,7 +102,6 @@
                 border-radius: 14px;
                 border: 1px solid var(--border-container);
                 box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-                overflow: hidden;
             }
         }
 
@@ -233,28 +233,8 @@
             flex-shrink: 0;
             z-index: 20;
         }
-        .input-box-wrapper {
-            flex: 1;
-            background: var(--bg-input-wrapper);
-            border-radius: 22px;
-            display: flex;
-            align-items: center;
-            padding: 0 14px;
-            gap: 8px;
-            position: relative;
-        }
-        input[type="text"] {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: var(--text-input);
-            font-size: 16px;
-            padding: 10px 0;
-            -webkit-appearance: none;
-            caret-color: #00a884;
-            transform: translateZ(0);
-        }
+        .input-box-wrapper { flex: 1; background: var(--bg-input-wrapper); border-radius: 22px; display: flex; align-items: center; padding: 0 14px; gap: 8px; }
+        input[type="text"] { flex: 1; background: transparent; border: none; outline: none; color: var(--text-input); font-size: 16px; padding: 10px 0; -webkit-appearance: none; }
         input[type="text"]::placeholder { color: var(--placeholder-input); }
         .whatsapp-icon-btn { background: none; border: none; color: var(--icon-color); cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; padding: 4px; }
         
@@ -341,11 +321,15 @@
     function scrollToLatestMessage(smooth = false) {
         const chatBox = document.getElementById('chatBox');
         if (!chatBox) return;
-        requestAnimationFrame(() => {
+        const runScroll = () => {
             chatBox.scrollTo({
                 top: chatBox.scrollHeight,
                 behavior: smooth ? 'smooth' : 'auto'
             });
+        };
+        requestAnimationFrame(() => {
+            runScroll();
+            setTimeout(runScroll, 50);
         });
     }
 
@@ -354,18 +338,23 @@
         if (!container) return;
         if (window.innerWidth >= 500) {
             container.style.height = '92vh';
+            container.style.transform = '';
+            scrollToLatestMessage(false);
             return;
         }
         if (window.visualViewport) {
             container.style.height = `${window.visualViewport.height}px`;
+            container.style.transform = `translateY(${window.visualViewport.offsetTop}px)`;
         } else {
             container.style.height = `${window.innerHeight}px`;
+            container.style.transform = '';
         }
         scrollToLatestMessage(false);
     }
 
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', syncViewportHeight);
+        window.visualViewport.addEventListener('scroll', syncViewportHeight);
     }
     window.addEventListener('resize', syncViewportHeight);
 
@@ -728,7 +717,8 @@
     msgInputEl.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
     msgInputEl.addEventListener('focus', () => {
         syncViewportHeight();
-        setTimeout(() => scrollToLatestMessage(false), 300);
+        setTimeout(() => scrollToLatestMessage(false), 120);
+        setTimeout(() => scrollToLatestMessage(false), 320);
     });
 
     function extractReceiptNumber(text) {
