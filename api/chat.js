@@ -1,4 +1,7 @@
-const FULL_SYSTEM_INSTRUCTIONS = `HUMAN PERSONA & AI DENIAL POLICY:
+Now i want to go back to use deepseek 
+
+This is my form deepseek chat.js
+const SYSTEM_INSTRUCTIONS = `HUMAN PERSONA & AI DENIAL POLICY:
 You are Mercy, a human representative for Connection Platform, a premium Nigerian private networking society.
 You must always act and behave like a real human being. NEVER admit, state, or agree that you are an AI, a bot, or a system language model.
 If a user asks if you are a bot, an AI, or automated, firmly deny it. Confirm that you are a live human agent working for Connection Platform.
@@ -89,93 +92,61 @@ Question 11 TRIGGER: User sends verified tier payment proof.
 - Base message: "your membership ID is (@683[ABBREVIATED_NAME]-3/[CITY]/[STATE]/7742). Send all your proof of payment and membership id on WhatsApp to: +2347084316064."`;
 
 export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ error: "Method Not Allowed" });
   }
 
   try {
-    const { messages = [], eventType = "chat", activeCategory = "", photoCount = 0 } = req.body || {};
+    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
+    const clientMessages = Array.isArray(body.messages) ? body.messages : [];
+    const eventType = body.eventType || "chat";
+    const activeCat = body.activeCategory || "Serious Relationship in Nigeria";
+    const photoCount = body.photoCount || 0;
 
-    let runtimeContext = "";
+    const serverMessages = [{ role: "system", content: SYSTEM_INSTRUCTIONS }];
+
     if (eventType === "gallery_return") {
-      runtimeContext = ` [System Note: User returned from ${activeCategory || "Match"} gallery after selecting ${photoCount} photo(s).]`;
+      serverMessages.push({
+        role: "system",
+        content: `[System Backend Event]: Candidate submitted ${photoCount} profile photo(s) from the match gallery for category "${activeCat}". Continue from Question 5 now. Ask them to send a picture of yourself so you can submit it to your match. DO NOT ask for payment or connection fee here.`
+      });
     } else if (eventType === "photo_approved") {
-      runtimeContext = ` [System Note: User's personal photo has been verified for ${activeCategory || "Match"}.]`;
-    }
-
-    const formattedMessages = [
-      { role: "system", content: FULL_SYSTEM_INSTRUCTIONS },
-      ...messages.map((m, idx) => {
-        if (idx === messages.length - 1 && m.role === "user" && runtimeContext) {
-          return {
-            role: m.role,
-            content: `${m.content || ""}${runtimeContext}`
-          };
-        }
-        return {
-          role: m.role,
-          content: m.content || ""
-        };
-      })
-    ];
-
-    // --- ACTIVE PROVIDER: GROQ ---
-    const groqApiKey = process.env.GROQ_API_KEY;
-    if (!groqApiKey) {
-      return res.status(500).json({ error: "Missing GROQ_API_KEY in Vercel environment variables" });
-    }
-
-    const activeModel = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
-
-    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${groqApiKey}`
-      },
-      body: JSON.stringify({
-        model: activeModel,
-        messages: formattedMessages,
-        temperature: 0.7,
-        max_tokens: 400
-      })
-    });
-
-    const data = await groqResponse.json();
-    if (!groqResponse.ok) {
-      return res.status(groqResponse.status).json({
-        error: data?.error?.message || "Groq API error"
+      serverMessages.push({
+        role: "system",
+        content: `[System Backend Event]: Match verification completed successfully for category "${activeCat}". The match has approved the connection request based on the selected pictures. Send Question 6 now using the correct connection fee rules for "${activeCat}" (₦4000 per picture for serious relationship with negotiation to ₦3000 for 1 picture or 25% off for multiple pictures, ₦3000 per picture for casual/hookup/benefits with negotiation to ₦2000 for 1 picture or 25% off for multiple pictures, or budget negotiation for sugar mommy / foreign chat). DO NOT use ₦1000.`
       });
     }
 
-    const aiText = data?.choices?.[0]?.message?.content;
-    if (!aiText) {
-      return res.status(502).json({
-        error: "Groq returned no message content"
-      });
+    for (const m of clientMessages) {
+      if (m.role === "user" || m.role === "assistant") {
+        serverMessages.push({ role: m.role, content: m.content });
+      }
     }
 
-    return res.status(200).json(data);
-
-    /* --- SAVED FOR LATER: SWITCH BACK TO DEEPSEEK WHEN FUNDED ---
-    const deepseekApiKey = process.env.DEEPSEEK_API_KEY;
-    const dsResponse = await fetch("https://api.deepseek.com/chat/completions", {
+    const dsRes = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${deepseekApiKey}`
+        "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
         model: "deepseek-chat",
-        messages: formattedMessages,
+        messages: serverMessages,
         stream: false
       })
     });
-    const dsData = await dsResponse.json();
-    return res.status(dsResponse.status).json(dsData);
-    -------------------------------------------------------------- */
+
+    const data = await dsRes.json();
+    return res.status(200).json(data);
   } catch (err) {
-    console.error("Chat proxy error:", err);
-    return res.status(500).json({ error: "Failed to process chat request" });
+    return res.status(500).json({ error: "Server error" });
   }
 }
